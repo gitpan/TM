@@ -1,0 +1,36 @@
+This is the Perl Extension for TmTk.
+
+TmTk is available at GooseWorks.org [http://www.gooseworks.org]. You need
+TmTk for building this Perl module.
+
+
+INSTALLATION
+------------
+
+First create a Makefile with
+
+perl Makefile.PL  LIBS="-L/usr/local/tmtk/lib -ltm -lexpat -lraptor"  INC=-I/usr/local/tmtk/include
+
+You might need to adjust /usr/local/tmtk/lib to the directory  where your
+libtm.a is located and /usr/local/tmtk/include to the directory where your
+TmTk include files are (/usr/local/tmtk is the TmTk default installation
+directory).
+
+The -l options linking against the vaious parser libraries depend on how your
+TmTk has been compiled. If you don't have raptor, simply remove -lraptor
+from the commandline shown above.
+
+Once your Makefile is created,
+
+
+make all
+make test
+make install
+
+That's all.
+
+This is still a developer's release, direct an questions and comments to
+algermissen@acm.org.
+
+Thanks for using TMTK.
+

@@ -1,0 +1,3 @@
+TYPEMAP
+TMTopicMap    O_OBJECT
+void*         VOID_OBJECT
