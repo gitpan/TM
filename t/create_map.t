@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..2\n"; }
+BEGIN { $| = 1; print "1..3\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use TM;
 $loaded = 1;
@@ -19,7 +19,16 @@ print "ok 1\n";
 # of the test code):
 
 my $tm = TM::TopicMap->new();
-if(defined $tm) { print "ok 2"; }
-else { print "not ok 2"; }
+if(defined $tm) { print "ok 2\n"; }
+else { print "not ok 2\n"; }
 
 
+
+my $rv = $tm->load_string("<topicMap></topicMap>", "xtm_simple","xml");
+if(defined $rv) { print "ok 3\n"; }
+else { print "not ok 3\n"; }
+
+
+#$rv = $tm->load_file("/usr/local/tmtk/maps/xtm/topic.xtm", "xtm_simple","xml");
+#if(defined $rv) { print "ok 4\n"; }
+#else { print "not ok 4\n"; }

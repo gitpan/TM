@@ -52,9 +52,9 @@ AR_STATIC_ARGS = cr
 NAME = TM
 DISTNAME = TM
 NAME_SYM = TM
-VERSION = 0.01
-VERSION_SYM = 0_01
-XS_VERSION = 0.01
+VERSION = 0.02
+VERSION_SYM = 0_02
+XS_VERSION = 0.02
 INST_BIN = blib/bin
 INST_EXE = blib/script
 INST_LIB = blib/lib
@@ -796,7 +796,7 @@ testdb_static :: pure_all $(MAP_TARGET)
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd:
-	@$(PERL) -e "print qq{<SOFTPKG NAME=\"TM\" VERSION=\"0,01,0,0\">\n}. qq{\t<TITLE>TM</TITLE>\n}. qq{\t<ABSTRACT></ABSTRACT>\n}. qq{\t<AUTHOR></AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"i386-linux\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > TM.ppd
+	@$(PERL) -e "print qq{<SOFTPKG NAME=\"TM\" VERSION=\"0,02,0,0\">\n}. qq{\t<TITLE>TM</TITLE>\n}. qq{\t<ABSTRACT></ABSTRACT>\n}. qq{\t<AUTHOR></AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"i386-linux\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > TM.ppd
 
 # --- MakeMaker pm_to_blib section:
 

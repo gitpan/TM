@@ -4,3 +4,9 @@ Revision history for Perl extension TopicMap.
 	- original version; created by h2xs 1.20 with options
 		-A -n TopicMap
 
+0.02  Mon Nov 10 20:00:00 2003
+	- added several methods, fixed some bugs
+
+0.03  Wed Dec 10 23:33:00 2003
+	- adjusted TM to TMTK v0.8.03  (API changes)
+

@@ -21,7 +21,7 @@ print "ok 1\n";
 my $tm = TM::TopicMap->new();
 if(defined $tm)
 {
-	$tm->require("SAM");
+	$tm->require("http://www.gooseworks.org/disclosures/SAM.xml");
 	print "ok 2";
 }
 else

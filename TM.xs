@@ -5,6 +5,8 @@
 #include <topicmaps.h>
 #include <tmmodel.h>
 
+static TM tmhdl;
+
 /* user data for VIEW callbacks */
 struct user_data
 {
@@ -48,11 +50,14 @@ static int vstart(void* ud, const char *name, void **atts)
 		}
 		else if(strcmp(vtype->name,"Text") == 0)
 		{
-			hv_store(perl_atts,
-				key, strlen(key), newSVpv((char*)value,0) , 0);
+			if(value)
+				hv_store(perl_atts,
+					key, strlen(key), newSVpv((char*)value,0) , 0);
 		}
-		else if(strcmp(vtype->name,"LocatorSet") == 0)
+		else if(strcmp(vtype->name,"TextSet") == 0)
 		{
+			if(value)
+			{
 			AV *perl_set;
 			TMList lp;
 			perl_set = newAV();
@@ -62,6 +67,7 @@ static int vstart(void* ud, const char *name, void **atts)
 			}
 			hv_store(perl_atts,
 				key, strlen(key), newRV_inc((SV*)perl_set),0);
+			}
 		}
 		else
 		{
@@ -122,16 +128,21 @@ new(CLASS)
     PREINIT:
 	TMTopicMap tm;
     CODE:
-	tm = tm_topicmap_new(&default_mem_storage_descriptor);
+	tm = tm_topicmap_new(tmhdl);
 	if( tm == NULL )
 	{
 		warn("unable to create TopicMap object");
 		XSRETURN_UNDEF;
 	}
+	if( tm_topicmap_set_storage(tm,"MemStore") != TM_OK)
+	{
+		warn("unable to set storage, %s", tm_get_error(tmhdl) );
+		XSRETURN_UNDEF;	
+	}
 	if( tm_topicmap_open(tm,NULL) != TM_OK)
 	{
 		warn("unable to open topic map, %s",
-			tm_topicmap_get_error(tm));
+			tm_get_error(tmhdl));
 		tm_topicmap_delete(&tm);
 		XSRETURN_UNDEF;
 	}
@@ -157,15 +168,10 @@ require( self , val )
 	TMError e;
 	int eins = 1;
     CODE:
-	if( (e = tmtk_default_model_lookup_function(val,&m)) != TM_OK)
-	{
-		warn("unable to find model %s, %s", val, tm_strerror(e));
-		XSRETURN_UNDEF;
-	}
-	if(tm_topicmap_require_model(self,m) != TM_OK)
+	if(tm_topicmap_require_model(self,val) != TM_OK)
 	{
 		warn("unable to load model %s to topic map, %s", val,
-			tm_topicmap_get_error(self) );
+			tm_get_error(tmhdl) );
 		XSRETURN_UNDEF;
 	}
 	RETVAL = eins;
@@ -179,7 +185,7 @@ get_error( self )
     PREINIT:
 	char *s;
     CODE:
-	s = (char*)tm_topicmap_get_error(self);
+	s = (char*)tm_get_error(tmhdl);
 	RETVAL = s;
     OUTPUT:
 	RETVAL
@@ -189,55 +195,37 @@ void
 dump( self )
         TMTopicMap self
     CODE:
-	tm_topicmap_dump(self,stdout);
+	tm_topicmap_dump(self,stderr);
 
 
 
-void
+int
 load_file( self , fname , pm_name, parse_type)
         TMTopicMap self
         char *fname
 	char *pm_name
 	char *parse_type
     PREINIT:
-	int parse_mode;
-	TMProcModel pm;
+	int eins = 1;
 	TMError e;
 	int fd;
 	struct stat stbuf;
 	Omnivore o;
     CODE:
-	if( strcmp(parse_type,"xml") == 0)
-		parse_mode = TM_PARSE_XML;
-	else if( strcmp(parse_type,"rdfxml") == 0)
-		parse_mode = TM_PARSE_RDFXML;
-	else if( strcmp(parse_type,"rdfntriples") == 0)
-		parse_mode = TM_PARSE_RDFNTRIPLES;
-	else if( strcmp(parse_type,"lines") == 0)
-		parse_mode = TM_PARSE_LINES;
-	else
-	{
-		warn("unknown input type %s",parse_type);
-		assert(0);
-	}
-
 	if( (fd = open(fname,O_RDONLY,0)) < 0)
 	{
-		warn("cannot open %s, %s\n", fname, strerror(errno));
-		assert(0);
+		tm_set_error(tmhdl,"cannot open %s, %s\n", fname, strerror(errno));
+		XSRETURN_UNDEF;
 	}
 	if( fstat(fd,&stbuf) < 0)
 	{
-		warn("cannot stat %s, %s\n",
+		tm_set_error(tmhdl,"cannot stat %s, %s\n",
                                 fname, strerror(errno));
+		XSRETURN_UNDEF;
 	}
-	if( (e = tmtk_default_procmodel_lookup_function(pm_name,&pm)) != TM_OK)
-	{
-		warn(tm_strerror(e));
-		assert(0);
-	}
- 
-	o = Omnivore_new(parse_mode,pm,self);
+	o = Omnivore_new(tmhdl);
+	tm_omnivore_prepare(o,parse_type,pm_name,NULL,self);
+	Omnivore_setDocUri(o,fname);
 	for (;;)
 	{
 		char buf[4096];
@@ -245,18 +233,56 @@ load_file( self , fname , pm_name, parse_type)
  
 		if( (len = read(fd, buf, sizeof(buf))) < 0)
 		{
-			warn("error reading %s, %s\n", fname, strerror(errno));
-			assert(0);
+			tm_set_error(tmhdl,"error reading %s, %s\n", fname, strerror(errno));
+			XSRETURN_UNDEF;
 		}
  
 		if (! Omnivore_parse(o, buf, len, len == 0))
 		{
-			warn("Parse error: %s\n", Omnivore_getErrorString(o) );
+			XSRETURN_UNDEF;
 		}
 		if (len == 0)
 			break;
 	}
 	Omnivore_delete( &o );
+	if( tm_topicmap_fully_merge(self) != TM_OK)
+	{
+		XSRETURN_UNDEF;
+	}
+	RETVAL=eins;
+   OUTPUT:
+	RETVAL
+
+int
+load_string( self , string , pm_name, parse_type)
+        TMTopicMap self
+        char *string
+	char *pm_name
+	char *parse_type
+    PREINIT:
+	int eins = 1;
+	TMError e;
+	Omnivore o;
+    CODE:
+	o = Omnivore_new(tmhdl);
+	tm_omnivore_prepare(o,parse_type,pm_name,NULL,self);
+	Omnivore_setDocUri(o,"fake://PARSED_FROM_CHUNK");
+	if (! Omnivore_parse(o, string, strlen(string), 1 /* isFinal! */))
+	{
+		tm_set_error(tmhdl,"Parse error: %s\n", Omnivore_getErrorString(o) );
+		Omnivore_delete( &o );
+		XSRETURN_UNDEF;
+	}
+	Omnivore_delete( &o );
+	if( tm_topicmap_fully_merge(self) != TM_OK)
+	{
+		XSRETURN_UNDEF;
+	}
+	RETVAL=eins;
+   OUTPUT:
+	RETVAL
+
+
 
 void
 query( self , user_data_ref, start, end, query )
@@ -307,7 +333,7 @@ get_property(self,topic, fullname )
 	{
 		RETVAL = newSVpv((char*)value,0);
 	}
-	else if(strcmp(vtype->name,"LocatorSet") == 0)
+	else if(strcmp(vtype->name,"TextSet") == 0)
 	{
 		AV *perl_set;
 		TMList lp;
@@ -348,11 +374,9 @@ get_topic(self,fullname,value )
 	{
 		/* FIXME: if prop, to_tring value and put in warning */
 		warn("cannot get topic by %s, %s",fullname,
-			tm_topicmap_get_error(self));
+			tm_get_error(tmhdl));
 		XSRETURN_UNDEF;
 	}
-	if(topic == 0)
-		XSRETURN_UNDEF;
 	RETVAL = newSViv( (int)topic );
     OUTPUT:
         RETVAL
@@ -361,6 +385,14 @@ get_topic(self,fullname,value )
 
 
 MODULE = TM			PACKAGE = TM
+
+
+BOOT:
+	if(tm_init(&tmhdl,"www-df",NULL) != TM_OK)
+        {
+                fprintf(stderr,"ERROR: %s\n",tm_get_error(tmhdl));
+                exit(1);
+        }
 
 void
 set_trace(mask)
