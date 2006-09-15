@@ -1,0 +1,30 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         TM
+version:      1.13
+version_from: lib/TM.pm
+installdirs:  site
+requires:
+    Config::General:               2.26
+    Log::Log4perl:                 0.5
+    Log::Log4perl::Appender::File: 
+    MLDBM:                         2
+    MLDBM::Sync:                   0.25
+    Parse::RecDescent:             1.94
+    Parse::Yapp::Driver:           1.05
+    Pod::Usage:                    1.16
+    POE:                           0.29
+    POE::Component::IRC:           2.9
+    POE::Wheel::FollowTail:        1.005
+    Proc::Daemon:                  0.03
+    Proc::PID::File:               1.24
+    SOAP::Transport::HTTP:         0.55
+    Term::ReadLine:                1.01
+    Test::More:                    0.47
+    URI::Escape:                   3.22
+    URI::file:                     4.14
+    XML::LibXML:                   1.57
+    XML::Simple:                   2.13
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.30_01

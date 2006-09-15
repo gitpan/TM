@@ -1,36 +1,69 @@
-This is the Perl Extension for TmTk.
+What is it?
+-----------
+This base package contains Perl extensions for Topic Maps
 
-TmTk is available at GooseWorks.org [http://www.gooseworks.org]. You need
-TmTk for building this Perl module.
+   http://www.isotopicmaps.org/
 
+With it you can
 
-INSTALLATION
+  - manage maps in memory
+
+Future releases will add (please bear with me until I have this all
+consolidated and documented):
+
+  - read/write XTM files
+  - read AsTMa 1.x and 2.x resources
+  - read LTM resources
+  - manipulate and query topic maps via an API or TMQL (query language)
+  - create virtual topic maps
+  - use a topic map backend store
+  - a command line driven workbench (tm).
+
+Prerequisites
+-------------
+
+Of course, TM::* relies heavily on other Perl packages. Most of them
+(hopefully all) should be resolved automatically if you use the CPAN
+frontend.
+
+Installation
 ------------
 
-First create a Makefile with
+This module should be completely installable via the cpan frontend.
+To build the extensions manually, unpack this distribution somewhere,
+and exercise the usual incantation:
 
-perl Makefile.PL  LIBS="-L/usr/local/tmtk/lib -ltm -lexpat -lraptor"  INC=-I/usr/local/tmtk/include
-
-You might need to adjust /usr/local/tmtk/lib to the directory  where your
-libtm.a is located and /usr/local/tmtk/include to the directory where your
-TmTk include files are (/usr/local/tmtk is the TmTk default installation
-directory).
-
-The -l options linking against the vaious parser libraries depend on how your
-TmTk has been compiled. If you don't have raptor, simply remove -lraptor
-from the commandline shown above.
-
-Once your Makefile is created,
-
-
-make all
+perl Makefile.PL
+make
 make test
 make install
 
-That's all.
+You will need perl version 5.8 or better to install these modules.
 
-This is still a developer's release, direct an questions and comments to
-algermissen@acm.org.
+There may also be Debian packages for this generation.
 
-Thanks for using TMTK.
+Documentation
+-------------
+
+You can learn about Topic Maps in general at
+
+  http://www.isotopicmaps.org/  (standards)
+  http://topicmaps.bond.edu.au/ (tutorials, other stuff)
+  http://easytopicmaps.com/     (tutorials, lotta links and hints)
+
+Support
+-------
+
+You can either
+
+  - mail to the author (rho@bigpond.net.au), or
+  - discuss this in one of the topicmap mailing lists, or
+  - find me in the freenode #topicmaps IRC channel (clever choice), or
+  - create a bug entry in rt.cpan.org (preferred)
+
+
+Copyright 200[1-6] Robert Barta, rho@bigpond.net.au
+
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 

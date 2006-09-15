@@ -1,12 +1,186 @@
-Revision history for Perl extension TopicMap.
+Revision history for Perl extension TM
 
-0.01  Sat Oct 25 17:31:55 2003
-	- original version; created by h2xs 1.20 with options
-		-A -n TopicMap
+2.00  Tue Jul 27 13:48:21 EST 2004
+	- complete reorganisation and new (yeah) basic data structures
 
-0.02  Mon Nov 10 20:00:00 2003
-	- added several methods, fixed some bugs
+-- COMPATIBILITY LEAP ----------------------------------------------
 
-0.03  Wed Dec 10 23:33:00 2003
-	- adjusted TM to TMTK v0.8.03  (API changes)
+1.05  Tue Jan 13 08:29:29 EST 2004
+	- public version, packaging
+
+1.01-1.04 pure internal development version
+	- added abstraction layer for virtual maps and tau expressions
+	- added transactions
+	- reorganised driver infrastructure 10 times
+	- update AsTMa= parser to latest spec
+
+1.00  Sun Jun 29 19:56:20 EST 2003
+	- feature poor reimplementation with completely revamped data structure
+
+-- COMPATIBILITY LEAP ----------------------------------------------
+
+0.36  Not published
+	- added freeze and thaw commands to xtm.pl
+
+0.35  Mon Aug  5 21:20:43 EST 2002
+	- added missing maps/test.ltm (need better cpan simulator)
+
+0.34  Sun Aug  4 21:32:45 EST 2002
+	- added LTM/CParser (would not build automatically on some systems?)
+	- more speed improvements in XTM::Memory (topics query)
+	- fixed documentation bug for induced_topic_tree
+	- added class-instance as special association type to induced_topic_tree
+	- added loop support (via shared trees) in induced_topic_tree, pruning reduces runtime
+	- added some PSIs to XTM::PSI
+	- added method descriptions to the most important base classes
+
+0.33  Fri Jul 26 21:35:17 EST 2002
+	- fixed bug which raises exception when XTM::Path creating /topic[@id = '...']
+	- changed simple search syntax in XTM::Memory 'regexp' -> 'regexps'
+	- added commands 'merge', 'duplicate_suppression', 'follow_maps' to xtm.pl
+	- added consistency to be passed through all sync_ins also through XTM::Virtual
+	- added t/08topic.t for simple tests
+	- added 'is-reified-by' clauses in AsTMa (XTM::AsTMa::Parser) for topics and associations
+	- added AsTMa directive auto_complete
+	- added AsTMa directive encoding to occur several times in a document
+	- added first (still experimental) version of LTM parsing, see XTM::LTM
+	- fixed strange 'cannot add to undefined' error in XTM::Path when using XTM::Path::create and find inside one program (workaround, not solved yet)
+	- allowed several scope topics for an association (follows XTM and LTM)
+	- added caching to XTM::Path, already parsed expressions are cached
+	- added variable to XTM::Path (similar to SQL prepare/expecute)
+	- added method add_defaults to XTM::topic to add default type/scope to topic components if missing
+	- modified Memory, generic for major performance improvements when merging (still some potential to be used)
+	- modified Memory: merging dies if a topic is merged with an existing but both have a
+	     different addressable resource
+	- fixed bug in XTM::Path not detecting correctly strings '0'
+
+0.32  Sun Jun 30 20:36:01 EST 2002
+	- added XTM::grammar, a package to hold element dependencies and nesting (internal mainly)
+	- added XTM::Path, XPath-like navigation through XTM::base data structures
+	- XTM::Memory::id: setting of id added
+	- XTM::topic, doc corrections
+	- using a precompiled version of the Parse::Recdescent (considerable AsTMa= speedup)
+	- fixed potential problems in XTM::generic
+	- added merging code to XTM::Memory, is controlled via a hash in XTM constructor (BACKWARD COMPATIBILITY?)
+	- fixed docu/code mismatch in XTM::topic (occurrences)
+	- added scope_eq to XTM::scope
+	- added canonicalize to XTM::topic (removes duplicates, sorts things)
+	- added more query clauses for the simple query language in XTM::Memory
+	- more directives for XTM::AsTMa (naming, encoding). Use with care.
+
+0.31  Thu May 16 16:56:40 EST 2002
+	- got rid of XTM::XML::ParseError and used XML::SAX::Exception instead	
+
+0.30  Wed May  8 17:50:02 EST 2002
+	- removed dependency of File::Slurp (weird version number), reported by az
+	- fixed bug in incorrectly reporting line numbers in AsTMa::Parser, reported by az
+	- various documention bugs fixed (still much to do)
+	- astma2xtm.pl: some minor changes in switches (see man page)
+	- AsTMa parser: local comments MUST have at least one blank before the '#' (see docs, may break some maps, sorry)
+	- activated tests (old XML::LibXML core dump error has disappeared)
+
+0.29  Feb 25 07:23 EST 2002
+	- Debian test version
+
+0.28  Wed Jan 16 22:17:57 EST 2002
+	- fixed empty character handling in AsTMa::Parser, added line number for better debugging
+	- added more accurate dependencies
+	- added some explanation to the README
+	- fixed XTM::XML::MemoryBuilder to work with SAX::Expat, LibXML::SAX and PurePerl (still a problem there)
+	- AsTMa parser: added directives %cancel, %log
+
+0.27  Mon Jan 14 12:23:41 EST 2002
+	- added missing XTM::AsTMA::MemoryBuilder
+	- fixed test suite bugs which occur at some other Perl installations
+
+0.26  Mon Dec 31 21:49:37 EST 2001
+	- add xml output serialization for (most) classes
+	- revamped XML::ATM into XML::AsTMa, XML::ATM is not distributed any more
+	- added astma2xtm.pl into bin/ (converter), this obsoletes atm2xtm.pl
+	- fixed some bugs in XTM::XML
+	- added connected methods to topic and association to return all topic refs mentioned there
+	- added test for topic IDs in XTM::topic.pm (experimental), have to be valid XML identifiers
+	- started to move to Test::More for testing
+	- added bin/prettifyxtm.pl
+	- fixed unclean code in XTM::topic::has_instanceOf, checking for URIs now
+	- moved XML parsing to XML::LibXML::SAX using the XML::SAX factory
+	- moved most testing to Test::More, added numerous tests
+	- added population mechanism into XTM::topic to load default values
+	- added auto_complete parameter to all XTM::IO subclasses to control auto_completion, default is 1
+	- updated README to reflect Perl version 5.6.1
+	- added support rt.cpan.org to README 
+	- added 'stats' command to xtm.pl
+	- added commands 'topics' and 'assocs' to xtm.pl
+	- modified URIs handling in xtm.pl: URIs without a scheme will default as file: URIs
+
+0.25  Mon Dec 17 18:06:24 EST 2001
+	- added statistics to info() in XTM
+	- added clusters() in XTM
+
+0.24  Sat Oct 20 18:46:32 EST 2001
+	- fixed bug of not escaping & in XTM::ATM for occurrences
+	- fixed bug of not checking for all URI schemes in XTM::ATM
+	- fixed too restrictive pattern in XTM::ATM to allow valid XML ids as topic ids
+
+0.23  Sat Oct 13 12:32:11 EST 2001
+	- added XTM::ATM support, documentation in docs/astma.html
+	- fixed hickup in pod in XTM::Virtual
+	- silenced 'Uninitialized value....' during make test in XTM::XML and XTM::ATM
+	- fixed some documentation errors, formatting
+	- added more map debugging facility in XTM (see XTM::info)
+	- added map meta information to XTM and xtm.pl
+	- distinguished between topic and assoc searches in xtm.pl
+	- straightened syntax for XTM::topics 'assocs .....' to allow no trailing characters
+	- changed meaning of parameters of induced_vortex in a subtle but dangerous way
+
+0.22  Sat Mar 17 10:22:40 EST 2001
+	- fixed test maps which made 'make test' fail
+	- fixed nr of subtests in 04virtual.t
+	- removed debugging output from XTM::Virtual
+	- fixed missing use XTM::generic in XTM::subjectIndicatorRef
+
+0.21  Sat Mar 10 11:24:10 EST 2001
+	- added XTM::Virtual
+	- added virtual map support into xtm.pl
+	- added commodity function (induce*) to XTM
+		induced_vortex
+		induced_assoc_tree
+	- added XTM::base as introductory package
+	- moved XTM::XML::PSI to XTM::PSI
+	- removed _massage from XTM::XML::Grove2TM
+	- relaxed is-a ... pattern for queryingto allow for PSIs
+	- unified various redundant subroutines in XTM::Memory
+
+0.20  Sat Feb 24 23:28:45 EST 2001
+	- minor release gap because of completely reorganised package structure
+	- honoring XTM-1.0 http://www.topicmaps.org/xtm/1.0/xtm1-20010223.html (modulo TNC)
+	- consolidated topics and c_topics into some simple query language driven routine
+	- moved all thread code into separate server distribution
+	- added xtm.pl workbench
+
+0.12  Sat Feb 17 10:15:39 EST 2001
+        - fixed memory management which cause loooong hangs on the server at some requests
+	- fixed small bug in xtmctrl which made it complain in interactive mode
+        - optimized a bit assoc via <topic> with <topic> queries
+	- optimized XTM::Virtual cache management, small reorgs there
+        - introduced config management via additional switch to xtmd.pl
+
+0.11..0.07 not documented, intermediate panic releases
+
+
+0.06  Fri Feb  9 13:49:13 EST 2001
+        - fixed daemonization
+        - optimized XTM::Memory::_topic_tree handling a bit
+	- XTM December version of the standard implemented, not fully complete
+
+0.04  Sun Dec 31 14:18:45 2000
+	- original version; created by h2xs 1.19
+        - cloned from inofficial TM-0.04 version
+
+
+Revision history for Perl extension TM.
+
+0.01  Tue Jul 27 13:27:54 2004
+	- original version; created by h2xs 1.23 with options
+		-n TM -X
 
