@@ -6,15 +6,15 @@ This base package contains Perl extensions for Topic Maps
 
 With it you can
 
-  - manage maps in memory
+  - manipulate topic maps via an API
+  - read AsTMa 1.x and 2.x resources
 
 Future releases will add (please bear with me until I have this all
 consolidated and documented):
 
   - read/write XTM files
-  - read AsTMa 1.x and 2.x resources
   - read LTM resources
-  - manipulate and query topic maps via an API or TMQL (query language)
+  - query topic maps via TMQL (query language)
   - create virtual topic maps
   - use a topic map backend store
   - a command line driven workbench (tm).
@@ -51,6 +51,8 @@ You can learn about Topic Maps in general at
   http://topicmaps.bond.edu.au/ (tutorials, other stuff)
   http://easytopicmaps.com/     (tutorials, lotta links and hints)
 
+  http://astma.it.bond.edu.au/  (shorthand notation used by the authors)
+
 Support
 -------
 
@@ -60,7 +62,6 @@ You can either
   - discuss this in one of the topicmap mailing lists, or
   - find me in the freenode #topicmaps IRC channel (clever choice), or
   - create a bug entry in rt.cpan.org (preferred)
-
 
 Copyright 200[1-6] Robert Barta, rho@bigpond.net.au
 

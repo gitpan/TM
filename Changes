@@ -1,6 +1,18 @@
 Revision history for Perl extension TM
 
-2.00  Tue Jul 27 13:48:21 EST 2004
+1.15  Sun Sep 17 12:03:54 EST 2006
+	- added AsTMa 2.0 parser
+
+1.14  Sat Sep 16 17:08:10 EST 2006
+	- reanimated AsTMa 1.x parser
+	- added TM::Resource to capture generic resource handling (adapted TM::M::File
+
+1.13  Sat Sep 16 10:27:01 EST 2006
+	- another consolidation after much infrastructure work
+
+... only internal distributions for experimentation...
+
+1.10  Tue Jul 27 13:48:21 EST 2004
 	- complete reorganisation and new (yeah) basic data structures
 
 -- COMPATIBILITY LEAP ----------------------------------------------

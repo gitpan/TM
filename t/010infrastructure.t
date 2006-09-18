@@ -61,6 +61,25 @@ require_ok ('TM');
 }
 
 
+require_ok ('TM::PSI');
+
+{
+    is (  scalar (keys %{$TM::PSI::core->{mid2iid}})
+	+ scalar (keys %{$TM::PSI::topicmaps_inc->{mid2iid}})
+	+ scalar (keys %{$TM::PSI::astma_inc->{mid2iid}})
+	, 
+	scalar  keys %{$TM::PSI::topicmaps->{mid2iid}}, 'merging topicmaps');
+}
+
+{
+  my $tm = new TM (psis => {});
+
+  is (0, 
+      grep (defined $_, $tm->mids ( keys %{$TM::PSI::topicmaps->{mid2iid}} ))
+      ,  'psis: nothing defined');
+}
+
+__END__
 { # check predefined
     my $tm = new TM;
 #warn Dumper $tm;

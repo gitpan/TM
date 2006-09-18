@@ -16,7 +16,6 @@ package TM::PSI;
 
 our $core = { # this makes the TM::Store work
     mid2iid => {
-	'thing'          => [ 'http://virtual.cvut.cz/kifb/en/concepts/_entity.html' ],
 #            'assertion'      => \ 'http://psi.tm.bond.edu.au/pxtm/1.0/#assertion',
         'assertion-type' => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#assertion-type' ],
 	'is-subclass-of' => [ 'http://psi.topicmaps.org/sam/1.0/#supertype-subtype',
@@ -36,9 +35,6 @@ our $core = { # this makes the TM::Store work
 
     },
     assertions => [
-#		   [ 'isa', [ 'class', 'instance' ], [ 'ontology', 'astma' ] ],
-#		   [ 'isa', [ 'class', 'instance' ], [ 'ontology', 'xsd' ] ],
-
 		   [ 'isa', [ 'class', 'instance' ], [ 'scope', 'us' ] ],
 		   [ 'isa', [ 'class', 'instance' ], [ 'assertion-type', 'isa' ] ],
 		   [ 'isa', [ 'class', 'instance' ], [ 'assertion-type', 'is-subclass-of' ] ],
@@ -57,21 +53,13 @@ our $topicmaps_inc = {
 				      'http://www.topicmaps.org/xtm/#psi-display' ],
 	'characteristic'         => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/characteristic'],
 	'unique-characteristic'  => [ 'http://psi.topicmaps.org/sam/1.0/#unique-characteristic'],
-	'basename'               => [ 'http://psi.topicmaps.org/sam/1.0/#topic-name'],
 	'xtm-psi-occurrence'     => [ 'http://www.topicmaps.org/xtm/1.0/#psi-occurrence' ],
 	'variant'                => [ 'http://psi.topicmaps.org/sam/1.0/#variant'],
 	'occurrence'             => [ 'http://psi.topicmaps.org/sam/1.0/#occurrence',
 				      'http://www.topicmaps.org/xtm/1.0/#psi-occurrence' ],
 	'association-role'       => [ 'http://psi.topicmaps.org/sam/1.0/#association-role' ],
 	
-#	'has-data-occurrence'    => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-has-data-occurrence' ],
-#	'has-uri-occurrence'     => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-has-uri-occurrence' ],
 	'name'                   => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/name' ],
-
-# astma stuff
-        'ontology'       => [ 'http://topicmaps.bond.edu.au/astma/2.0/#ontology' ],
-        'template'       => [ 'http://topicmaps.bond.edu.au/astma/2.0/#template' ],
-        'return'         => [ 'http://topicmaps.bond.edu.au/astma/2.0/#return' ],
 
     },
     assertions => [
@@ -85,9 +73,39 @@ our $topicmaps_inc = {
 		   ],
 };
 
-our $topicmaps; # = core + topicmaps_inc
-%{$topicmaps->{mid2iid}}    = (%{$core->{mid2iid}},    %{$topicmaps_inc->{mid2iid}});
-@{$topicmaps->{assertions}} = (@{$core->{assertions}}, @{$topicmaps_inc->{assertions}});
+our $astma_inc = {
+    mid2iid => {
+	'thing'          => [ 'http://virtual.cvut.cz/kifb/en/concepts/_entity.html' ],
+        'value'          => [ 'http://psi.tm.bond.edu.au/astma/2.0/#thing' ],
+        'ontology'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#ontology' ],
+        'template'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#template' ],
+        'return'         => [ 'http://psi.tm.bond.edu.au/astma/2.0/#return' ],
+        'body'           => [ 'http://psi.tm.bond.edu.au/astma/2.0/#body' ],
+    },
+    assertions => [
+		   ],
+};
+
+our $tmql_inc = {
+    mid2iid => {
+#	'function'       => [ 'http://www.isotopicmaps.org/tmql/#function' ],
+    },
+    assertions => [
+		   ],
+};
+
+
+our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
+%{$topicmaps->{mid2iid}}    = (%{$core         ->{mid2iid}},    
+			       %{$topicmaps_inc->{mid2iid}},
+			       %{$tmql_inc     ->{mid2iid}},
+			       %{$astma_inc    ->{mid2iid}}
+			       );
+@{$topicmaps->{assertions}} = (@{$core         ->{assertions}},
+			       @{$topicmaps_inc->{assertions}},
+			       @{$tmql_inc     ->{assertions}},
+			       @{$astma_inc    ->{assertions}}
+			       );
 
 our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us');
 
@@ -108,12 +126,20 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = '0.12';
+our $VERSION  = '0.13';
 our $REVISION = '$Id: PSI.pm,v 1.22 2006/09/14 10:37:46 rho Exp $';
 
 1;
 
 __END__
+
+#	'sum-ergo-sum'                => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-sum-ergo-sum'],
+#	'regexp'                      => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-regexp'],
+#	'validates'                   => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-validates'],
+#	'astma-left'                  => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-left'],
+#	'astma-right'                 => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-right'],
+
+
 
 our %PSIs = (
 # core

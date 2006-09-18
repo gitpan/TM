@@ -30,6 +30,7 @@ WriteMakefile(
 "SOAP::Transport::HTTP"    => 0.55,
 "Term::ReadLine"    => 1.01,
 "Test::More"    => 0.47,
+"Test::Pod"    =>  1.00,
 "URI::Escape"    => 3.22,
 "URI::file"    => 4.14,
 "XML::LibXML"    => 1.57,
@@ -44,10 +45,13 @@ package MY;
 sub depend {
     return <<MAKE
 
-cparser: lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm
+cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm
 
 lib/TM/AsTMa/Fact.pm: yapp/astma-fact.yp yapp/YappTemplate.pm
 	yapp -m TM::AsTMa::Fact -t yapp/YappTemplate.pm -o lib/TM/AsTMa/Fact.pm yapp/astma-fact.yp
+
+lib/TM/AsTMa/Fact2.pm: yapp/astma2-fact.yp yapp/YappTemplate.pm
+	yapp -m TM::AsTMa::Fact2 -t yapp/YappTemplate.pm -o lib/TM/AsTMa/Fact2.pm yapp/astma2-fact.yp
 
 lib/TM/AsTMa/PathCParser.pm: lib/TM/AsTMa/Path.pm
 	perl -Ilib -MTM::AsTMa::Path -e 'print \$\$TM::AsTMa::Path::ap_grammar' > /tmp/grammar

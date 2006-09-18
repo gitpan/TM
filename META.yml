@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         TM
-version:      1.13
+version:      1.15
 version_from: lib/TM.pm
 installdirs:  site
 requires:
@@ -21,6 +21,7 @@ requires:
     SOAP::Transport::HTTP:         0.55
     Term::ReadLine:                1.01
     Test::More:                    0.47
+    Test::Pod:                     1
     URI::Escape:                   3.22
     URI::file:                     4.14
     XML::LibXML:                   1.57

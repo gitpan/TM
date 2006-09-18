@@ -138,7 +138,7 @@ sub new {
 
   unless ($self->{mid2iid}) {                                                     # we need to do fast cloning of basic vocabulary
       use TM::PSI;
-      my $psis = $self{psis} || $TM::PSI::core;
+      my $psis = $self{psis} || $TM::PSI::topicmaps;
       my $mids = $psis->{mid2iid};
       my $bu   = $self->{baseuri};
                                                                                   # now create low-level TM content via fast cloning
@@ -333,8 +333,6 @@ MERGE:
 	  }
       }
   }
-
-
 #== consolidate mergers: no cycles, trail followed through ======================================================
 #warn "mergers ".Dumper \%mergers;
 
@@ -344,7 +342,7 @@ MERGE:
 #warn "working on $h";
 	  if ($mergers{$h} eq $h) { # micro loop
 	      delete $mergers{$h};
-	  } elsif ($mergers{$mergers{$h}} eq $h) {
+	  } elsif (defined $mergers{$mergers{$h}} && $mergers{$mergers{$h}} eq $h) {
 	      delete $mergers{$h};
 	  } else {
 	      my $h2 = $mergers{$h};
@@ -1521,8 +1519,9 @@ sub is_subclass {
     my $super  = shift;
 
     my ($THING, $SUBCLASSES, $SUPERCLASS) = @{$self->{usual_suspects}}{'thing', 'is-subclass-of', 'superclass'};
+#warn Dumper $self unless $THING;
 
-#warn "is_subclass?: class $class   super $super";
+#warn "is_subclass?: class $class   super $super , thing $THING, $SUBCLASSES, $SUPERCLASS";
     return 1 if $super eq $THING;                                    # everything is a topic
 #warn "was not a thing, so continue";
     return 0 if $class eq $THING;                                    # a thing cannot be a subclass
@@ -1950,7 +1949,7 @@ itself.
 
 =cut
 
-our $VERSION  = '1.13';
+our $VERSION  = '1.15';
 our $REVISION = '$Id: TM.pm,v 1.26 2006/09/15 09:17:29 rho Exp $';
 
 
