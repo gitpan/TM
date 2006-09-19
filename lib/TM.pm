@@ -314,21 +314,21 @@ MERGE:
   }
 #-- based on TNC ---------------------------------------------------------------------------------------------
   if ($tnc) {
-#warn "tnc here!";
-      my ($THING, $BN) = @{$self->{usual_suspects}}{'thing', 'basename'};
+      my ($THING, $VALUE) = @{$self->{usual_suspects}}{'thing', 'value'};
       foreach my $a (values %{$self->{assertions}}) {
 	  next unless $a->[TM->KIND] == TM->NAME;                          # we are only interested in basenames
 #warn "checking assertion ".Dumper $a;
-	  my $bn_plus_scope = ${get_x_players ($self, $a, $BN)} .          # the basename is a string reference
+	  my ($v) = get_x_players ($self, $a, $VALUE);                     # if we get back a longer list, bad luck
+	  my $bn_plus_scope = $v->[0] .                                    # the basename is a string reference
                               $a->[TM->SCOPE];                             # relative to the scope
+	  my ($this) = get_x_players ($self, $a, $THING);                  # thing which plays 'topic'
+#warn "    --> player is $this";
 	  if (my $that = $BNs{$bn_plus_scope}) {                           # if we have seen it before
 #warn "  -> SEEN";
-	      my $this = get_x_players ($self, $a, $THING);                # thing which plays 'topic'
-#warn "    --> player is $this";
 	      $mergers{_find_free ($this, \%mergers)} = $that;
 	  } else {                                                         # it is new to use, we store it into %BNs
 #warn "  -> NOT SEEN";
-	      $BNs{$bn_plus_scope} = get_x_players ($self, $a, $THING);
+	      $BNs{$bn_plus_scope} = $this;
 #warn "BNs ".Dumper \%BNs;
 	  }
       }
@@ -377,7 +377,6 @@ MERGE:
       $mid2iid->{$that} = $thism;
   }
 #warn "after post-merger ". Dumper $mid2iid;
-
 
   $self->{last_mod} = Time::HiRes::time;
 }
@@ -811,7 +810,7 @@ sub is_x_role {
 
 =item B<get_roles>
 
-I<@role_ids> = @{ get_roles (I<$tm>, I<$assertion>)
+I<@role_ids> = @{ get_roles (I<$tm>, I<$assertion>) }
 
 This function extracts a reference to the list of role identifiers.
 
@@ -880,6 +879,7 @@ sub assert {
 	}
 	$self->{assertions}->{$_->[LID]} = $_;
     }
+    $self->{last_mod} = Time::HiRes::time;
     return @_;
 }
 
@@ -950,6 +950,8 @@ sub retract {
   map { 
       delete $self->{assertions}->{$_} # delete them from the primary store
   } @_; 
+  $self->{last_mod} = Time::HiRes::time;
+
 }
 
 =pod
@@ -1358,6 +1360,7 @@ sub internalize {
 	    }
 	}
     }
+    $self->{last_mod} = Time::HiRes::time;
     return wantarray ? @mids : $mids[0];
 }
 
@@ -1442,6 +1445,7 @@ up all assertion where non-existing topics still exist.
 sub externalize {
     my $self = shift;
 
+    $self->{last_mod} = Time::HiRes::time;
     map { delete $self->{mid2iid}->{$_} } @_;
 }
 
@@ -1498,6 +1502,8 @@ Deriving classes may want to consider to overload/redefine these methods better 
 representation of the a map. Saying this, the methods below are not optimized for speed.
 
 B<NOTE>: There are NO subclasses of the C<thing>. But everything is an instance of C<thing>.
+
+B<NOTE>: See L<TM::PSI> for predefined things.
 
 =over
 
@@ -1707,8 +1713,6 @@ I<$tm>->is_a (I<$something_lid>, I<$class_lid>)
 This method returns C<1> if the thing referenced by the first parameter is an instance of the class
 referenced by the second. The method honors transitive subclassing.
 
-B<NOTE>: Everything is an instance of a C<thing>.
-
 =cut
 
 sub is_a {
@@ -1793,7 +1797,7 @@ sub are_instances {
 
 =pod
 
-=item B<are_types>
+=item B<are_types> (Warning: placeholder only)
 
 I<@ids> = I<$tm>->are_types (I<$instance_id>, I<@list_of_ids>)
 
@@ -1807,7 +1811,7 @@ sub are_types {
 
 =pod
 
-=item B<are_supertypes>
+=item B<are_supertypes> (Warning: placeholder only)
 
 I<@ids> = I<$tm>->are_supertypes (I<$class_id>, I<@list_of_ids>)
 
@@ -1821,7 +1825,7 @@ sub are_supertypes {
 
 =pod
 
-=item B<are_subtypes>
+=item B<are_subtypes> (Warning: placeholder only)
 
 I<@ids> = I<$tm>->are_subtypes (I<$class_id>, I<@list_of_ids>)
 
@@ -1920,7 +1924,7 @@ The structure is like this:
 The parameters are the keys (there can only be one, which is a useful, cough, restriction of the
 standard) and the data is the value. Obviously, one key value (i.e. parameter) can only exists once.
 
-Caveat: this is not very well tested.
+Caveat: This is not very well tested (read: not tested at all).
 
 =cut
 
@@ -1929,6 +1933,7 @@ sub variants {
     my $id   = shift;
     my $var  = shift;
 
+    $self->{last_mod} = Time::HiRes::time if $var;
     return $var ? $self->{variants}->{$id} = $var : $self->{variants}->{$id};
 }
 
@@ -1938,7 +1943,8 @@ sub variants {
 
 =head1 SEE ALSO
 
-L<TM::Tau>
+L<TM::PSI>, L<TM::Resource>
+
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -1949,8 +1955,8 @@ itself.
 
 =cut
 
-our $VERSION  = '1.15';
-our $REVISION = '$Id: TM.pm,v 1.26 2006/09/15 09:17:29 rho Exp $';
+our $VERSION  = '1.16';
+our $REVISION = '$Id: TM.pm,v 1.27 2006/09/17 02:10:39 rho Exp $';
 
 
 1;

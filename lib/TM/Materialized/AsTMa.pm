@@ -146,7 +146,7 @@ http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.16';
-our $REVISION = '$Id$';
+our $REVISION = '$Id: AsTMa.pm,v 1.17 2006/09/17 02:10:39 rho Exp $';
 
 1;
 

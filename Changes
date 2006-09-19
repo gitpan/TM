@@ -1,7 +1,11 @@
 Revision history for Perl extension TM
 
+1.16  Tue Sep 19 20:15:49 EST 2006
+	- added driver for maps stored via MLDBM
+
 1.15  Sun Sep 17 12:03:54 EST 2006
 	- added AsTMa 2.0 parser
+	- added merging tests
 
 1.14  Sat Sep 16 17:08:10 EST 2006
 	- reanimated AsTMa 1.x parser

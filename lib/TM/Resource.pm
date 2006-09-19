@@ -14,8 +14,10 @@ TM::Resource - Topic Maps, abstract class for resource-backed Topic Maps
 
 =head1 SYNOPSIS
 
-  # this class will never be directly used for instantiation
-  # see the description in TM and individual low-level drivers
+  # this class is probably only interesting for implementors of individual
+  # low-level drivers
+
+  # see TM for the 'application engineer' API
 
 =head1 DESCRIPTION
 
@@ -29,7 +31,38 @@ be addressed via a URL) given that the map has a last-modified data as the resou
 
 The methods C<sync_in>, C<sync_out> and C<last_mod> implement the synchronization between the
 in-memory data structure and the content on the external resource. That resource is specified via a
-URI. To control the synchronization a I<last modification> attribute can be used.
+URI.
+
+=head2 Predefined URIs
+
+The following resources, actually their URIs are predefined:
+
+=over
+
+=item C<io:stdin>
+
+Symbolizes the UNIX STDIN file descriptor. The resource is all text content coming from this file.
+
+=item C<io:stdout>
+
+Symbolizes the UNIX STDOUT file descriptor.
+
+=item C<null:>
+
+Symbolizes a resource which never delivers any content and which can consume any content silently
+(like C</dev/null> under UNIX).
+
+=back
+
+=head2 Predefined URI Methods
+
+=over
+
+=item C<inline>
+
+An I<inlined> resource is a resource which contains all content as part of the URI.
+
+=back
 
 =head1 INTERFACE
 
@@ -128,13 +161,12 @@ sub last_mod {
 
 I<$tm>->sync_in
 
-If the map is connected to a resource, i.e. if the map has a C<uri> attribute, then this method will
-try to load the content in the resource into the map. Depending on the driver, most likely any
-existing content will be replaced.
+If the map is connected to a resource, then this method will try to load the content behind the
+resource into the map. Depending on the driver, most likely any existing content will be replaced.
 
-If the resource is C<io:stdout>, then nothing happens.
+If the resource URI is C<io:stdout>, then nothing happens.
 
-If the resource is C<null:>, then nothing happens.
+If the resource URI is C<null:>, then nothing happens.
 
 If the last modification date of the resource is not younger than that of the map, then no
 synchronisation happens.
@@ -178,15 +210,14 @@ sub sync_in {
 
 I<$tm>->sync_out
 
-If a map is connected to a resource, i.e. it has a C<uri> attribute then this method contains the
-logic, under which circumstances to synchronize with the external resource by flushing all map
-content onto the resource.
+If a map is connected to a resource, then this method contains the logic under which circumstances
+to synchronize with the external resource.
 
-If the resource is C<io:stdin>, nothing happens.
+If the resource URI is C<io:stdin>, nothing happens.
 
-If the resource is C<null:>, nothing happens.
+If the resource URI is C<null:>, nothing happens.
 
-If the resource is C<inline:..> nothing happens.
+If the resource URI is C<inline:..> nothing happens.
 
 If the map has not changed since the last modification of the external resource, nothing happens.
 
@@ -239,8 +270,8 @@ http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.1;
-our $REVISION = '$Id: Resource.pm,v 1.1 2006/09/16 06:40:52 rho Exp $';
+our $VERSION = 0.3;
+our $REVISION = '$Id: Resource.pm,v 1.2 2006/09/17 02:10:39 rho Exp $';
 
 1;
 

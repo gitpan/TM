@@ -24,6 +24,7 @@ my @PODs = qw(
 	      lib/TM/Resource.pm
 	      lib/TM/Materialized/File.pm
 	      lib/TM/Materialized/AsTMa.pm
+	      lib/TM/Materialized/MLDBM.pm
 	      );
 plan tests => scalar @PODs;
 

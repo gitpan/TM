@@ -107,7 +107,7 @@ our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
 			       @{$astma_inc    ->{assertions}}
 			       );
 
-our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us');
+our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us', 'name', 'value');
 
 =pod
 
@@ -126,8 +126,8 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = '0.13';
-our $REVISION = '$Id: PSI.pm,v 1.22 2006/09/14 10:37:46 rho Exp $';
+our $VERSION  = '0.14';
+our $REVISION = '$Id: PSI.pm,v 1.23 2006/09/17 02:10:39 rho Exp $';
 
 1;
 

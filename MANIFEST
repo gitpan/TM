@@ -15,8 +15,10 @@ t/010infrastructure.t
 t/011manipulate.t
 t/03resource.t
 t/041astmafact.t
+t/042merge.t
 t/045astma2fact.t
 t/050astma.t
+t/051mldbm.t
 lib/TM.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/AsTMa/Fact2.pm
@@ -24,6 +26,7 @@ lib/TM/Literal.pm
 lib/TM/Resource.pm
 lib/TM/Materialized/File.pm
 lib/TM/Materialized/AsTMa.pm
+lib/TM/Materialized/MLDBM.pm
 lib/TM/PSI.pm
 lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm

@@ -1,17 +1,5 @@
 package TM::Utils;
 
-=pod
-
-@@@@
-
-=head2 Functions
-
-=over
-
-=item B<get_content>
-
-=cut
-
 our $STDIN; # here we store the STDIN content to be able to reuse it later
 
 sub get_content {
@@ -101,6 +89,9 @@ sub is_xml {
 	my $doc = $parser->parse_string ($s);
     }; $@ ? 0 : 1;
 }
+
+our $VERSION  = '1.03';
+our $REVISION = '$Id$';
 
 
 1;
