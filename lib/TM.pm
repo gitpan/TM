@@ -150,7 +150,7 @@ sub new {
       delete $self{psis};                                                         # we do not need it anymore
   }
 
-  $self->{last_mod} = undef;                                                      # book keeping
+  $self->{last_mod} = 0;                                                          # book keeping
   $self->{created}  = Time::HiRes::time;
 
   return $self;
@@ -378,6 +378,7 @@ MERGE:
   }
 #warn "after post-merger ". Dumper $mid2iid;
 
+  $self->{mid2iid}  = $mid2iid;                                                  # this makes tie happy, in the case the map is tied
   $self->{last_mod} = Time::HiRes::time;
 }
 
@@ -859,8 +860,10 @@ sub assert {
     my $self = shift;
     my ($THING, $US) = @{$self->{usual_suspects}}{'thing', 'us'};
 
+##warn "sub assert $self".ref ($self);
+
+    my $assertions = $self->{assertions};
     foreach (@_) {
-#warn "assert ".Dumper $_;
 	unless ($_->[CANON]) {
 	    $_->[KIND]  ||= ASSOC;
 
@@ -877,8 +880,9 @@ sub assert {
 	    $_->[LID]   ||= hash ($_);                         # the LID is either already there, or it will default to a hash over the canonicalized info
 	    $_->[LID]     = $self->internalize ($_->[LID] => undef);
 	}
-	$self->{assertions}->{$_->[LID]} = $_;
+	$assertions->{$_->[LID]} = $_;
     }
+    $self->{assertions} = $assertions; ##!! needed for Berkeley DBM recognize changes on deeper levels
     $self->{last_mod} = Time::HiRes::time;
     return @_;
 }
@@ -947,11 +951,12 @@ sub retract {
   my $self = shift;
 
 # TODO: does delete $self->{assertions}->{@_} work?
+  my $assertions = $self->{assertions};
   map { 
-      delete $self->{assertions}->{$_} # delete them from the primary store
+      delete $assertions->{$_} # delete them from the primary store
   } @_; 
+  $self->{assertions} = $assertions; ##!! needed for Berkeley DBM recognize changes on deeper levels
   $self->{last_mod} = Time::HiRes::time;
-
 }
 
 =pod
@@ -1315,6 +1320,7 @@ sub internalize {
 #warn "internalize base: $baseuri";
 
     my @mids;
+    my $mid2iid = $self->{mid2iid};
     while (@_) {
 	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
 #warn "internalize $k, $v";
@@ -1347,8 +1353,8 @@ sub internalize {
 #warn "internalizing '$k' '$v'";
 
 	# now see that we have an entry in the mid2iid table
-	$self->{mid2iid}->{$k} ||= [ undef, [] ];
-	my $kentry = $self->{mid2iid}->{$k};                      # keep this as a shortcut
+	$mid2iid->{$k} ||= [ undef, [] ];
+	my $kentry = $mid2iid->{$k};                               # keep this as a shortcut
 
 	if ($v) {
 	    if (ref($v)) {                                         # being a reference means that we have a subject indication
@@ -1360,6 +1366,7 @@ sub internalize {
 	    }
 	}
     }
+    $self->{mid2iid}  = $mid2iid; #!! needed for Berkeley DBM recognize changes on deeper levels
     $self->{last_mod} = Time::HiRes::time;
     return wantarray ? @mids : $mids[0];
 }
@@ -1445,8 +1452,11 @@ up all assertion where non-existing topics still exist.
 sub externalize {
     my $self = shift;
 
+    my $mid2iid = $self->{mid2iid};
+    my @doomed = map { delete $mid2iid->{$_} } @_;
+    $self->{mid2iid} = $mid2iid; ## !! needed for Berkeley DBM recognize changes on deeper levels
     $self->{last_mod} = Time::HiRes::time;
-    map { delete $self->{mid2iid}->{$_} } @_;
+    return @doomed;
 }
 
 =pod
@@ -1955,8 +1965,8 @@ itself.
 
 =cut
 
-our $VERSION  = '1.16';
-our $REVISION = '$Id: TM.pm,v 1.27 2006/09/17 02:10:39 rho Exp $';
+our $VERSION  = '1.17';
+our $REVISION = '$Id: TM.pm,v 1.28 2006/09/19 10:20:33 rho Exp $';
 
 
 1;

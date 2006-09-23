@@ -19,13 +19,11 @@ TM::Materialized::File - Topic Maps, abstract class for stream (map) based input
 This class is a subclass of L<TM::Resource>, so it implements maps which are connected to a
 resource. It is abstract, though, as it only defined how a stream-based driver package should
 behave. It may thus be inherited by classes which implement external formats
-(L<TM::Materialized::AsTMa>, L<TM::Materialized::XML>, ....).
+(L<TM::Materialized::AsTMa>, ....).
 
 =head1 INTERFACE
 
 =head2 Methods
-
-=head3 Synchronisation
 
 The methods of synchronisation is defined here. They should not be directly called by a user, as
 they will be triggered by C<sync_in> and C<sync_out> from the superclass.
@@ -34,8 +32,6 @@ What deriving implementations MUST implement are methods how to I<deserialize> s
 how to I<serialize> maps to streams. If the serialization format supports this, of course.
 
 Note: No map consolidation is triggered here. The application has to do this separately.
-
-=over
 
 =cut
 
@@ -61,8 +57,6 @@ sub _sync_out {
 
 =pod
 
-=back
-
 =head1 SEE ALSO
 
 L<TM>
@@ -77,7 +71,7 @@ http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.11;
+our $VERSION = 0.12;
 our $REVISION = '$Id: File.pm,v 1.10 2006/09/17 02:10:39 rho Exp $';
 
 1;

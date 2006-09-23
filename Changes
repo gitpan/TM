@@ -1,5 +1,9 @@
 Revision history for Perl extension TM
 
+1.17  Sat Sep 23 09:26:42 EST 2006
+	- added BerkeleyDB based MLDBM map implementation (TM::Materialized::MLDBM2)
+	- fixed/reduced dependencies
+
 1.16  Tue Sep 19 20:15:49 EST 2006
 	- added driver for maps stored via MLDBM
 
@@ -9,7 +13,7 @@ Revision history for Perl extension TM
 
 1.14  Sat Sep 16 17:08:10 EST 2006
 	- reanimated AsTMa 1.x parser
-	- added TM::Resource to capture generic resource handling (adapted TM::M::File
+	- added TM::Resource to capture generic resource handling (adapted TM::M::File)
 
 1.13  Sat Sep 16 10:27:01 EST 2006
 	- another consolidation after much infrastructure work

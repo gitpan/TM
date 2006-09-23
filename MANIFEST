@@ -19,6 +19,7 @@ t/042merge.t
 t/045astma2fact.t
 t/050astma.t
 t/051mldbm.t
+t/052mldbm2.t
 lib/TM.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/AsTMa/Fact2.pm
@@ -27,6 +28,7 @@ lib/TM/Resource.pm
 lib/TM/Materialized/File.pm
 lib/TM/Materialized/AsTMa.pm
 lib/TM/Materialized/MLDBM.pm
+lib/TM/Materialized/MLDBM2.pm
 lib/TM/PSI.pm
 lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm

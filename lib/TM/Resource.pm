@@ -271,7 +271,7 @@ http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.3;
-our $REVISION = '$Id: Resource.pm,v 1.2 2006/09/17 02:10:39 rho Exp $';
+our $REVISION = '$Id: Resource.pm,v 1.3 2006/09/19 10:20:33 rho Exp $';
 
 1;
 

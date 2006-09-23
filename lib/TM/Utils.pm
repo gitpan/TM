@@ -91,7 +91,7 @@ sub is_xml {
 }
 
 our $VERSION  = '1.03';
-our $REVISION = '$Id$';
+our $REVISION = '$Id: Utils.pm,v 1.4 2006/09/19 10:20:33 rho Exp $';
 
 
 1;

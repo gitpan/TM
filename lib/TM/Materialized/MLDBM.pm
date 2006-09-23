@@ -13,7 +13,7 @@ use MLDBM::Sync;
 
 =head1 NAME
 
-TM::Materialized::MLDBM - Topic Maps, DBM Storage
+TM::Materialized::MLDBM - Topic Maps, DBM Storage (asynchronous)
 
 =head1 SYNOPSIS
 
@@ -86,7 +86,7 @@ http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.01';
-our $REVISION = '$Id$';
+our $REVISION = '$Id: MLDBM.pm,v 1.1 2006/09/19 10:20:33 rho Exp $';
 
 1;
 
