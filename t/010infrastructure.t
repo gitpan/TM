@@ -26,9 +26,11 @@ use TM::PSI;
 
 require_ok ('TM');
 
+
 {
     my $tm = new TM;
     ok ($tm->isa ('TM'), 'class');
+
 
     is ($tm->baseuri, 'tm://nirvana/', 'baseuri default');
 

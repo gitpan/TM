@@ -33,6 +33,8 @@ our $core = { # this makes the TM::Store work
 	'scope'          => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#scope' ],
 	'us'             => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-universal-scope' ],
 
+	'topicmap'       => [ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap' ],
+
     },
     assertions => [
 		   [ 'isa', [ 'class', 'instance' ], [ 'scope', 'us' ] ],
@@ -78,6 +80,7 @@ our $astma_inc = {
 	'thing'          => [ 'http://virtual.cvut.cz/kifb/en/concepts/_entity.html' ],
         'value'          => [ 'http://psi.tm.bond.edu.au/astma/2.0/#thing' ],
         'ontology'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#ontology' ],
+        'implementation' => [ 'http://psi.tm.bond.edu.au/astma/2.0/#implementation' ],
         'template'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#template' ],
         'return'         => [ 'http://psi.tm.bond.edu.au/astma/2.0/#return' ],
         'body'           => [ 'http://psi.tm.bond.edu.au/astma/2.0/#body' ],
@@ -109,6 +112,10 @@ our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
 
 our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us', 'name', 'value');
 
+use constant {
+    TOPICMAP => 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap'
+};
+
 =pod
 
 =head1 SEE ALSO
@@ -132,6 +139,33 @@ our $REVISION = '$Id: PSI.pm,v 1.24 2006/09/19 10:20:33 rho Exp $';
 1;
 
 __END__
+
+=pod
+
+use constant ONTOLOGY => '
+tau-object
+bn: Tau Object
+sin: http://astma.it.bond.edu.au/ns/tau/1.0/object
+
+tau-map subclasses tau-object
+bn: map
+sin: http://astma.it.bond.edu.au/ns/tau/1.0/map
+
+tau-ontology subclasses tau-object
+bn: ontology
+sin: http://astma.it.bond.edu.au/ns/tau/1.0/ontology
+
+tau-query subclasses tau-object
+bn: query
+sin: http://astma.it.bond.edu.au/ns/tau/1.0/query
+
+tau-collection subclasses tau-object
+bn: collection
+sin: http://astma.it.bond.edu.au/ns/tau/1.0/collection
+
+';
+
+
 
 #	'sum-ergo-sum'                => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-sum-ergo-sum'],
 #	'regexp'                      => [ 'http://psi.tm.bond.edu.au/astma/1.0/#psi-regexp'],

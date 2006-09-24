@@ -86,7 +86,7 @@ http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.01';
-our $REVISION = '$Id: MLDBM.pm,v 1.1 2006/09/19 10:20:33 rho Exp $';
+our $REVISION = '$Id: MLDBM.pm,v 1.2 2006/09/23 01:22:03 rho Exp $';
 
 1;
 

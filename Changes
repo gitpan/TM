@@ -1,8 +1,12 @@
 Revision history for Perl extension TM
 
+1.18  Sun Sep 24 18:24:11 EST 2006
+	- added first MapSphere support (experimental)
+	- added more subjects in TM::PSI
+
 1.17  Sat Sep 23 09:26:42 EST 2006
 	- added BerkeleyDB based MLDBM map implementation (TM::Materialized::MLDBM2)
-	- fixed/reduced dependencies
+	- fixed/reduced package dependencies
 
 1.16  Tue Sep 19 20:15:49 EST 2006
 	- added driver for maps stored via MLDBM

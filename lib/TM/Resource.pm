@@ -1,5 +1,8 @@
 package TM::Resource;
 
+use strict;
+use warnings;
+
 use TM;
 use base qw(TM);
 

@@ -12,6 +12,8 @@ use Time::HiRes;
 
 use TM::PSI;
 
+
+
 =pod
 
 =head1 NAME
@@ -20,8 +22,43 @@ TM - Topic Maps, Base Class
 
 =head1 SYNOPSIS
 
-    my $tm = new TM;   # empty map
-    ... more to come
+    my $tm = new TM (baseuri => 'tm://whatever/');   # empty map
+
+    # add a midlet (= minimal topic, only identification, no characteristics)
+    # by specifying an internal ID
+    $tm->internalize ('aaa');                     # only internal identifier
+    $tm->internalize ('bbb' =>   'http://bbb/');  # with a subject address
+    $tm->internalize ('ccc' => \ 'http://ccc/');  # with a subject indicator
+
+    # without specifying an internal ID (will be auto-generated)
+    $tm->internalize (undef =>   'http://ccc/');  # with a subject address
+    $tm->internalize (undef => \ 'http://ccc/');  # with a subject indicator
+
+    # get rid of midlet(s)
+    $tm->externalize ('tm://whatever/aaa', ...);
+
+    # add an assertion (association or characteristic)
+    $a = $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'rumsti', 'ramsti' ]));
+
+    # get rid of assertion(s)
+    $tm->retract ($a->[TM->LID], ...);
+
+    # extract particular assertions
+    my @as = $tm->retrieve (....);
+
+    # find particular assertions
+    my @as = $tm->match (TM->FORALL, scope   => 'tm://whatever/sss');
+
+    my @bs = $tm->match (TM->FORALL, type    => 'tm://whatever/ttt',
+                                     roles   => [ 'tm://whatever/aaa', 'tm://whatever/bbb' ]);
+
+    my @cs = $tm->match (TM->FORALL, type    => 'tm://whatever/is-subclass-of', 
+			             arole   => 'tm://whatever/superclass', 
+			             aplayer => 'tm://whatever/rumsti', 
+			             brole   => 'tm://whatever/subclass')
+
+
+@@@ consolidate.....
 
 =head1 ABSTRACT
 
@@ -155,6 +192,8 @@ sub new {
 
   return $self;
 }
+
+sub DESTROY {}                                                                    # not much to do here
 
 =pod
 
@@ -1965,8 +2004,8 @@ itself.
 
 =cut
 
-our $VERSION  = '1.17';
-our $REVISION = '$Id: TM.pm,v 1.28 2006/09/19 10:20:33 rho Exp $';
+our $VERSION  = '1.18';
+our $REVISION = '$Id: TM.pm,v 1.29 2006/09/23 01:22:03 rho Exp $';
 
 
 1;
@@ -5151,5 +5190,30 @@ split into
 ^==head1 Meta Interface
 
 @@@@bla
+
+
+#-- shared directory of maps
+# whenever a thread creates a new map, it will be registered here. at destruction time,
+# it will be de-registered.
+
+use threads::shared;
+our %directory;
+
+sub _register {
+    my $baseuri = shift;
+    my $obj     = shift;
+warn "register $baseuri";
+#    warn "another map with baseURI '$baseuri' already loaded" if $directory{$baseuri};
+    $directory{$baseuri} = $obj;                                                      # register in directory
+}
+
+sub _deregister {
+    my $baseuri = shift;
+warn "deregister $baseuri";
+#    warn "no map with baseURI '$baseuri' registered, ignoring" unless exists $directory{$baseuri};
+    delete $directory{$baseuri};
+}
+
+#--------------------------
 
 

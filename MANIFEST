@@ -20,11 +20,13 @@ t/045astma2fact.t
 t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
+t/10mapsphere.t
 lib/TM.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/Literal.pm
 lib/TM/Resource.pm
+lib/TM/MapSphere.pm
 lib/TM/Materialized/File.pm
 lib/TM/Materialized/AsTMa.pm
 lib/TM/Materialized/MLDBM.pm
