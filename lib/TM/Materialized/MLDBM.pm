@@ -5,9 +5,12 @@ use base qw (TM::Resource);
 
 use Data::Dumper;
 
-use MLDBM qw(DB_File Storable);        # use Storable for serializing
-use Fcntl qw(:DEFAULT);
+#use MLDBM qw(DB_File Storable);        # use Storable for serializing
+##use MLDBM qw(Storable);        # use Storable for serializing
+
+use MLDBM qw(MLDBM::Sync::SDBM_File);
 use MLDBM::Sync;
+use Fcntl qw(:DEFAULT);
 
 =pod
 

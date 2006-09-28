@@ -15,6 +15,7 @@ use warnings;
 use Test::More qw(no_plan);
 
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
 use Time::HiRes;
 
 
@@ -24,158 +25,151 @@ require_ok('TM::MapSphere');
 
 #== TESTS =====================================================================
 
-{
-    my $ms = new TM::MapSphere;
+my ($tmp, $tmp2, $tmp3) = ('/tmp/xxx', '/tmp/yyy', '/tmp/zzz');
+END { unlink ($tmp) ; unlink ($tmp2) ; unlink <"$tmp3*">; }
 
-    eval {
-	$ms->mids ('thing');
-    }; like ($@, qr/mount something/,                   'non-existing root');
-
-    # now mount something on /
-    $ms->mount ('/' => new TM);
-    ok ($ms->mids ('thing'),                            'root map, thing');
-
-    # use a broken map
-    eval {
-	$ms->mount ('/xxx/' => 42);
-    }; like ($@, qr/can only mount/,                    'non-map mounting error');
-
-    # use a take mount point
-    eval {
-	$ms->mount ('/' => new TM);
-    }; like ($@, qr/taken/,                             'taken mount point error');
-
-    eval {
-	$ms->mount ('/xxx/yyy/' => new TM);
-    };  like ($@, qr/does not yet exist/,               'missing mount point error');
-}
-
-{
-    my $ms = new TM::MapSphere;
-
-    use TM::Materialized::AsTMa;
-    my $tm = new TM::Materialized::AsTMa (inline => 'xxx (yyy)
-');
-    $tm->sync_in;
-    $ms->mount ('/' => $tm);
-#warn Dumper $ms;
-    ok ($ms->mids ('xxx'),                              'background map, xxx');
-    ok ($ms->mids ('yyy'),                              'background map, yyy');
-}
-
-{
-    my $ms = new TM::MapSphere; #-- use map as map sphere
-
-#-- root first
-    $ms->mount ('/' => new TM);
-
-#-- one map
-    use TM::Materialized::AsTMa;
-    my $tm1 = new TM::Materialized::AsTMa (inline => 'xxx (yyy)
-');
-    $ms->mount ('/rumsti/' => $tm1);
-
-    ok ($ms->mids ('rumsti'),                            'mounted map, midlet');
-
-    is ($ms->midlet ('rumsti')->[TM->ADDRESS], 
-	'tm://nirvana/',                                 'mounted midlet, address');
-    ok (eq_array ($ms->midlet ('rumsti')->[TM->INDICATORS], 
-		  [
-		   'inline:xxx (yyy)
-'		   
-		   ]),                                   'mounted midlet, indicators');
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
-		[ 'tm://nirvana/rumsti' ]),              'mounted midlet, found as map instance');
-    ok (eq_set ([ $ms->instances  ($ms->mids (\ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap')) ],
-		[ 'tm://nirvana/rumsti' ]),              'mounted midlet, found as map instance');
-
-#-- second map
-    my $tm2 = new TM;
-    $ms->mount ('/ramsti/' => $tm2);
-
-    ok ($ms->is_mounted ('/ramsti/'),                     'one map mounted');
-
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
-		[ 
-		  'tm://nirvana/rumsti',
-		  'tm://nirvana/ramsti'
-		  ]),                                    'mounted midlets, found as map instances');
-
-    $ms->umount ('/rumsti/');
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
-		[ 'tm://nirvana/ramsti' ]),              'mounted midlet, found as map instance');
-}
-
-{
-    my $ms = new TM::MapSphere;
-
-    $ms->mount ('/'     => new TM);
-    $ms->mount ('/xxx/' => new TM);
-    eval {
-	$ms->mount ('/xxx/yyy/zzz' => new TM);
-    }; like ($@, qr/does not yet exist/,                 'deep: missing mount point error');
-
-    $ms->mount ('/xxx/yyy/' => new TM);
-    $ms->mount ('/xxx/yyy/zzz/' => new TM);
-
-    foreach my $p (qw( / /xxx/ /xxx/yyy/ /xxx/yyy/zzz/)) {
-	ok (ref ($ms->is_mounted ($p)) eq 'TM',  "mounting: mount point $p verified");
-    }
-
-    $ms->umount ('/xxx/yyy/');
-    foreach my $p (qw( / /xxx/ )) {
-	ok (ref ($ms->is_mounted ($p)) eq 'TM',  "unmounting: mount point $p verified");
-    }
-}
-
-use IO::File;
-use POSIX qw(tmpnam);
-
-my ($tmp);
-do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
-END { unlink ($tmp, $tmp.".lock") || warn "cannot unlink tmp file '$tmp'"; }
-
-{
-
-    { # part I: writing something into the top
+if (1) {
+    unlink ($tmp);
+    { # first write through the map sphere, and...
 	my $ms = new TM::MapSphere;
-	
-	use TM::Materialized::MLDBM;
-	$ms->mount ('/'     => new TM::Materialized::MLDBM (file => $tmp));
+
+	use TM::Materialized::MLDBM2;
+	$ms->mount ('/'     => new TM::Materialized::MLDBM2 (file => $tmp));
 	use TM::Materialized::AsTMa;
 	$ms->mount ('/xxx/' => new TM::Materialized::AsTMa (inline => "aaa (bbb)\n\n"));
-	
-	$ms->is_mounted ('/')->sync_out;
+
     }
-    { # part II: getting it out again
+    { # ... then check whether it is still here (look Ma! No syncs!)
 	my $ms = new TM::MapSphere;
-
-        use TM::Materialized::MLDBM;
-        $ms->mount ('/'     => new TM::Materialized::MLDBM (file => $tmp));
-	$ms->is_mounted ('/')->sync_in;
-#warn Dumper $ms->is_mounted ('/');
-
+	
+	use TM::Materialized::MLDBM2;
+	my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
+#	warn Dumper $tm; exit;
+	$ms->mount ('/' => $tm);
+	ok ($ms->mids ('xxx'),                            'found topic for child map');
 	ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
 		    [ 'tm://nirvana/xxx' ]),              'regained map instance');
 
 	ok (!$ms->is_mounted ('/xxx/'),                   'no recursive automount');
     }
-    { # part III: let MapSphere do the sync
+    {
 	my $ms = new TM::MapSphere;
-	use TM::Materialized::MLDBM;
-	$ms->mount   ('/'     => new TM::Materialized::MLDBM (file => $tmp));
+	
+	use TM::Materialized::MLDBM2;
+	$ms->mount ('/' => new TM::Materialized::MLDBM2 (file => $tmp));
+
 	$ms->sync_in ('/');
-
-	ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
-		    [ 'tm://nirvana/xxx' ]),              'regained map instance');
-
+	ok ($ms->is_mounted ('/xxx/'),                    'recursive automount');
 	my $child = $ms->is_mounted ('/xxx/');
 	ok ($child->mids ('aaa'),                         'child map, midlet');
 	ok ($child->mids ('bbb'),                         'child map, midlet');
     }
+    unlink ($tmp);
 }
 
+if (1){
+    {
+	my $ms = new TM::MapSphere;
+	
+	use TM::Materialized::MLDBM2;
+	$ms->mount ('/'         => new TM::Materialized::MLDBM2 (file => $tmp));
+ 	$ms->mount ('/xxx/'     => new TM::Materialized::MLDBM2 (file => $tmp2));
+	$ms->mount ('/yyy/'     => new TM::Materialized::AsTMa (inline => "ccc (ddd)\n\n"));
+	$ms->mount ('/xxx/yyy/' => new TM::Materialized::AsTMa (inline => "eee (fff)\n\n"));
 
+#	$ms->sync_in ('/xxx/');
+
+	ok ($ms->is_mounted ('/')->mids ('xxx'),          'child map, midlet (xxx)');
+	ok ($ms->is_mounted ('/')->mids ('yyy'),          'child map, midlet (yyy)');
+	ok ($ms->is_mounted ('/xxx/')->mids ('yyy'),      'child map, midlet (xxx/yyy)');
+    }
+    {
+	my $ms = new TM::MapSphere;
+	
+	use TM::Materialized::MLDBM2;
+	$ms->mount ('/'         => new TM::Materialized::MLDBM2 (file => $tmp));
+ 	$ms->mount ('/xxx/'     => new TM::Materialized::MLDBM2 (file => $tmp2));
+# they all have to be in there!
+	ok ($ms->is_mounted ('/')->mids ('xxx'),          'again, child map, midlet (xxx)');
+	ok ($ms->is_mounted ('/')->mids ('yyy'),          'again, child map, midlet (yyy)');
+	ok ($ms->is_mounted ('/xxx/')->mids ('yyy'),      'again, child map, midlet (xxx/yyy)');
+
+	ok (!$ms->is_mounted ('/yyy/'),                   'no recursive automount for yyy');
+	ok (!$ms->is_mounted ('/xxx/yyy/'),               'no recursive automount for xxx/yyy');
+
+# now we sync
+	$ms->sync_in ('/xxx/');
+	ok ( $ms->is_mounted ('/xxx/yyy/'),               'recursive automount for xxx/yyy');
+	ok (!$ms->is_mounted ('/yyy/'),                   'no recursive automount for yyy');
+
+# now we sync from the top
+	$ms->sync_in ('/');
+
+	ok ( $ms->is_mounted ('/yyy/'),                   'recursive automount for yyy');
+	ok ( $ms->is_mounted ('/xxx/yyy/'),               'recursive automount for xxx/yyy');
+    }
+
+    unlink ($tmp); unlink ($tmp2);
+}
+
+{
+    my $db = { aaa => { bbb => { ccc => undef }},
+	       ddd => { eee => undef,
+			fff => { ggg => undef },
+		    },
+	       xxx => { yyy => undef } };
+
+    {
+	use TM::MapSphere;
+	my $ms = new TM::MapSphere;
+
+	use TM::Materialized::MLDBM2;
+	$ms->mount ('/' => new TM::Materialized::MLDBM2 (file => $tmp3));
+
+	_mount_rec ($ms, '/', $db);
+
+	sub _mount_rec {
+	    my $ms   = shift;
+	    my $path = shift;
+	    my $db   = shift or return;
+
+	    foreach my $child (keys %$db) {
+# 		warn "# hooking $child into ". $path . $child . '/';
+		use TM::Materialized::MLDBM2;
+		my $path2 = $path . $child . '/';
+ 		$ms->mount ($path2 => new TM::Materialized::MLDBM2 (file => $tmp3 . '.' . $child, baseuri => 'tm:'.$path . $child . '/'));
+ 		_mount_rec ($ms, $path2, $db->{$child});
+	    }
+	}
+
+    }
+    {
+	use TM::Materialized::MLDBM2;
+
+	use TM::MapSphere;
+	my $mt = new TM::MapSphere;
+	$mt->mount ('/' => new TM::Materialized::MLDBM2 (file => $tmp3));
+
+	$mt->sync_in ('/');
+
+#	warn "after ".Dumper $mt; exit;
+	_mount_check_rec ($mt, '/', $db);
+
+	sub _mount_check_rec {
+	    my $ms   = shift;
+	    my $path = shift;
+	    my $db   = shift or return;
+
+	    foreach my $child (keys %$db) {
+		my $path2 = $path . $child . '/';
+		ok ($ms->is_mounted ($path2), "regained $path2");
+
+ 		_mount_check_rec ($ms, $path2, $db->{$child});
+	    }
+	}
+    }
+    unlink <"$tmp3*">;
+}
 
 __END__
 

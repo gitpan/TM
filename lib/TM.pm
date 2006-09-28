@@ -2004,8 +2004,8 @@ itself.
 
 =cut
 
-our $VERSION  = '1.18';
-our $REVISION = '$Id: TM.pm,v 1.29 2006/09/23 01:22:03 rho Exp $';
+our $VERSION  = '1.19';
+our $REVISION = '$Id: TM.pm,v 1.30 2006/09/24 08:27:27 rho Exp $';
 
 
 1;

@@ -48,10 +48,10 @@ TM::MapSphere - Interface for a TM Repository
 
 This package serves as a container to hold topic maps (and other objects), all organized as a topic
 map itself. Obviously, this provides a hierarchical topic map database. On the top level, addressed
-as C</> is the root map. The child maps have addresses such as <C/abc/> and
+as C</> is the root map. The child maps have addresses such as C</abc/> and
 C</internet/web/browsers>.
 
-The individual maps can be of different provenience. Any subclass of L<TM> will do, consequently
+The individual maps can be of different provenance. Any subclass of L<TM> will do, consequently
 also any subclass of L<TM::Resource>. This implies that this database can be heterogenic, in that
 different maps can be stored differently, or can even be kept remotely. And it implies that you can
 decide whether the whole repository is ephemeral (using a memory-only map) or whether it is
@@ -129,9 +129,9 @@ subject indicator.
 
 sub _find_longest_match {
     my $p = shift;
-    my @ps = sort { length($a) <= length($b) } @_;
+    my @ps = sort { length($b) <=> length($a) } @_;
 
-#warn "check $p ". Dumper \@ps;
+#warn "_find_longest_match  $p ". Dumper \@ps;
     foreach (@ps) {
         return $_ if ($p =~ /^$_/);
     }
@@ -146,6 +146,8 @@ sub mount {
 
     $main::log->logdie (scalar __PACKAGE__ .": can only mount map objects")         unless (ref ($obj) && $obj->isa ('TM'));
     $main::log->logdie (scalar __PACKAGE__ .": mount point '$path' already taken")  if     exists $self->{mounttab}->{$path};
+
+#warn "trying to mount $path";
 
     unless ($path eq '/') {
 	my $p = _find_longest_match ($path, keys %{$self->{mounttab}});
@@ -235,6 +237,16 @@ C<implementation> characteristic. The resource URL will be determined from one o
 indicators, the base URI will be determined from the subject address of the map topic. If any of
 these are missing, this particular sub-map is ignored.
 
+B<Example>: Let us assume that a map has a C<baseuri> C<http://whatever/> and a resource URL
+C<http://example.org/here.xtm>. It is a materialized map using the XTM driver. If this map is
+mounted into a root map under C</foo/>, then the entry will take the form (using AsTMa= 2.0 as
+notation):
+
+   foo isa topicmap
+   ~ http://example.org/here.xtm
+   = http://whatever/
+   implementation: TM::Materialized::XTM
+   
 =cut
 
 sub sync_in {
@@ -253,10 +265,9 @@ sub _do_sync_recursive {
     $parent->sync_in;
 
     foreach my $m ( $parent->instances ($parent->mids (\ TM::PSI->TOPICMAP)) ) {
-#warn "working on $m";
-        (my $id = $m) =~ s|.+/(.+)|$1|; # throw away the baseuri stuff
+        (my $id = $m) =~ s|.+/(.+)|$1|;                                                  # throw away the baseuri stuff
 #warn "id $id";
-	my $mid = $parent->midlet ($m);  # get the topic itself
+	my $mid = $parent->midlet ($m);                                                  # get the topic itself
 #warn Dumper $mid;
 	my ($url)            = @{$mid->[TM->INDICATORS]}                        or next; # if there is no subject indicator, we could not load it anyway
 	my ($baseuri)        =   $mid->[TM->ADDRESS]                            or next; # if there is no subject address, we could not load it anyway
@@ -270,10 +281,26 @@ sub _do_sync_recursive {
 	    $child = $implementation->new (url => $url, baseuri => $baseuri );
 	}; $main::log->logdie (scalar __PACKAGE__ .": cannot instantiate '$implementation' (maybe 'use' it?) for URL '$url' ($@)") if $@;
 
-	_do_sync_recursive ($ms, $path . "$id/", $child);       # go down recursively
-	$ms->mount ($path . "$id/" => $child);                             # finally mount this thing into the current
+	$ms->mount ($path . "$id/" => $child)                                            # finally mount this thing into the current
+	    unless $ms->is_mounted ($path . "$id/");                                     # unless there is already something there
+#warn "-------mounted $path  $id/";
+	_do_sync_recursive ($ms, $path . "$id/", $child);                                # go down recursively
     }
 }
+}
+
+=pod
+
+=item B<sync_out>
+
+I<$ms>->sync_out (I<$path>)
+
+@@@ TBW @@@
+
+=cut
+
+sub sync_out {
+    die "not implemented yet";
 }
 
 =pod
@@ -318,8 +345,8 @@ available.
 
 =cut
 
-our $VERSION  = 0.02;
-our $REVISION = '$Id: MapSphere.pm,v 1.19 2006/09/24 05:42:03 rho Exp $';
+our $VERSION  = 0.03;
+our $REVISION = '$Id: MapSphere.pm,v 1.20 2006/09/24 08:27:27 rho Exp $';
 
 1;
 

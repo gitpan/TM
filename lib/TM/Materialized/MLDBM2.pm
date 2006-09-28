@@ -7,13 +7,13 @@ use Data::Dumper;
 
 use BerkeleyDB ;
 use MLDBM qw(BerkeleyDB::Hash) ;
-use Fcntl qw(:DEFAULT);
+use Fcntl;
 
 =pod
 
 =head1 NAME
 
-TM::Materialized::MLDBM2 - Topic Maps, DBM Storage (synchronous
+TM::Materialized::MLDBM2 - Topic Maps, DBM Storage (synchronous)
 
 =head1 SYNOPSIS
 
@@ -46,21 +46,25 @@ sub new {
     my $class = shift;
     my %options = @_;
 
-    $main::log->logdie ("no file specified") unless $options{file};
+    my $whatever = $class->SUPER::new (%options);                                   # this ensures that we have a proper url component
+    $main::log->logdie ("no file specified")
+	unless $whatever->url =~ /^file:(.+)/;                                      # if it is not a file we have a problem
+    my $file = $1;                                                                  # otherwise get the file(name)
+    my %self;                                                                       # forget about the object itself, make a new one
 
-    my %self;
-
-    if (-e $options{file}) {                                                        # file does exist already
-	tie %self, 'MLDBM', -Filename => $options{file}
-	    or main::log->logdie ( "Cannot create DBM file '$options{file}: $!");
-
+    if (-e $file) {                                                                 # file does exist already
+#warn "file exists $file!";
+	tie %self, 'MLDBM', -Filename => $file
+	    or main::log->logdie ( "Cannot create DBM file '$file: $!");
+                                                                                    # oh, we are done now
     } else {                                                                        # no file yet
-	tie %self, 'MLDBM', -Filename => $options{file},                            # bind to one
+#warn "file not exists $file!";
+	tie %self, 'MLDBM', -Filename => $file,                                     # bind to one
                             -Flags    => DB_CREATE                                  # which we create here
-	    or main::log->logdie ( "Cannot create DBM file '$options{file}: $!");
-	my $parent = TM::Resource->new (%options);
-	foreach (keys %$parent) {                                                   # clone all components
-	    $self{$_} = $parent->{$_};                                              # this makes sure that Berkeley'ed tie picks it up
+	    or main::log->logdie ( "Cannot create DBM file '$file: $!");
+
+	foreach (keys %$whatever) {                                                 # clone all components
+	    $self{$_} = $whatever->{$_};                                            # this makes sure that Berkeley'ed tie picks it up
 	}
     }
     return bless \%self, $class;                                                    # give the reference a blessing

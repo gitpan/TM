@@ -20,7 +20,8 @@ t/045astma2fact.t
 t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
-t/10mapsphere.t
+t/100mapsphere.t
+t/101mapsphere.t
 lib/TM.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/AsTMa/Fact2.pm

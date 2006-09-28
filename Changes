@@ -1,5 +1,9 @@
 Revision history for Perl extension TM
 
+1.19  Thu Sep 28 18:18:42 EST 2006
+	- split mapsphere test into two parts (MLDBM does not like it to be used with different serializers in one program)
+	- added torture test for hierarchical MLDBM2 databases
+
 1.18  Sun Sep 24 18:24:11 EST 2006
 	- added first MapSphere support (experimental)
 	- added more subjects in TM::PSI
