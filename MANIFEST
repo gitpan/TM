@@ -13,6 +13,7 @@ t/00pods.t
 t/00utils.t
 t/010infrastructure.t
 t/011manipulate.t
+t/012analysis.t
 t/03resource.t
 t/041astmafact.t
 t/042merge.t
@@ -20,9 +21,11 @@ t/045astma2fact.t
 t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
+t/091taufilter.t
 t/100mapsphere.t
 t/101mapsphere.t
 lib/TM.pm
+lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/Literal.pm
@@ -33,5 +36,7 @@ lib/TM/Materialized/AsTMa.pm
 lib/TM/Materialized/MLDBM.pm
 lib/TM/Materialized/MLDBM2.pm
 lib/TM/PSI.pm
+lib/TM/Tau/Filter.pm
+lib/TM/Tau/Filter/Analyze.pm
 lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm

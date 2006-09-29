@@ -137,7 +137,7 @@ will happen).
 
 sub url {
     my $self = shift;
-    return $self->{_in_url} || $self->{_out_url} || $self->{url};
+    return $self->{url};
 }
 
 =pod
@@ -155,7 +155,7 @@ sub last_mod {
     my $self = shift;
 
     use TM::Utils;
-    return TM::Utils::last_mod ($self->{_in_url} || $self->{_out_url} || $self->{url});
+    return TM::Utils::last_mod ($self->{url});
 }
 
 =pod
@@ -190,13 +190,14 @@ which all implementations have to provide. (See L<TM::Materialized::File> for an
 =cut
 
 sub _sync_in {
+    warn "abstract method _sync_in called, ignored";
 };
 
 sub sync_in {
     my $self = shift;
 
 #warn "generic TM sync in";
-    if (my $url = $self->{_in_url} || $self->{url}) {
+    if (my $url = $self->{url}) {
 #warn __PACKAGE__ . ": is it stdout? null?";
         return if $url eq 'io:stdout';   # no syncing in from STDOUT
         return if $url eq 'null:';       # no syncing in from null
@@ -235,6 +236,7 @@ The real functionality has to be provided by implementations which define
 =cut
 
 sub _sync_out {
+    warn "abstract method _sync_out called, ignored";
 }
 
 sub sync_out {
@@ -274,7 +276,7 @@ http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.3;
-our $REVISION = '$Id: Resource.pm,v 1.4 2006/09/24 08:27:27 rho Exp $';
+our $REVISION = '$Id: Resource.pm,v 1.5 2006/09/29 02:12:05 rho Exp $';
 
 1;
 

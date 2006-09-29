@@ -1,5 +1,9 @@
 Revision history for Perl extension TM
 
+1.20
+	- added TM::Tau::Filter
+	- added TM::Analysis (first part)
+
 1.19  Thu Sep 28 18:18:42 EST 2006
 	- split mapsphere test into two parts (MLDBM does not like it to be used with different serializers in one program)
 	- added torture test for hierarchical MLDBM2 databases

@@ -180,8 +180,8 @@ sub new {
       my $bu   = $self->{baseuri};
                                                                                   # now create low-level TM content via fast cloning
       $self->{mid2iid}        = { map { $bu.$_ => [ undef, [ @{$mids->{$_}} ] ] }   keys %{$mids} };
-      $self->{usual_suspects} = { map { $_ => $self->mids ($_) } @TM::PSI::Usual_Suspects };
-      $self->assert (             map { Assertion->new (type    => $_->[0],
+      $self->{usual_suspects} = { map { $_ => mids ($self, $_) } @TM::PSI::Usual_Suspects };
+      assert ($self,              map { Assertion->new (type    => $_->[0],
 							roles   => [@{$_->[1]}],  # here we clone the roles/player list
 							players => [@{$_->[2]}])} @{$psis->{assertions}}  );
       delete $self{psis};                                                         # we do not need it anymore
@@ -2004,8 +2004,8 @@ itself.
 
 =cut
 
-our $VERSION  = '1.19';
-our $REVISION = '$Id: TM.pm,v 1.30 2006/09/24 08:27:27 rho Exp $';
+our $VERSION  = '1.20';
+our $REVISION = '$Id: TM.pm,v 1.32 2006/09/29 02:12:53 rho Exp $';
 
 
 1;

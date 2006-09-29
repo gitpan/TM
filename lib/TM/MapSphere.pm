@@ -346,7 +346,7 @@ available.
 =cut
 
 our $VERSION  = 0.03;
-our $REVISION = '$Id: MapSphere.pm,v 1.20 2006/09/24 08:27:27 rho Exp $';
+our $REVISION = '$Id: MapSphere.pm,v 1.21 2006/09/28 08:26:02 rho Exp $';
 
 1;
 
