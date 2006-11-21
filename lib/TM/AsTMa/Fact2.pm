@@ -1275,7 +1275,7 @@ sub _Lexer {
 ## tricky optimization: don't ask
     my $aux;                                                                        # need this to store identifier/uri prefix temporarily (optimization)
     my $aux2;                                                                       # need this to store ontology URL, if there is one
-    $$refINPUT =~ s/^([A-Za-z][A-Za-z0-9_-]*)//o      and $aux = $1                 # save this for later
+    $$refINPUT =~ s/^([A-Za-z][.A-Za-z0-9_-]*)//o     and $aux = $1                 # save this for later
 	                                              and $$refINPUT !~ /^:[\w\/]/
                                                       and return (_is_template ($parser->{USER}->{store},
 										$aux) 

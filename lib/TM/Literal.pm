@@ -25,8 +25,8 @@ our $grammar = q{
 
     luri                      : uri                                   { $return = new TM::Literal  ($item[1], 'xsd:uri'); }
 
-    string                    : /\"{3}(.*?)\"{3}|"([^\n]*?)"/s
-                                ('^^' uri)(?)                         { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
+    string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
+                              | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
 
 };
 

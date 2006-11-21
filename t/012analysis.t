@@ -118,9 +118,12 @@ bbb is-a ccc
     is ($stats2->{'nr_clusters'}, 15,                              'nr_clusters');
     
 }
-__END__
+
+    require_ok ('TM::Tree');
 
 { # tree
+
+
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -169,13 +172,13 @@ parent: seth
 child: noam
 
    ');
+
+    Class::Trait->apply ($tm => 'TM::Tree');
     $tm->sync_in;
 
 #warn Dumper $tm;
 
-  use TM::Tau::Tree;
-  my $pedigree =  TM::Tau::Tree::tree ($tm,
-                                       'adam',
+  my $pedigree =  $tm->tree (          'adam',
                                        'begets',
                                        'parent',
                                        'child',
@@ -204,12 +207,12 @@ ccc subclasses aaa
 ddd subclasses aaa
 
 ');
+    Class::Trait->apply ($tm => 'TM::Tree');
     $tm->sync_in;
 
 #warn Dumper $tm;
 
-    use TM::Tau::Tree;
-    my $taxo =  TM::Tau::Tree::taxonomy ($tm, 'aaa');
+    my $taxo =  $tm->taxonomy ('aaa');
 
 #warn Dumper $taxo;
 
@@ -217,7 +220,7 @@ ddd subclasses aaa
     ok (eq_set([ map { $_->{lid} } @{$taxo->{children}} ],
 	       [ 'tm:ccc', 'tm:ddd' ]),          'taxo 2');
 
-    $taxo =  TM::Tau::Tree::taxonomy ($tm);
+    $taxo =  $tm->taxonomy;
     ok ($taxo->{lid} eq 'tm:thing',              'taxo 3');
     ok (eq_set([ map { $_->{lid} } @{$taxo->{children}} ],
 	       [ 'tm:aaa', 'tm:bbb' ]),          'taxo 4');
@@ -225,11 +228,6 @@ ddd subclasses aaa
     ok (eq_set([ map { $_->{lid} } @{$aaa->{children}} ],
 	       [ 'tm:ccc', 'tm:ddd' ]),          'taxo 5');
 }
-
-#------------------------------------------------------------------------------
-
-#-------------------------------------------------------------
-
 
 __END__
 

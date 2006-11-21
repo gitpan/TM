@@ -1,11 +1,12 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         TM
-version:      1.20
+version:      1.21
 version_from: lib/TM.pm
 installdirs:  site
 requires:
-    BerkeleyDB:                    0.29
+    BerkeleyDB:                    0.26
+    Class::Trait:                  0.22
     Config::General:               2.26
     Log::Log4perl:                 0.5
     Log::Log4perl::Appender::File: 
@@ -15,6 +16,7 @@ requires:
     Parse::RecDescent:             1.94
     Parse::Yapp::Driver:           1.05
     Pod::Usage:                    1.16
+    Test::Deep:                    0.093
     Test::More:                    0.47
     Test::Pod:                     1
     URI::Escape:                   3.22

@@ -1,6 +1,15 @@
 Revision history for Perl extension TM
 
-1.20
+1.21  Sun Oct  1 11:01:40 EST 2006
+	- added: first experimental TMQL support (test cases not yet included)
+	- improved: PSI docu (somewhat)
+	- introduced: traits (Class::Trait) to solve some architectural problems
+	- reintroduced: tree analysis
+	- improved: TM docu
+	- added: first support for indices, significant speedup
+	- patched: identifiers in AsTMa[12] can also contain . (dot)
+
+1.20  Sun Oct  1 08:33:21 EST 2006
 	- added TM::Tau::Filter
 	- added TM::Analysis (first part)
 

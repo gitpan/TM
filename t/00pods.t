@@ -22,16 +22,29 @@ plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 my @PODs = qw(
 	      lib/TM.pm
 	      lib/TM/Analysis.pm
-	      lib/TM/Resource.pm
+	      lib/TM/Tree.pm
+	      lib/TM/PSI.pm
+	      lib/TM/ResourceAble.pm
+	      lib/TM/Synchronizable.pm
+	      lib/TM/Synchronizable/MLDBM.pm
+	      lib/TM/Serializable.pm
+	      lib/TM/Serializable/AsTMa.pm
+	      lib/TM/Serializable/LTM.pm
 	      lib/TM/MapSphere.pm
-	      lib/TM/Materialized/File.pm
+	      lib/TM/Materialized/Stream.pm
 	      lib/TM/Materialized/AsTMa.pm
+	      lib/TM/Materialized/LTM.pm
 	      lib/TM/Materialized/MLDBM.pm
 	      lib/TM/Materialized/MLDBM2.pm
+	      lib/TM/Tau.pm
 	      lib/TM/Tau/Filter.pm
-	      lib/TM/Tau/Filter/Analyze.pm
+	      lib/TM/Index/Match.pm
 	      );
 plan tests => scalar @PODs;
+
+# lib/TM/Tau/Federated.pm
+#	      lib/TM/QL.pm
+#	      lib/TM/Tau/Filter/Analyze.pm
 
 map {
     pod_file_ok ( $_, "$_ pod ok" )

@@ -6,13 +6,17 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
+our $VERSION  = '1.21';
+
 use Data::Dumper;
+# !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
+$Data::Dumper::VERSION = '2.12108';
+# !!! END of HACK
+
 use Class::Struct;
 use Time::HiRes;
 
 use TM::PSI;
-
-
 
 =pod
 
@@ -47,18 +51,38 @@ TM - Topic Maps, Base Class
     my @as = $tm->retrieve (....);
 
     # find particular assertions
-    my @as = $tm->match (TM->FORALL, scope   => 'tm://whatever/sss');
+    my @as = $tm->match_forall (scope   => 'tm://whatever/sss');
 
-    my @bs = $tm->match (TM->FORALL, type    => 'tm://whatever/ttt',
-                                     roles   => [ 'tm://whatever/aaa', 'tm://whatever/bbb' ]);
+    my @bs = $tm->match_forall (type    => 'tm://whatever/ttt',
+                                roles   => [ 'tm://whatever/aaa', 'tm://whatever/bbb' ]);
 
-    my @cs = $tm->match (TM->FORALL, type    => 'tm://whatever/is-subclass-of', 
-			             arole   => 'tm://whatever/superclass', 
-			             aplayer => 'tm://whatever/rumsti', 
-			             brole   => 'tm://whatever/subclass')
+    my @cs = $tm->match_forall (type    => 'tm://whatever/is-subclass-of', 
+			        arole   => 'tm://whatever/superclass', 
+			        aplayer => 'tm://whatever/rumsti', 
+			        brole   => 'tm://whatever/subclass');
+
+    my @ds = $tm->match_forall (type    => 'tm://whatever/isa'
+                                instance=> 'tm://whatever/person');
 
 
-@@@ consolidate.....
+    # perform merging, cleanup, etc.
+    $tm->consolidate;
+
+    # find full URI of a topic (uhm, midlet)
+    my $mid  = $tm->mids ('person');      # returns tm://whatever/person
+    my @mids = $tm->mids ('person', ...)  # for a whole list
+
+    # get all midlets
+    my @ms   = $tm->midlets;    
+
+    # taxonomy stuff
+    warn "%-|" if $tm->is_a ($tm->mids ('gw_bush', 'moron')); # what a subtle joke
+
+    die unless $tm->is_subclass ($tm->mids ('politician', 'moron');
+
+    # returns Mr. Spock if Volcans are subclassing Aliens
+    warn "my best friends: ". Dumper [ $tm->instancesT ($tm->mids ('alien')) ];
+
 
 =head1 ABSTRACT
 
@@ -156,10 +180,11 @@ controls how an absolute URI is built from this identifier.
 
 =item C<psis>
 
+=back
+
 If you need to roll your own taxonomy to bootstrap with, you can pass in a structure which has
 exactly the same structure as that in L<TM::PSI>.
 
-=back
 
 =cut
 
@@ -263,7 +288,7 @@ perform merging based on subject indicators (see TMDM section 5.3.2)
 
 remove all superfluous toplets (those which do not take part in any association)
 
-NOTE: Not implemented yet!
+B<NOTE>: Not implemented yet!
 
 =back
 
@@ -277,17 +302,17 @@ B<NOTE>: After merging some of the I<lids> might not be reliably point to a topi
 
 =cut
 
-# NOTE: Below there much is done regarding speed. First the toplets are sweeped detecting which have
+# NOTE: Below there much is done regarding speed. First the toplets are swept detecting which have
 # to be merged. This is not done immediately (as this is an expensive operation, but a 'merger' hash
 # is built. Note how merging information A -> B and A -> C is morphed into A -> B and B -> C using
 # the _find_free function.
 
-# That merger hash is the consolidated by following edges until their end, so that there are no
+# That merger hash is then consolidated by following edges until their end, so that there are no
 # cycles.
 
 sub consolidate {
   my $self = shift;
-  my $cons = @_ ? [ @_ ] : $self->{consistency};
+  my $cons = @_ ? [ @_ ] : $self->{consistency};                           # override
   my $indi = grep ($_ == Indicator_based_Merging, @{$self->{consistency}});
   my $subj = grep ($_ == Subject_based_Merging,   @{$self->{consistency}});
   my $tnc  = grep ($_ == TNC_based_Merging,       @{$self->{consistency}});
@@ -480,6 +505,19 @@ sub melt {
 
     @{$self}{@ESSENTIALS} = @{$tm2}{@ESSENTIALS};
     $self->{last_mod} = Time::HiRes::time;
+}
+
+=pod
+
+=item B<last_mod>
+
+Returns the last UNIX date of modifying the map content. This comes as a L<Time::HiRes> time.
+
+=cut
+
+sub last_mod {
+    my $self = shift;
+    return $self->{last_mod};
 }
 
 =pod
@@ -850,19 +888,42 @@ sub is_x_role {
 
 =item B<get_roles>
 
-I<@role_ids> = @{ get_roles (I<$tm>, I<$assertion>) }
+I<@role_ids> = get_roles (I<$tm>, I<$assertion>, I<$player>)
 
-This function extracts a reference to the list of role identifiers.
+This function returns a list of roles a particular player plays in a given assertion
 
 =cut
 
 sub get_roles {
     my $self = shift;
     my $a = shift;
+    my $p = shift; # the player
 
-    return $a->[ROLES];
+    my ($ps, $rs) = ($a->[PLAYERS], $a->[ROLES]);
+    
+    my @rs;
+    for (my $i = 0; $i < @$ps; $i++) {
+	next unless $ps->[$i] eq $p;
+	push @rs, $rs->[$i];
+    }
+    return @rs;
 }
 
+=pod
+
+=item B<get_role_s>
+
+I<@role_ids> = @{ get_role_s (I<$tm>, I<$assertion>) }
+
+This function extracts a reference to the list of role identifiers.
+
+=cut
+
+sub get_role_s {
+    my $self = shift;
+    my $a = shift;
+    return $a->[ROLES];
+}
 
 =pod
 
@@ -1000,17 +1061,23 @@ sub retract {
 
 =pod
 
-=item B<match>
+=item B<match>, B<match_forall>, B<match_exists>
 
 I<@list> = I<$tm>->match (C<FORALL> or C<EXISTS> [ , I<search-spec>, ... ]);
 
-This method takes a search specification and returns all assertions matching.
+I<@list> = I<$tm>->match_forall                    ( I<search-spec>, ... ]);
 
-If the constant C<FORALL> is used as first parameter, this method returns a list of assertions in
-the store following the search specification. If the constant C<EXISTS> is used the method will
-return a non-empty value if at least one can be found. The result list contains references to the
-assertions themselves, not to copies. You can change the assertions themselves on your own risk
-(read: better not do it).
+I<@list> = I<$tm>->match_exists                    ( I<search-spec>, ... ]);
+
+These methods takes a search specification and return matching assertions. The result list contains
+references to the assertions themselves, not to copies. You can change the assertions themselves on
+your own risk (read: better not do it).
+
+For C<match>, if the constant C<FORALL> is used as first parameter, this method returns a list of
+all assertions in the store following the search specification. If the constant C<EXISTS> is used
+the method will return a non-empty value if at least one can be found. Calling the more specific
+C<match_forall> is the same as calling C<match> with C<FORALL>. Similar for C<match_exists>.
+
 
 B<NOTE>: C<EXISTS> is not yet implemented.
 
@@ -1019,9 +1086,9 @@ The search specification is a hash with the same fields as for the constructor o
 Example:
 
    $tm->match (FORALL, type    => '...',
-                                  scope   => '...,
-                                  roles   => [ ...., ....],
-                                  players => [.... ]);
+                       scope   => '...,
+                       roles   => [ ...., ....],
+                       players => [ ...., ....]);
 
 Any combination of assertion components can be used, all are optional, with the only constraint that
 the number of roles must match that for the players. All involved IDs will be absolutized before
@@ -1031,6 +1098,9 @@ B<NOTE>: Some combinations will be very fast, while others quite slow. The latte
 there is no special-purpose matcher implemented and the general-purpose one has to be used as a
 fallback.
 
+B<NOTE>: The implementation also understands a number of rather specialized query handlers. These
+are not yet documented here as there may be some shifts in the near future.
+
 =cut
 
 use constant {
@@ -1038,28 +1108,74 @@ use constant {
     FORALL => 0
     };
 
-# implements 'forall' semantics
+our %exists_handlers = ();
 
-our %query_handlers = ('' => 
+our %forall_handlers = ('' => 
 		       sub { # no params => want all of them
 			   my $self   = shift;
-			   my $exists = shift;
 			   return values %{$self->{assertions}};
 		       },
 
 		       'nochar' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
 			   return
 			       grep ($_->[KIND] <= ASSOC,
 					   values %{$self->{assertions}});
 		       },
+#-- taxos ---------------------------------------------------------------------------------------------
+		       'subclass.type' =>
+		       sub {
+			   my $self   = shift;
+			   my $st     = shift;
+			   my ($ISSC, $SUBCLASS) = @{$self->{usual_suspects}}{'is-subclass-of', 'subclass'};
+			   return () unless shift eq $ISSC;
+			   return
+			       grep ( $self->is_x_player   ($_, $st, $SUBCLASS),
+			       grep ( $_->[TYPE] eq $ISSC,
+				      values %{$self->{assertions}}));
+		       },
+
+		       'superclass.type' =>
+		       sub {
+			   my $self   = shift;
+			   my $st     = shift;
+			   my ($ISSC, $SUPERCLASS) = @{$self->{usual_suspects}}{'is-subclass-of', 'superclass'};
+			   return () unless shift eq $ISSC;
+			   return
+			       grep ( $self->is_x_player   ($_, $st, $SUPERCLASS),
+			       grep ( $_->[TYPE] eq $ISSC,
+				      values %{$self->{assertions}}));
+		       },
+
+		       'class.type' =>
+		       sub {
+			   my $self   = shift;
+			   my $t      = shift;
+			   my ($ISA, $CLASS) = @{$self->{usual_suspects}}{'isa', 'class'};
+			   return () unless shift eq $ISA;
+			   return
+			       grep ( $self->is_x_player   ($_, $t, $CLASS),
+			       grep ( $_->[TYPE] eq $ISA,
+				      values %{$self->{assertions}}));
+		       },
+
+		       'instance.type' =>
+		       sub {
+			   my $self   = shift;
+			   my $i      = shift;
+			   my ($ISA, $INSTANCE) = @{$self->{usual_suspects}}{'isa', 'instance'};
+			   return () unless shift eq $ISA;
+			   return
+			       grep ( $self->is_x_player   ($_, $i, $INSTANCE),
+			       grep ( $_->[TYPE] eq $ISA,
+				      values %{$self->{assertions}}));
+		       },
+#--
 
 		       'char.irole' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
 			   my $topic  = $_[1];
 			   return undef unless $topic;
 			   return
@@ -1073,13 +1189,12 @@ our %query_handlers = ('' =>
 			   my $self   = shift;
 			   my $lid    = $_[1];
 			   return
-			       $self->{assertions}->{$lid};
+			       $self->{assertions}->{$lid} || ();
 		       },
 
 		       'type' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
 			   my $type   = $_[0];
 			   return 
 			       grep ($self->is_subclass ($_->[TYPE], $type),
@@ -1089,7 +1204,6 @@ our %query_handlers = ('' =>
 		       'iplayer' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
 			   my $ip     = $_[0];
 			   return 
 			       grep ($self->is_player ($_, $ip), 
@@ -1099,7 +1213,6 @@ our %query_handlers = ('' =>
 		       'iplayer.type' =>
 		       sub {
 			   my $self      = shift;
-			   my $exists    = shift;
 			   my ($ip, $ty) = @_;
 			   return 
 			       grep ($self->is_player ($_, $ip)          &&
@@ -1110,7 +1223,6 @@ our %query_handlers = ('' =>
 		       'iplayer.irole' =>
 		       sub {
 			   my $self      = shift;
-			   my $exists    = shift;
 			   my ($ip, $ir) = @_;
 			   return 
 			       grep ($self->is_player ($_, $ip, $ir), 
@@ -1120,7 +1232,6 @@ our %query_handlers = ('' =>
 		       'iplayer.irole.type' =>
 		       sub {
 			   my $self           = shift;
-			   my $exists         = shift;
 			   my ($ip, $ir, $ty) = @_;
 			   return 
 			       grep ($self->is_subclass ($_->[TYPE], $ty) && 
@@ -1131,7 +1242,6 @@ our %query_handlers = ('' =>
 		       'irole.type' =>
 		       sub {
 			   my $self      = shift;
-			   my $exists    = shift;
                            my ($ir, $ty) = @_;
 			   return
 			       grep ($self->is_role ($_, $ir)             &&
@@ -1142,30 +1252,15 @@ our %query_handlers = ('' =>
 		       'irole' =>
 		       sub {
 			   my $self      = shift;
-			   my $exists    = shift;
                            my ($ir)      = @_;
 			   return
 			       grep ($self->is_role ($_, $ir),
 				     values %{$self->{assertions}});
 		       },
 
-		       'subtype' =>
-		       sub {
-			   my $self   = shift;
-                           my $exists = shift;
-			   my $st     = shift;
-			   my ($issc, $sub, $sup) = @{$self->{usual_suspects}}{'is-subclass-of', 'subclass', 'superclass'};
-			   return
-			       grep ( $self->is_x_role     ($_, $sup),
-			       grep ( $self->is_x_player   ($_, $st, $sub),
-			       grep ( $_->[TYPE] eq $issc,
-				      values %{$self->{assertions}})));
-		       },
-
 		       'aplayer.arole.brole.type' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
                            my ($ap, $ar, $br, $ty) = @_;
 			   return
 			       grep ( $self->is_role     ($_, $br),
@@ -1177,7 +1272,6 @@ our %query_handlers = ('' =>
 		       'aplayer.arole.bplayer.brole.type' =>
 		       sub {
 			   my $self  = shift;
-			   my $exists = shift; # still ignored :-/
                            my ($ap, $ar, $bp, $br, $ty) = @_;
 			   return
 			       grep ( $self->is_player ($_, $bp, $br),
@@ -1189,7 +1283,6 @@ our %query_handlers = ('' =>
 		       'anyid' =>
 		       sub {
 			   my $self   = shift;
-			   my $exists = shift;
                            my $lid    = shift;
 			   return
 			       grep (
@@ -1201,71 +1294,115 @@ our %query_handlers = ('' =>
 				     values %{$self->{assertions}});
 		       },
 
-		       'allinone' =>
-		       sub {
-			   my $self     = shift;
-			   my $exists   = shift;
-			   my $template = Assertion->new (@_);                              # we create an assertion on the fly
-#warn "allinone ".Dumper $template;
-#			   $self->absolutize   ($template);  
-#warn "allinone2".Dumper $template;
-			   $self->canonicalize ($template);                                # of course, need to be canonicalized
-#warn "allinone3".Dumper $template;
-
-#warn "in store match template ".Dumper $template;
-			   my @mads;
-			 ASSERTION:
-			   foreach my $m (values %{$self->{assertions}}) {                 # arbitrary AsTMa! queries TBD, can be faster as well
-			       
-			       next if defined $template->[KIND]  && $m->[KIND]  ne $template->[KIND];         # does kind match?
-#warn "after kind";
-			       next if defined $template->[SCOPE] && $m->[SCOPE] ne $template->[SCOPE];        # does scope match?
-#warn "after scope";
-			       next if defined $template->[TYPE]  && !$self->is_subclass ($m->[TYPE], $template->[TYPE]);         # does type match?
-#warn "after type";
-			       
-			       my ($rm, $rc) = ($m->[ROLES],   $template->[ROLES]);
-			       push @mads, $m and next ASSERTION             if ! @$rc;     # match ok, if we have no roles
-#warn "after push roles";
-			       next if @$rm != @$rc;                                        # quick check: roles must be of equal length
-#warn "after roles";
-			       
-			       my ($pm, $pc) = ($m->[PLAYERS], $template->[PLAYERS]);
-			       push @mads, $m and next ASSERTION             if ! @$pc;     # match ok, if we have no players
-			       next if @$pm != @$pc;                                        # quick check: roles and players must be of equal length
-#warn "after players";
-			       
-			       for (my $i = 0; $i < @{$rm}; $i++) {                         # order is canonicalized, would not want to test all permutations
-#warn "before role tests : is $rm->[$i] subclass of $rc->[$i]?";
-				   next ASSERTION if defined $rc->[$i] && !$self->is_subclass ($rm->[$i], $rc->[$i]);              # go to next assertion if that does not match
-#warn "after role ok";
-				   next ASSERTION if defined $pc->[$i] && $pm->[$i] ne $pc->[$i];
-			       }
-#warn "after players  roles";
-			       return (1) if $exists;                                       # with exists that's it
-			       push @mads, $m;                                              # with forall we do continue to collect
-			   }
-#warn "we return ".Dumper \@mads;
-			   return @mads;                                                    # and return what we got
-		       }
 
 		      );
 
-sub match {
+sub _allinone {
+    my $self     = shift;
+    my $exists   = shift;
+    my $template = Assertion->new (@_);                              # we create an assertion on the fly
+#warn "allinone ".Dumper $template;
+#			   $self->absolutize   ($template);  
+#warn "allinone2".Dumper $template;
+    $self->canonicalize ($template);                                # of course, need to be canonicalized
+#warn "allinone3".Dumper $template;
+
+#warn "in store match template ".Dumper $template;
+    my @mads;
+  ASSERTION:
+    foreach my $m (values %{$self->{assertions}}) {                 # arbitrary AsTMa! queries TBD, can be faster as well
+	
+	next if defined $template->[KIND]  && $m->[KIND]  ne $template->[KIND];         # does kind match?
+#warn "after kind";
+	next if defined $template->[SCOPE] && $m->[SCOPE] ne $template->[SCOPE];        # does scope match?
+#warn "after scope";
+	next if defined $template->[TYPE]  && !$self->is_subclass ($m->[TYPE], $template->[TYPE]);         # does type match?
+#warn "after type";
+			       
+	my ($rm, $rc) = ($m->[ROLES],   $template->[ROLES]);
+	push @mads, $m and next ASSERTION             if ! @$rc;     # match ok, if we have no roles
+#warn "after push roles";
+	next if @$rm != @$rc;                                        # quick check: roles must be of equal length
+#warn "after roles";
+	my ($pm, $pc) = ($m->[PLAYERS], $template->[PLAYERS]);
+	push @mads, $m and next ASSERTION             if ! @$pc;     # match ok, if we have no players
+	next if @$pm != @$pc;                                        # quick check: roles and players must be of equal length
+#warn "after players";
+	for (my $i = 0; $i < @{$rm}; $i++) {                         # order is canonicalized, would not want to test all permutations
+#warn "before role tests : is $rm->[$i] subclass of $rc->[$i]?";
+	    next ASSERTION if defined $rc->[$i] && !$self->is_subclass ($rm->[$i], $rc->[$i]);              # go to next assertion if that does not match
+#warn "after role ok";
+	    next ASSERTION if defined $pc->[$i] && $pm->[$i] ne $pc->[$i];
+	}
+#warn "after players  roles";
+	return (1) if $exists;                                       # with exists that's it
+	push @mads, $m;                                              # with forall we do continue to collect
+    }
+#warn "we return ".Dumper \@mads;
+    return @mads;                                                    # and return what we got
+}
+
+
+sub match_forall {
     my $self   = shift;
-    my $exists = shift;
+    my %query  = @_;
+#warn "forall ".Dumper \%query;
 
-    my %query = @_;
-#warn "store match query".Dumper \%query;
-    my @skeys = sort keys %query;                                                       # all fields make up the key
+    my @skeys = sort keys %query;                                                           # all fields make up the key
     my $skeys = join ('.', @skeys);
+    my @svals = map { $query{$_} } @skeys;
 
-    if (my $handler = $query_handlers{$skeys}) {                                        # there is a constraint and we have a handler
-	return &{$handler} ($self, $exists, map { $query{$_} } @skeys);
-    } else {                                                                            # otherwise
-	&{$query_handlers{'allinone'}} ($self, $exists, %query);                        # we use a generic handler, slow but should do the trick
+    if (my $index = $self->{indices}->{match}) {                                            # there exists a dedicated index
+	my $key   = "$skeys:" . join ('.', @svals);
+	if (my $lids  = $index->is_cached ($key)) {                                         # if result was cached, lets take the list of lids
+	    return map { $self->{assertions}->{$_} } @$lids;                                # and return fully fledged
+	} else {                                                                            # not defined means not cache => recompute
+	    my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                     # do it the hard way
+	    $index->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later
+	    return @as;
+	}
+    } else {                                                                                # no cache, let's do the ochsentour
+	return _dispatch_forall ($self, \%query, $skeys, @svals);
+    }
+
+sub _dispatch_forall {
+    my $self  = shift;
+    my $query = shift;
+    my $skeys = shift;
+
+#warn "keys for this $skeys";
+    if (my $handler = $forall_handlers{$skeys}) {                                           # there is a constraint and we have a handler
+	return &{$handler} ($self, @_); 
+    } else {                                                                                # otherwise
+	return _allinone ($self, 0, %$query);                                               # we use a generic handler, slow but should do the trick
     }
 }
+
+}
+sub match_exists {
+    my $self   = shift;
+    my %query  = @_;
+
+#warn "exists ".Dumper $query;
+
+    my @skeys = sort keys %query;                                                           # all fields make up the key
+    my $skeys = join ('.', @skeys);
+
+#warn "keys for this $skeys";
+    if (my $handler = $exists_handlers{$skeys}) {                                           # there is a constraint and we have a handler
+	return &{$handler} ($self, map { $query{$_} } @skeys); 
+    } else {                                                                                # otherwise
+	return _allinone ($self, 1, %query);                                                # we use a generic handler, slow but should do the trick
+    }
+}
+
+sub match {
+    my $self   = shift;
+    my $exists = shift; # FORALL or EXIST, DOES NOT work yet
+
+    return $exists ? match_exists ($self, @_) : match_forall ($self, @_);
+}
+
 
 =pod
 
@@ -1564,63 +1701,78 @@ This function returns C<1> if the first parameter is a (transitive) superclass o
 i.e. there is an assertion of type I<is-subclass-of> in the context map. It also returns C<1> if the
 superclass is a $TM::PSI::THING or if subclass and superclass are the same (reflexive).
 
-TODO: memoize
-
 =cut
 
 sub is_subclass {
     my $self  = shift;
-    my $class  = shift;
-    my $super  = shift;
+    my $class = shift;
+    my $super = shift;
 
-    my ($THING, $SUBCLASSES, $SUPERCLASS) = @{$self->{usual_suspects}}{'thing', 'is-subclass-of', 'superclass'};
-#warn Dumper $self unless $THING;
+    return 1 if $class eq $super;                                            # we always assume that A subclasses A
+
+    my ($ISA, $US, $THING, $SUBCLASSES, $SUBCLASS, $SUPERCLASS, $INSTANCE, $CLASS) =
+	@{$self->{usual_suspects}}{'isa', 'us', 'thing', 'is-subclass-of', 'subclass', 'superclass', 'instance', 'class'};
 
 #warn "is_subclass?: class $class   super $super , thing $THING, $SUBCLASSES, $SUPERCLASS";
-    return 1 if $super eq $THING;                                    # everything is a topic
-#warn "was not a thing, so continue";
-    return 0 if $class eq $THING;                                    # a thing cannot be a subclass
-    return 1 if $class eq $super;                                    # and warn "they are the same!";
-#warn "both are not equal, so continue";
-    return 0 if $class eq $SUBCLASSES;                               # that cannot be a subclass
-#warn "subclass was not a thing, so continue";
-#warn "checking the hard way";
-    {                                                                # next strategy: try to find this EXACTLY in the map as assertion
-##warn "XXXX $class '$super'";
-	return 1 if $self->is_asserted (Assertion->new (scope   => 'us',
-							type    => 'is-subclass-of', 
-							roles   => [ 'subclass', 'superclass' ],
-							players => [ $class, $super ])
-					);
-    }
-#warn "trying to do indirect";
-    { # if we still do not have a decision, we will check all super types of $class and see (recursively) whether we can establish is-subclass-of
-#warn "YYY";
-#
-#  my @mx = match ($self, FORALL,
-#		  subtype => $class,
-#		  );
-#warn " found superclasses ".Dumper \@mx;
-#
-#my @mp = map { $self->get_player ($_, mids ($self, 'superclass')) } @mx;#
-#
-#warn " found players superclass ".Dumper \@mp;
-#
-#my $r = grep (is_subclass ($self, $_, $super), @mp);
-#
-#warn "is one a indirect subclass of $super?: $r";
-#
-#return $r;
+    return 1 if $super eq $THING;                                            # everything is a topic
+# but not if the class is one of the predefined things, yes, there is a method to this madness
+    return 0 if $class eq $ISA;
+    return 0 if $class eq $US;
+    return 0 if $class eq $THING;
+    return 0 if $class eq $SUBCLASSES;
+    return 0 if $class eq $SUBCLASS;
+    return 0 if $class eq $SUPERCLASS;
+    return 0 if $class eq $INSTANCE;
+    return 0 if $class eq $CLASS;
+#    # see whether there is an assertion that we have a direct subclasses relationship between the two
 
-	return 1 if grep ($self->is_subclass ($_, $super),           # check all of the intermediate type whether there is a transitive relation
-			  map { $self->get_x_players ($_, $SUPERCLASS) }  # find the superclass player there => intermediate type
-			  $self->match (FORALL,
-					 subtype => $class,
-					 )
-			  );
-    }
-#warn "no subclass";
-    return 0;                                                        # ok, we give up now
+# This would be an optimization, but this does not go through match
+#    return 1 if $self->is_asserted (Assertion->new (scope   => $US,                          # TODO OPTIMIZE
+#						    type    => $SUBCLASSES, 
+#						    roles   => [ $SUBCLASS, $SUPERCLASS ],
+#						    players => [ $class,    $super ])
+#				    );
+    # if we still do not have a decision, we will check all super types of $class and see (recursively) whether we can establish is-subclass-of
+    return 1 if grep ($self->is_subclass ($_, $super),                       # check all of the intermediate type whether there is a transitive relation
+		      map { $self->get_x_players ($_, $SUPERCLASS) }         # find the superclass player there => intermediate type
+		      $self->match_forall (type       => $SUBCLASSES,
+					   subclass   => $class)
+		      );
+    return 0;                                                                # ok, we give up now
+}
+
+=pod
+
+=item B<is_a>
+
+I<$tm>->is_a (I<$something_lid>, I<$class_lid>)
+
+This method returns C<1> if the thing referenced by the first parameter is an instance of the class
+referenced by the second. The method honors transitive subclassing.
+
+=cut
+
+sub is_a {
+    my $self    = shift;
+    my $thingie = shift;
+    my $type    = shift;                                                         # ok, what class are looking at?
+
+    my ($ISA, $CLASS, $THING) = @{$self->{usual_suspects}}{'isa', 'class', 'thing'};
+
+#warn "isa thingie $thingie class $type";
+
+    return 1 if $type eq $THING and                                              # is the class == 'thing' and
+                $self->{mid2iid}->{$thingie};                                    # and does the thingie exist?
+
+    my ($m) = $self->retrieve ($thingie);
+    return 1 if $m and                                                           # is it an assertion ? and...
+	        $self->is_subclass ($m->[TYPE], $type);                          # is the assertion type a subclass?
+
+    return 1 if grep ($self->is_subclass ($_, $type),                            # check all of the intermediate type whether there is a transitive relation
+		         map { $self->get_players ($_, $CLASS) }                 # find the class player there => intermediate type
+		             $self->match (TM->FORALL, type => $ISA, instance => $thingie)
+		      );
+    return 0;
 }
 
 =pod
@@ -1641,8 +1793,8 @@ sub subclasses {
     my $self = shift;
     my $lid  = shift;
 
-    my ($issc, $sub, $sup) = @{$self->{usual_suspects}}{'is-subclass-of', 'subclass', 'superclass'};
-    return map { $_->[PLAYERS]->[0] } $self->match (TM->FORALL, type => $issc, arole => $sup, aplayer => $lid, brole => $sub);
+    my ($SUBCLASSES) = @{$self->{usual_suspects}}{'is-subclass-of'};
+    return map { $_->[PLAYERS]->[0] } $self->match (FORALL, type => $SUBCLASSES, superclass => $lid);
 }
 
 sub subclassesT {
@@ -1671,9 +1823,8 @@ transitive subclassing.
 sub superclasses {
     my $self = shift;
     my $lid  = shift;
-
-    my ($issc, $sub, $sup) = @{$self->{usual_suspects}}{'is-subclass-of', 'subclass', 'superclass'};
-    return map { $_->[PLAYERS]->[1] } $self->match (TM->FORALL, type => $issc, arole => $sub, aplayer => $lid, brole => $sup);
+    my ($SUBCLASSES) = @{$self->{usual_suspects}}{'is-subclass-of'};
+    return map { $_->[PLAYERS]->[1] } $self->match (FORALL, type => $SUBCLASSES, subclass => $lid);
 }
 
 sub superclassesT {
@@ -1704,9 +1855,9 @@ sub types {
     my $self = shift;
     my $lid  = shift;
 
-    my ($isa, $inst, $class) = @{$self->{usual_suspects}}{'isa', 'instance', 'class'};
-    return (map { defined $_ ? $_->[TYPE ] : () } $self->match (TM->FORALL, lid => $lid)),
-           (map { $_->[PLAYERS]->[0] }            $self->match (TM->FORALL, type => $isa, arole => $inst, aplayer => $lid, brole => $class));
+    my $a = $self->retrieve ($lid) and return ($a);
+    my ($ISA) = @{$self->{usual_suspects}}{'isa'};
+    return (map { $_->[PLAYERS]->[0] }   $self->match (FORALL, type => $ISA, instance => $lid));
 }
 
 sub typesT {
@@ -1736,10 +1887,12 @@ sub instances {
     my $self = shift;
     my $lid  = shift;
 
-    my ($isa, $inst, $class, $thing) = @{$self->{usual_suspects}}{'isa', 'instance', 'class', 'thing'};
-    return () if $lid eq $thing;                                             # a thing does not have direct instances? or everything?
+    my ($ISA, $THING) = @{$self->{usual_suspects}}{'isa', 'thing'};
+
+    return () if $lid eq $THING;                                             # a thing does not have direct instances? or everything?
+
     return  (map { $_->[LID ] }         $self->match (TM->FORALL, type => $lid)),
-            (map { $_->[PLAYERS]->[1] } $self->match (TM->FORALL, type => $isa, arole => $class, aplayer => $lid, brole => $inst))
+            (map { $_->[PLAYERS]->[1] } $self->match (TM->FORALL, type => $ISA, class => $lid))
 	;
 }
 
@@ -1751,43 +1904,6 @@ sub instancesT {
 
     return $self->midlets if $lid eq $thing;
     return map { $self->instances ($_) }   $self->subclassesT ($lid);
-}
-
-=pod
-
-=item B<is_a>
-
-I<$tm>->is_a (I<$something_lid>, I<$class_lid>)
-
-This method returns C<1> if the thing referenced by the first parameter is an instance of the class
-referenced by the second. The method honors transitive subclassing.
-
-=cut
-
-sub is_a {
-    my $self    = shift;
-    my $thingie = shift;
-    my $type    = shift;                                                         # ok, what class are looking at?
-
-    my ($isa, $inst, $class, $thing) = @{$self->{usual_suspects}}{'isa', 'instance', 'class', 'thing'};
-
-#warn "isa thingie $thingie class $type";
-
-    return 1 if $type eq $thing and                                              # is the class == 'thing' and
-                $self->{mid2iid}->{$thingie};                                    # and does the thingie exist?
-
-    my ($m) = $self->match (TM->FORALL, lid => $thingie);
-    return 1 if $m and                                                           # is it an assertion ? and...
-	        $self->is_subclass ($m->[TYPE], $type);                          # is the assertion type a subclass?
-
-    return 1 if grep ($self->is_subclass ($_, $type),                            # check all of the intermediate type whether there is a transitive relation
-		         map { $self->get_players ($_, $class) }                 # find the class player there => intermediate type
-		             $self->match (TM->FORALL,
-					   iplayer => $thingie,
-					   irole   => $inst,
-					   type    => $isa)
-		      );
-    return 0;
 }
 
 =pod
@@ -1814,7 +1930,7 @@ sub are_instances {
     my $self  = shift;
     my $class = shift;                                                           # ok, what class are we looking at?
 
-    my ($THING, $ISA, $CLASS, $INSTANCE) = @{$self->{usual_suspects}}{'thing', 'isa', 'class', 'instance'};
+    my ($THING, $ISA, $CLASS) = @{$self->{usual_suspects}}{'thing', 'isa', 'class'};
 
     my @rs;
     foreach my $thing (@{$_[0]}) {                                               # we work through all the things we got
@@ -1834,11 +1950,7 @@ sub are_instances {
 	push @rs, $thing and next                                                # we happily take one if
 	    if grep ($self->is_subclass ($_, $class),                            # finall we check all of the intermediate type whether there is a transitive relation
 		     map { $self->get_players ($_, $CLASS) }                     # then we find the 'class' value
-                           $self->match (FORALL,
-					  iplayer => $thing,                     # first we find all classes of the thing
-					  irole   => $INSTANCE,
-					  type    => $ISA));
-
+                           $self->match (FORALL, type => $ISA, instance => $thing));
         # nothing                                                                # otherwise we do not push
     }
     return \@rs;
@@ -1992,8 +2104,7 @@ sub variants {
 
 =head1 SEE ALSO
 
-L<TM::PSI>, L<TM::Resource>
-
+L<TM::PSI>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -2004,8 +2115,7 @@ itself.
 
 =cut
 
-our $VERSION  = '1.20';
-our $REVISION = '$Id: TM.pm,v 1.32 2006/09/29 02:12:53 rho Exp $';
+our $REVISION = '$Id: TM.pm,v 1.36 2006/11/21 09:14:10 rho Exp $';
 
 
 1;

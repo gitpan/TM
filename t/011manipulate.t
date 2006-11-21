@@ -87,11 +87,11 @@ use TM;
 
 { # reasserting
     my $tm = new TM;
-    my $npa = $tm->match ();
+    my $npa = $tm->match (TM->FORALL);
 
     $tm->assert (Assertion->new (type => 'is-a', roles => [ 'class', 'instance' ], players => [ 'rumsti', 'ramsti' ]));
     $tm->assert (Assertion->new (type => 'is-a', roles => [ 'class', 'instance' ], players => [ 'rumsti', 'ramsti' ]));
-    is (scalar $tm->match (),                                                  1+$npa, 'double assert 1');
+    is (scalar $tm->match (TM->FORALL),                                 1+$npa, 'double assert 1');
     is (scalar $tm->match (TM->FORALL, iplayer => 'tm://nirvana/rumsti'),    1, 'double assert 2');
 #warn Dumper $tm;
 }
@@ -193,9 +193,7 @@ use TM;
 		 map { $tm2->get_players ($_, 'tm://nirvana/subclass') }
 		 $tm2->match (TM->FORALL,
 			      type    => 'tm://nirvana/is-subclass-of', 
-			      arole   => 'tm://nirvana/superclass', 
-			      aplayer => 'tm://nirvana/rumsti', 
-			      brole   => 'tm://nirvana/subclass')
+			      superclass => 'tm://nirvana/rumsti')
 		 ], 
 		[
 		 'tm://nirvana/ramsti',
@@ -218,6 +216,7 @@ use TM;
 #warn Dumper $tm;
 
     ok (eq_set ([ $tm->instances  ('tm:assertion-type') ],[ 'tm:isa', 'tm:is-subclass-of' ]), 'subsumption: instances 1');
+
     ok (eq_set ([ $tm->instances  ('tm:scope') ],         [ 'tm:us' ]),                       'subsumption: instances 2');
     ok (eq_set ([ $tm->instances  ('tm:thing') ],         [  ]),                              'subsumption: instances 3');
 #warn Dumper [ $tm->instancesT ('thing') ];
@@ -323,6 +322,8 @@ use TM;
 }
 
 __END__
+
+TODO: are_instances, ...filters
 
 TODO: reification
 

@@ -14,8 +14,9 @@ WriteMakefile(
               'NOECHO'        => '@',
               'PREREQ_PM'     => {
 # do a 'make dependencies' to get an update
-'BerkeleyDB'                => '0.29',
+'BerkeleyDB'                => '0.26',
 "Config::General"    => 2.26,
+"Class::Trait"       => 0.22,
 "Log::Log4perl"    => 0.50,
 "Log::Log4perl::Appender::File"    => undef,
 'LWP::Simple'               => '1.41',
@@ -29,6 +30,7 @@ WriteMakefile(
 #"SOAP::Transport::HTTP"    => 0.55,
 #"Term::ReadLine"    => 1.01,
 "Test::More"    => 0.47,
+"Test::Deep"    => 0.093,
 "Test::Pod"    =>  1.00,
 "URI::Escape"    => 3.22,
 "URI::file"    => 4.14,
@@ -66,7 +68,21 @@ dependencies:
 	scandeps.pl `grep .pm MANIFEST` `grep bin/ MANIFEST`| grep -v undef
 # 	egrep -e '(^use | use ).*;' `find t -iname '*.t'; find lib -iname '*.pm'; find bin -iname '*'` | perl -ne '/^.+?:\\s*use ([A-Za-z0-9:]+)/; print "\$\$1\\n"' | egrep -v '(base|Carp|POSIX|vars|strict|constant|warnings|Class::Struct|Fcntl|Data::Dumper|Storable|lib|UNIVERSAL|Digest::MD5|IO::File|File::Temp|File::stat|Getopt::Long)' | egrep -v '^TM' | grep -v '^XTM' | sort -u | perl -ne 's/;//; chomp; next unless \$\$_; print "\\"\$\$_\\"    => "; eval "use \$\$_; print (\\\$\$\$\${_}::VERSION || \\"undef\\")"; print ",\\n"'
 
+manifesto:
+	find lib/ -iname '*.pm' | sort
+	find t    -iname '*.t'  | sort
+
+MAKE
+
+}
+
+
+sub debian {
+    return <<MAKE
+
+debian: dh-make-perl --build -cpan TM
 
 
 MAKE
+
 }

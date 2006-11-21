@@ -15,33 +15,50 @@ use Test::More qw(no_plan);
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-
 #== TESTS ===========================================================================
 
-require_ok( 'TM::Resource' );
+use TM;
 
-{
-  my $tm = new TM::Resource (baseuri => 'tm:');
-#warn Dumper $tm;
-  ok ($tm->isa('TM::Resource'),  'correct class');
-  ok ($tm->isa('TM'),            'correct class');
-    is ($tm->baseuri, 'tm:',       'baseuri ok');
+use Class::Trait;
+Class::Trait->initialize();
+
+require_ok( 'TM::ResourceAble' );
+Class::Trait->apply ('TM', 'TM::ResourceAble');
+
+{ # structural tests
+    my $tm = new TM (baseuri => 'tm:');
+    ok ($tm->isa('TM'),                 'correct class');
+    is ($tm->baseuri, 'tm:',            'baseuri ok');
+
+    ok ($tm->does ('TM::ResourceAble'), 'trait: ResourceAble');
+    ok ($tm->can ('url'),               'trait: can url');
 }
 
 {
-    my $tm = new TM::Resource (url => '123:');
-    is ($tm->url, '123:', 'url ok');
+    my $tm = new TM (baseuri => 'tm:');
+
+    is ($tm->url ('http://whatever'), $tm->url, 'url setter');
+    $tm->url ('io:stdin');
+    ok (time <= $tm->mtime && $tm->mtime <= time + 2, 'io:stdin time');
+    $tm->url ('io:stdout');
+    is ($tm->mtime, 0,                                'io:stdout time');
+    $tm->url ('inline:xxx');
+    ok (time <= $tm->mtime && $tm->mtime <= time + 2, 'inline: time');
 }
 
-{
-    my $tm = new TM::Resource (inline => 'xxx');
-    like ($tm->url,  qr/^inline:/, 'url ok');
-}
+__END__
 
 {
-    my $tm = new TM::Resource (file => 'xxx.xxx');
-    is ($tm->url, 'file:xxx.xxx', 'url ok');
+    my $tm = new TM (url => 'io:stdin');
+    is ($tm->url, 'io:stdin', 'url survives constructor');
 }
+
+# TODO file mtime, http mtime
+
+
+__END__
+
+#-- setup ------------------------------------------
 
 package Testus;
 

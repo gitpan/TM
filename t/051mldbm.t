@@ -21,6 +21,8 @@ sub _chomp {
     return $s;
 }
 
+##warn "\n# annoying warning about Data::Dumper can be ignored";
+
 #== TESTS ===========================================================================
 
 require_ok( 'TM::Materialized::MLDBM' );
@@ -28,9 +30,10 @@ require_ok( 'TM::Materialized::MLDBM' );
 {
     my $tm = new TM::Materialized::MLDBM (file => '/tmp/xxx');
     
-    ok ($tm->isa('TM'),                      'correct class');
-    ok ($tm->isa('TM::Resource'),            'correct class');
-    ok ($tm->isa('TM::Materialized::MLDBM'), 'correct class');
+    ok ($tm->isa('TM'),                             'correct class');
+    ok ($tm->isa('TM::Materialized::MLDBM'),        'correct class');
+    ok ($tm->does('TM::Synchronizable'),            'correct class');
+    ok ($tm->does('TM::Synchronizable::MLDBM'),     'correct class');
 }
 
 eval {
@@ -50,6 +53,8 @@ END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
     $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'ramsti', 'rumsti' ]));
     $tm->sync_out;
 }
+
+utime time + 1, time + 1, $tmp; # lets pretend that the file has been changed
 
 {
     my $tm = new TM::Materialized::MLDBM (file => $tmp, baseuri => 'tmx:');

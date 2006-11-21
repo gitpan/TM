@@ -382,7 +382,7 @@ sub _Lexer {
 ## unfortunately, this does not what I want
 ##  $$refINPUT =~ s/^([A-Za-z][A-Za-z0-9_-]*)(?!:)//o and return ('ID',        $1); # negative look-ahead
 ## tricky optimization: don't ask
-    $$refINPUT =~ s/^([A-Za-z][A-Za-z0-9_-]*)//o      and $aux = $1                 # save this for later
+    $$refINPUT =~ s/^([A-Za-z][.A-Za-z0-9_-]*)//o     and $aux = $1                 # save this for later
 	                                              and $$refINPUT !~ /^:[\w\/]/
                                                       and return ('ID',        $aux);
 

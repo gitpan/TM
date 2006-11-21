@@ -1,7 +1,9 @@
 package TM::Tau::Filter;
 
-use TM::Resource;
-use base qw(TM::Resource);
+use TM;
+use base qw(TM);
+use Class::Trait (TM::Synchronizable => { exclude => 'sync_out' },
+		  TM::ResourceAble   => { exclude => 'mtime' });
 
 use Data::Dumper;
 
@@ -96,6 +98,8 @@ If the URL is missing here (filters are resourced maps), then it defaults to C<n
 
 =back
 
+@@@ describe sync_in/out @@@@@@@@@@@@@@
+
 =cut
 
 sub new {
@@ -103,9 +107,26 @@ sub new {
     my %options = @_;
 
     $options{url} ||= 'null:'; # a filter may have nothing to which it is attached outgoingly
-    ref ($options{left}) and $options{left}->isa ('TM')
-	or $main::log->logdie ( scalar __PACKAGE__ .": left operand must be an instance of TM" );
-    return bless $class->SUPER::new (%options), $class;
+    if ($options{left}) {
+	ref ($options{left}) and $options{left}->isa ('TM')
+	    or $main::log->logdie ( scalar __PACKAGE__ .": left operand must be an instance of TM" );
+    }
+
+    $options{sync_in}  ||= 0;                                                          # defaults
+    $options{sync_out} ||= 0;
+    my $self = bless $class->SUPER::new (%options), $class;
+    
+    $self->sync_in if $self->{sync_in};                                                 # if user wants to sync at constructor time, lets do it
+    return $self;
+}
+
+# the DESTROY of the underlying map is done automatically, and that should try a sync_out (if materialized)
+# in case the user does not want a synchronisation, I have to avoid it by overriding _sync_in (or even sync_in)
+sub DESTROY {
+    my $self = shift;
+#warn "tau DESTROY"; #. Dumper $self;
+    return if $@; # we do not do anything in case of errors/exceptions
+    $self->sync_out if $self->{sync_out} && $self->can ('source_out');
 }
 
 =pod
@@ -117,14 +138,27 @@ sub new {
 =item B<left>
 
 I<$tm> = I<$filter>->left
+I<$filter>->left (I<$tm>)
 
-This is an accessor to get the left operand.
+This is an accessor (read and write) to get the left operand. In any case the left component is
+returned.
 
 =cut
 
 sub left {
     my $self = shift;
-    return $self->{left};
+    my $left = shift;
+    return $left ? $self->{left} = $left : $self->{left};
+}
+
+=pod
+
+=cut
+
+sub mtime {
+    my $self = shift;
+#warn "filter mtime with $self->{left}";
+    return $self->{left}->mtime;
 }
 
 =pod
@@ -134,7 +168,7 @@ sub left {
 I<$tm2> = I<$filter>->transform (I<$tm>)
 
 This method performs the actual transformation. If you develop your own filter, then this has to be
-overloaded. The default implementation here only hands back the same map.
+overloaded. The default implementation here only hands back the same map (I<identity> transformation).
 
 =cut
 
@@ -142,16 +176,20 @@ sub transform {
     return $_[1];
 }
 
-sub sync_in {
+sub source_in {
+#warn "filtrer source in";
     my $self = shift;
 
-#warn __PACKAGE__ . "sync in". $self->{_in_url};
-    if ($self->{left}->can ('sync_in')) {                   # this is a resourced map itself
-	$self->{left}->sync_in;                             # lets get the upstream crap, uhm map
-	$self->melt (
-		     $self->transform ($self->{left}, $self->{baseuri})
-		     );
-    }
+#warn __PACKAGE__ . "source in". $self->url;
+    $self->{left}->source_in;                             # lets get the upstream crap, uhm map
+#warn "left before  melt".Dumper $self->{left};
+    $self->melt ( $self->transform ($self->{left}, $self->{baseuri}) );
+#warn "whole thing after melt".Dumper $self;
+}
+
+sub sync_out {
+    my $self = shift;
+    $self->source_out; # do not think twice
 }
 
 =pod
@@ -160,7 +198,7 @@ sub sync_in {
 
 =head1 SEE ALSO
 
-L<TM>, L<TM::Resource>, L<TM::Tau::Filter::Analyze>
+L<TM>, L<TM::Tau::Filter::Analyze>, L<TM::Tau>
 
 =head1 AUTHOR INFORMATION
 
@@ -172,8 +210,8 @@ http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.2;
-our $REVISION = '$Id: Filter.pm,v 1.5 2006/09/29 06:53:45 rho Exp $';
+our $VERSION = 0.4;
+our $REVISION = '$Id: Filter.pm,v 1.7 2006/11/13 08:02:35 rho Exp $';
 
 1;
 

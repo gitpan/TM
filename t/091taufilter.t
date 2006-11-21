@@ -1,7 +1,8 @@
 package Rumsti;
 
-use TM::Resource;
-use base qw(TM::Resource);
+use TM;
+use base qw(TM);
+use Class::Trait ('TM::Synchronizable', 'TM::ResourceAble' => { exclude => 'mtime' } );
 
 our $sync_in_called = 0;
 our $sync_out_called = 0;
@@ -12,14 +13,19 @@ sub reset {
     $sync_out_called = 0;
 }
 
-sub _sync_in {
-    $sync_in_called++;
-#    warn "sync_in_called $sync_in_called";
+sub mtime {
+#warn "rumsti mtime";
+    return time + 1; # always a change
 }
 
-sub _sync_out {
+sub source_in {
+    $sync_in_called++;
+# warn "sync_in_called $sync_in_called";
+}
+
+sub source_out {
     $sync_out_called++;
-#    warn "sync_out_called $sync_out_called";
+# warn "sync_out_called $sync_out_called";
 }
 
 1;
@@ -38,9 +44,9 @@ sub reset {
     $sync_out_called = 0;
 }
 
-sub sync_out {
+sub source_out {
     $sync_out_called++;
-#    warn "sync_out_called $sync_out_called";
+# warn "Ramsti sync_out_called $sync_out_called";
 }
 
 1;
@@ -76,7 +82,7 @@ use TM;
 require_ok ('TM::Tau::Filter');
 
 eval {
-    my $f = new TM::Tau::Filter;
+    my $f = new TM::Tau::Filter (left => 1);
 }; like ($@, qr/must be an instance/, 'left must be a TM instance');
 
 { # structural
@@ -84,46 +90,47 @@ eval {
     my $f  = new TM::Tau::Filter (left => $tm);
 
     ok ($f->isa ('TM::Tau::Filter'),            'class');
-    ok ($f->isa ('TM::Resource'),               'superclass');
     ok ($f->isa ('TM'),                         'superclass');
+    ok ($f->does ('TM::ResourceAble'),          'trait: resource');
+    ok ($f->does ('TM::Synchronizable'),        'trait: sync');
     is ($f->url, 'null:', 'default url');
 
     is ($f->left, $tm,                          'left operand');
 }
 
-{
-    my $f = new TM::Tau::Filter (left => new Rumsti (url => 'in:'));
+{ # short chain
+    my $f = new Ramsti (left => new Rumsti (url => 'in:whatever'), url => 'out:whatever');
     $f->left->reset;
-    $f->sync_in;
-    is ($Rumsti::sync_in_called,  1,         'Rumsti: tried sync in once');
-    $f->sync_in;
-    is ($Rumsti::sync_in_called,  2,         'Rumsti: tried sync in twice');
-    $f->sync_out;
-    is ($Rumsti::sync_out_called, 0,         'Rumsti: tried sync out never');
-}
-
-{
-    my $f = new TM::Tau::Filter (left => new TM::Tau::Filter (left => new Rumsti (url => 'in:')));
-    $f->left->left->reset;
-    $f->sync_in;
-    is ($Rumsti::sync_in_called,  1,         'Rumsti: tried sync in once');
-    $f->sync_in;
-    is ($Rumsti::sync_in_called,  2,         'Rumsti: tried sync in twice');
-    $f->sync_out;
-    is ($Rumsti::sync_out_called, 0,         'Rumsti: tried sync out never');
-}
-
-{
-    my $f = new Ramsti (left => new Rumsti (url => 'in:'));
     $f->reset;
-    $f->left->reset;
     $f->sync_in;
     is ($Rumsti::sync_in_called,  1,         'Rumsti: tried sync in once');
     $f->sync_in;
     is ($Rumsti::sync_in_called,  2,         'Rumsti: tried sync in twice');
     $f->sync_out;
+    is ($Rumsti::sync_out_called, 0,         'Rumsti: tried sync out never');
     is ($Ramsti::sync_out_called, 1,         'Ramsti: tried sync out once');
 }
+
+{ # longer chain
+    my $f = new Ramsti (left => new Ramsti (left => new Rumsti (url => 'in:'),
+					    url  => 'what:ever'),
+			url => 'what:ever');
+    $f->left->left->reset;
+    $f->left->reset;
+    $f->reset;
+    $f->sync_in;
+    is ($Rumsti::sync_in_called,  1,         'Rumsti: tried sync in once');
+    $f->sync_in;
+    is ($Rumsti::sync_in_called,  2,         'Rumsti: tried sync in twice');
+    $f->sync_out;
+    is ($Rumsti::sync_out_called, 0,         'Rumsti: tried sync out never');
+    is ($Ramsti::sync_out_called, 1,         'Ramsti: tried sync out once');
+}
+
+__END__
+
+
+## TODO !!!!!!
 
 { # testing analysis filter
 

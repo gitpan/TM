@@ -118,17 +118,29 @@ sub mk_file {
   return $filename;
 }
 
+use TM::AsTMa::Fact;
+
 sub _parse {
     my $c = shift;
-    my $s = shift;
-    use TM::Materialized::AsTMa;
-    my $tm = new TM::Materialized::AsTMa (consistency => $c,
-					  inline      => $s);
-    $tm->sync_in;
-    return $tm;
+    my $text = shift;
+    my $ms = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps, consistency => $c);
+    my $p  = new TM::AsTMa::Fact (store => $ms);
+    my $i  = $p->parse ($text);
+    return $ms;
 }
 
 
+# sub _oldparse {
+#     my $c = shift;
+#     my $s = shift;
+#     use TM::Materialized::AsTMa;
+#     my $tm = new TM::Materialized::AsTMa (consistency => $c,
+# 					  inline      => $s);
+#     $tm->sync_in;
+#     return $tm;
+# }
+
+use TM;
 use TM::PSI;
 
 sub _closure { # computes transitive closure

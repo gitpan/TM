@@ -1,7 +1,8 @@
 package TM::Materialized::MLDBM2;
 
-use TM::Resource;
-use base qw (TM::Resource);
+use TM;
+use base qw (TM);
+use Class::Trait qw(TM::ResourceAble);
 
 use Data::Dumper;
 
@@ -17,28 +18,42 @@ TM::Materialized::MLDBM2 - Topic Maps, DBM Storage (synchronous)
 
 =head1 SYNOPSIS
 
+    use TM::Materialized::MLDBM2;
    {
     my $tm = new TM::Materialized::MLDBM2 (file => '/tmp/map.dbm');
     # modify the map here.....
 
-    } # it goes out of scope here, and all changes are written back
+    } # it goes out of scope here, and all changes are written back automagically
 
    # later in the game
    {
     my $tm = new TM::Materialized::MLDBM2 (file => '/tmp/map.dbm');
-    # we are back in business
+    # we are back in business, no sync necessary
     }
 
 =head1 DESCRIPTION
 
-This package just implements L<TM::Resource> with a BerkeleyDB store. Unlike
-L<TM::Materialized::MLDBM> this module does not need explicit synchronisation with the external
-resource (the DBM file here).  It ties content-wise with the DBM file at constructor time and unties
-at DESTROY time.
+This package just implements L<TM> with a BerkeleyDB store. Unlike L<TM::Materialized::MLDBM> this
+module does not need explicit synchronisation with the external resource (the DBM file here).  It
+ties content-wise with the DBM file at constructor time and unties at DESTROY time.
 
 The advantage of this storage form is that there is little memory usage. Only those fractions of the
 map are loaded which are actually needed. If one has very intense interactions with the map (as a
 query processor has), then this storage technique is not optimal.
+
+=head1 INTERFACE
+
+=head2 Constructor
+
+The constructor expects a hash with the following keys:
+
+=over
+
+=item B<file> (no default)
+
+This contains the file name of the DBM file to tie to.
+
+=back
 
 =cut
 
@@ -46,10 +61,9 @@ sub new {
     my $class = shift;
     my %options = @_;
 
-    my $whatever = $class->SUPER::new (%options);                                   # this ensures that we have a proper url component
-    $main::log->logdie ("no file specified")
-	unless $whatever->url =~ /^file:(.+)/;                                      # if it is not a file we have a problem
-    my $file = $1;                                                                  # otherwise get the file(name)
+    my $file = delete $options{file} or die $main::log->logdie ("no file specified");
+    my $whatever = $class->SUPER::new (%options, url => 'file:'.$file);             # this ensures that we have a proper url component
+
     my %self;                                                                       # forget about the object itself, make a new one
 
     if (-e $file) {                                                                 # file does exist already
@@ -70,12 +84,6 @@ sub new {
     return bless \%self, $class;                                                    # give the reference a blessing
 }
 
-sub _sync_in {
-}
-
-sub _sync_out {
-}
-
 sub DESTROY {                                                                       # if an object went out of scope
     my $self = shift;
     untie %$self;                                                                   # release the tie with the underlying resource
@@ -85,20 +93,19 @@ sub DESTROY {                                                                   
 
 =head1 SEE ALSO
 
-L<TM::Resource>
+L<TM>, L<TM::Materialized::MLDBM>
 
 =head1 AUTHOR INFORMATION
 
 Copyright 200[6], Robert Barta <drrho@cpan.org>, All rights reserved.
 
-This library is free software; you can redistribute it
-and/or modify it under the same terms as Perl itself.
-http://www.perl.com/perl/misc/Artistic.html
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl
+itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
 our $VERSION  = '0.01';
-our $REVISION = '$Id: MLDBM2.pm,v 1.2 2006/09/28 08:26:02 rho Exp $';
+our $REVISION = '$Id: MLDBM2.pm,v 1.3 2006/11/13 08:02:34 rho Exp $';
 
 1;
 

@@ -4,13 +4,58 @@ package TM::PSI;
 
 =head1 NAME
 
-  TM::PSI - Topic Map management, (published) subject identifiers
+  TM::PSI - Topic Maps - PSI (published subject identifiers)
 
 =head1 DESCRIPTION
 
-???
+This package provides predefined subjects, all of which will be preloaded in B<every> map which is
+instantiated with the L<TM> package hierarchy. When the subjects are defined also their relationship
+are kept here (example: I<isa is an instance of an assertion>).
 
-@@@@
+Every such subject is defined by its
+
+=over
+
+=item B<item identifier>
+
+The internal identifier, which does not really mean much.
+
+=item B<subject identifier>
+
+The subject indicator(s), which is ultimately B<the one> which identifies any of the subjects here.
+
+=back
+
+B<NOTE>: For none of the subjects declared here a subject address exists. All concepts are
+TM-related concepts.
+
+The subjects are sorted:
+
+=over
+
+=item B<TMRM>-related
+
+These are the minimal subjects which make a map what it is. Examples are C<isa> and
+its related role (type) C<class> and C<instance>, and C<is-subclass-of> and its related
+roles.
+
+=item B<TMDM>-related (XTM things)
+
+These are the additional concepts which are mandated by TMDM.
+
+=item B<AsTMa>-related
+
+Here are more concepts which are needed by the AsTMa= language(s), such as C<template> or
+C<ontology>.
+
+=back
+
+For the details, please look into the code ;-)
+
+@@@ TODO: describe properly @@@
+
+B<NOTE>: This is still subject to quite dramatic changes. Grounding is such a beast.
+
 
 =cut
 
@@ -78,7 +123,7 @@ our $topicmaps_inc = {
 our $astma_inc = {
     mid2iid => {
 	'thing'          => [ 'http://virtual.cvut.cz/kifb/en/concepts/_entity.html' ],
-        'value'          => [ 'http://psi.tm.bond.edu.au/astma/2.0/#thing' ],
+        'value'          => [ 'http://psi.tm.bond.edu.au/astma/2.0/#value' ],
         'ontology'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#ontology' ],
         'implementation' => [ 'http://psi.tm.bond.edu.au/astma/2.0/#implementation' ],
         'template'       => [ 'http://psi.tm.bond.edu.au/astma/2.0/#template' ],
@@ -129,18 +174,16 @@ Copyright 200[1-6], Robert Barta <drrho@cpan.org>, All rights reserved.
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
-  L<http://www.perl.com/perl/misc/Artistic.html>
+  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.14';
-our $REVISION = '$Id: PSI.pm,v 1.25 2006/09/24 08:27:27 rho Exp $';
+our $VERSION  = '0.15';
+our $REVISION = '$Id: PSI.pm,v 1.26 2006/10/01 02:38:12 rho Exp $';
 
 1;
 
 __END__
-
-=pod
 
 use constant ONTOLOGY => '
 tau-object

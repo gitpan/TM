@@ -21,6 +21,8 @@ sub _chomp {
     return $s;
 }
 
+##warn "\n# annoying warning about Data::Dumper can be ignored";
+
 #== TESTS ===========================================================================
 
 require_ok( 'TM::Materialized::MLDBM2' );
@@ -33,15 +35,12 @@ my $tmp = '/tmp/xxx';
 
 END { unlink ($tmp) || warn "# cannot unlink tmp file"; }
 
-
  {
      my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
     
      ok ($tm->isa('TM'),                       'correct class');
-     ok ($tm->isa('TM::Resource'),             'correct class');
      ok ($tm->isa('TM::Materialized::MLDBM2'), 'correct class');
  }
-
 
 unlink ($tmp) || warn "# cannot unlink $tmp file, but that is ok";
 
@@ -143,8 +142,6 @@ my $whatever3; # just a temp
                 [ 'tm:characteristic', 'tm:occurrence', 
 		  'tm:unique-characteristic', 'tm:name' ]),                                  'subsumption: subclassesT 1');
 }
-
-
 
 __END__
 
