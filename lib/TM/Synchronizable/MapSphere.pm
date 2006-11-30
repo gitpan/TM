@@ -7,9 +7,8 @@ use TM;
 
 use Data::Dumper;
 
-use TM::ResourceAble;
-#use TM::Synchronizable;
-use base qw(TM::ResourceAble);
+use Class::Trait 'base';
+use Class::Trait 'TM::ResourceAble';
 
 #our @REQUIRES = qw(source_in source_out);
 
@@ -188,7 +187,7 @@ available.
 =cut
 
 our $VERSION  = 0.02;
-our $REVISION = '$Id: MapSphere.pm,v 1.1 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: MapSphere.pm,v 1.3 2006/11/25 08:46:59 rho Exp $';
 
 1;
 

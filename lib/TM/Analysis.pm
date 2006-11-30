@@ -3,6 +3,8 @@ package TM::Analysis;
 use TM;
 use Data::Dumper;
 
+use Class::Trait 'base';
+
 =pod
 
 =head1 NAME
@@ -13,11 +15,13 @@ TM::Analysis - Topic Maps, analysis functions
 
   use TM::Materialized::AsTMa;
   my $tm = new TM::Materialized::AsTMa (file => 'test.atm');
+  $tm->sync_in;
 
-  use TM::Analysis;
-  print Dumper TM::Analysis::clusters ($tm);
+  Class::Trait->apply ($tm, 'TM::Analysis');
 
-  print Dumper TM::Analysis::statistics ($tm);
+  print Dumper $tm->clusters;
+
+  print Dumper $tm->statistics;
 
 
 =head1 DESCRIPTION
@@ -132,7 +136,7 @@ sub statistics {
     my $stats; # result
 
     $stats->{nr_midlets} = scalar $tm->midlets;
-    $stats->{nr_maplets} = scalar $tm->match (TM->FORALL);
+    $stats->{nr_maplets} = scalar $tm->match_forall;
 
     { # clusters
 	my $clusters = TM::Analysis::clusters ($tm, use_roles => 1, use_type => 1);
@@ -143,6 +147,74 @@ sub statistics {
     # payload (basenames, occurrence data, variant
 
     return $stats;
+}
+
+=pod
+
+=item B<orphanage>
+
+This computes all topics which have either no supertype and also those which have no type. Without
+further parameters, it returns a hash reference with the following fields:
+
+=over
+
+=item C<untyped>
+
+Holds a list reference to all topic ids which have no type.
+
+=item C<empty>
+
+Holds a list reference to all topic ids which have no instance.
+
+=item C<unclassified>
+
+Holds a list reference to all topic ids which have no superclass.
+
+=item C<unspecified>
+
+Holds a list reference to all topic ids which have no subclass.
+
+=back
+
+Optionally, a list of the identifiers above can be passed in so that only that particular
+information is actually returned (some speedup):
+
+   my $o = TM::Analysis::orphanage ($tm, 'untyped');
+
+=cut
+
+sub orphanage {
+    my $self = shift;
+
+    my %types     = (); # each topic -> how many types
+    my %instances = (); # each topic -> how many instances
+    my %supers    = (); # each topic -> how many superclasses
+    my %subs      = (); # each topic -> how many subclasses
+
+    my ($ISA, $ISSC, $CLASS, $INSTANCE) = @{$self->{usual_suspects}}{'isa', 'is-subclass-of', 'class', 'instance'};
+
+    foreach my $a (values %{$self->{assertions}}) {
+	$types{$a->[TM->LID]}++; $instances{$a->[TM->TYPE]}++;
+
+	if ($a->[TM->TYPE] eq $ISA) {
+	    my ($class, $instance) = @{ $a->[TM->PLAYERS] };
+	    $types{$instance}++; $instances{$class}++;
+	} elsif ($a->[TM->TYPE] eq $ISSC) {
+	    my ($sub, $super) = @{ $a->[TM->PLAYERS] };
+	    $supers{$sub}++; $subs{$super}++;
+	}
+    }
+#warn Dumper (\%types , \%instances, \%supers, \%subs);
+
+    my @all = $self->midlets;
+    my %o;
+    foreach my $a (@_ ? @_ : qw(untyped empty unclassified unspecified)) {       # default is all
+	$o{$a} = [ grep !$types{$_},     @all ] if $a eq 'untyped';
+	$o{$a} = [ grep !$instances{$_}, @all ] if $a eq 'empty';
+	$o{$a} = [ grep !$supers{$_},    @all ] if $a eq 'unclassified';
+	$o{$a} = [ grep !$subs{$_},      @all ] if $a eq 'unspecified';
+    };
+    return \%o;
 }
 
 =pod
@@ -163,7 +235,7 @@ it under the same terms as Perl itself.
 =cut
 
 our $VERSION  = 0.4;
-our $REVISION = '$Id: Analysis.pm,v 1.2 2006/11/13 08:02:33 rho Exp $';
+our $REVISION = '$Id: Analysis.pm,v 1.3 2006/11/29 10:31:11 rho Exp $';
 
 
 1;

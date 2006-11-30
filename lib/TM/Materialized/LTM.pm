@@ -3,7 +3,7 @@ package TM::Materialized::LTM;
 use TM::Materialized::Stream;
 use base qw (TM::Materialized::Stream);
 
-use Class::Trait qw(TM::Serializable::LTM TM::Serializable TM::Synchronizable TM::ResourceAble);
+use Class::Trait 'TM::Serializable::LTM';
 
 use Data::Dumper;
 
@@ -56,16 +56,8 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.3';
-our $REVISION = '$Id: LTM.pm,v 1.4 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: LTM.pm,v 1.6 2006/11/29 10:31:16 rho Exp $';
 
 1;
 
 __END__
-
-  use XTM::LTM::MemoryBuilder;
-  my $ap = new XTM::LTM::MemoryBuilder(tm => new XTM::Memory (consistency => $consistency));
-  $ap->handle_ltm (text          => $ltm_stream,
-		   ##		     log_level     => 2,
-		   #auto_complete => $self->{auto_complete}
-		  );
-  return $ap->{tm};

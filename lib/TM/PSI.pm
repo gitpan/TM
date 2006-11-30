@@ -48,14 +48,26 @@ These are the additional concepts which are mandated by TMDM.
 Here are more concepts which are needed by the AsTMa= language(s), such as C<template> or
 C<ontology>.
 
+=item B<TMQL>-related
+
+Here are more concepts which are needed by TMQL.
+
 =back
 
-For the details, please look into the code ;-)
+To learn about these predefined concepts, you can do one of the following
 
-@@@ TODO: describe properly @@@
+   use TM::PSI;
+   warn Dumper ($TM::PSI::core, $TM::PSI::topicmaps_inc, $TM::PSI::astma_inc, $TM::PSI::tmql_inc);
 
-B<NOTE>: This is still subject to quite dramatic changes. Grounding is such a beast.
+=head2 Taxonometry
 
+Two association types are predefined by the standard(s): C<is-subclass-of> and C<isa>.  Together
+with these roles are defined C<subclass>, C<superclass> and C<instance>, C<class>, respectively.
+
+The TM::* suite of packages has these not only built in, but also works under the assumption that
+these association types and also the roles B<CANNOT> be subclassed themselves. This means that no
+map is allowed to use, say, C<is-specialization-of> as a subclass of C<is-subclass-of>.  The costs
+of this constraint is quite small compared to the performance benefits.
 
 =cut
 
@@ -142,6 +154,19 @@ our $tmql_inc = {
 		   ],
 };
 
+=pod
+
+=head2 Infrastructure Concepts
+
+To make the whole machinery work, every topic map must contain infrastructure topics such as
+C<name>, C<occurrence> etc. They are topics like the topics a user may put into the map. While this
+is the right thing to do, in practical situation you often will want to filter out these I<infrastructure topics>.
+You can always get a list of these via
+
+    $tm->mids (keys %{$TM::PSI::topicmaps->{mid2iid}});
+
+=cut
+
 
 our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
 %{$topicmaps->{mid2iid}}    = (%{$core         ->{mid2iid}},    
@@ -154,6 +179,8 @@ our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
 			       @{$tmql_inc     ->{assertions}},
 			       @{$astma_inc    ->{assertions}}
 			       );
+
+
 
 our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us', 'name', 'value');
 
@@ -178,8 +205,8 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = '0.15';
-our $REVISION = '$Id: PSI.pm,v 1.26 2006/10/01 02:38:12 rho Exp $';
+our $VERSION  = '0.16';
+our $REVISION = '$Id: PSI.pm,v 1.28 2006/11/29 10:31:15 rho Exp $';
 
 1;
 

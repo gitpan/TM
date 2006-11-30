@@ -270,5 +270,46 @@ eval {
 
 }
 
-__END__
+{ # topic search spec
+    my $tmdm = new TM::DM (map => $atm);
+    my $tm = $tmdm->topicmap;
 
+    eval {
+	$tm->topics (\ 'rumsti');
+    }; like ($@, qr/unhandled/i, _chomp($@));
+
+    eval {
+	$tm->topics (\ '+rumsti');
+    }; like ($@, qr/unknown/i, _chomp($@));
+
+
+    is (scalar $tm->topics,            scalar $atm->midlets, 'spec: empty, all topics there');
+    is (scalar $tm->topics (\ '+all'), scalar $atm->midlets, 'spec: expl, all topics there');
+
+    ok (eq_set ([ grep (!/[0-9a-f]{32}/, $atm->midlets) ],
+		[ map { $_->id } $tm->topics (\ '+all -associations -names -occurrences') ]),
+                                                              'spec: expl, all non assertion topics there');
+    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all +all') ],
+		[ map { $_->id } $tm->topics (\ '+all') ]),                  'spec: expl, no duplicates');
+
+#    warn Dumper [ map { $_->id } $tm->topics (\ '+all -names +names') ]; exit;
+
+    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names +names') ],
+		[ map { $_->id } $tm->topics (\ '+all +names') ]),          'spec: expl, no duplicates');
+
+    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names +names') ],
+		[ map { $_->id } $tm->topics (\ '+all') ]),                 'spec: expl, no duplicates');
+
+    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names -names') ],
+		[ map { $_->id } $tm->topics (\ '+all -names') ]),          'spec: expl, no duplicates');
+
+    ok (eq_set ([ map { $_->id } $tm->topics (\ '+names +occurrences') ],
+		[ map { $_->id } $tm->topics (\ '+occurrences +names') ]),  'spec: expl, commutative');
+
+#    warn Dumper [map {$_->{mid} } $tm->topics (\ '+all -infrastructure -associations -names -occurrences') ];
+    is (scalar $tm->topics (\ '+all -infrastructure -associations -names -occurrences'),
+	                               22,
+                                                             'spec: expl, all user, non assertion topics there');
+}
+
+__END__

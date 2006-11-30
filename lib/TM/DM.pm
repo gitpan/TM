@@ -1,5 +1,8 @@
 package TM::DM::TopicMap;
 
+use TM;
+use Data::Dumper;
+
 sub new {
     my $class = shift;
     return bless { @_ }, $class;
@@ -15,11 +18,52 @@ sub topics {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
 
-    if (@_) {
-	@_ = $map->mids (@_);                        # make all these fu**ing identifiers map-absolute
+    if ($_[0]) { # if there is some parameter
+	if (ref ($_[0]) ) {                          # whoohie, a search spec
+	    my $spec = ${$_[0]};
+	    my $l = []; # will be list
+	    while ($spec =~ s/([+-])(\w+)//) {
+#warn "working on $1   $2";
+		if ($2 eq 'all') {
+		    $l = _mod_list ($1 eq '+', $l, keys %{$map->{mid2iid}});
+		} elsif ($2 eq 'associations') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->ASSOC, values %{$map->{assertions}}));
+		} elsif ($2 eq 'names') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->NAME,  values %{$map->{assertions}}));
+		} elsif ($2 eq 'occurrences') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->OCC,   values %{$map->{assertions}}));
+		} elsif ($2 eq 'infrastructure') {
+		    $l = _mod_list ($1 eq '+', $l, $map->mids (keys %{$TM::PSI::topicmaps->{mid2iid}}));
+		} else {
+		    $main::log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+		}
+	    }
+	    $main::log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+	    @_ = @$l;
+	} else {
+	    @_ = $map->mids (@_);                    # make all these fu**ing identifiers map-absolute
+	}
     } else {                                         # if the list was empty, we assume every thing in the map
 	@_ = keys %{$map->{mid2iid}};
     }
+sub _mod_list {
+    my $pm = shift; # non-zero for +
+    my $l  = shift;
+    if ($pm) {
+	return [ @$l, @_ ];
+    } else {
+	my %minus;
+	@minus{ @_ } = (1) x @_;
+        return [ grep (!$minus{$_}, @$l) ];
+    }
+}
+    @_ = _mk_uniq (@_);
+
+sub _mk_uniq {
+    my %uniq;
+    @uniq {@_} = (1) x @_;
+    return keys %uniq;
+}
 
     return map { 
 	         TM::DM::Topic->new (
@@ -55,9 +99,6 @@ sub reifier {
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $mid);
 }
 
-# dies with invlaid id
-# create ALWAYS new copy!!!
-
 sub topic {
     my $self = shift;
     my $id   = shift;
@@ -85,8 +126,6 @@ sub _mk_topic {
                                sids => [ @{$midlet->[TM->INDICATORS]} ]);
 }
 
-## only one!
-
 sub subjectLocators {
     my $self = shift;
     return ($self->{sad});
@@ -96,8 +135,6 @@ sub subjectIdentifiers {
     my $self = shift;
     return @{ $self->{sids} };
 }
-
-# only one identifier
 
 sub id {
     my $self = shift;
@@ -177,8 +214,6 @@ sub type {
     my $map    = $self->{tmdm}->{map};
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $map->retrieve ($self->{lid})->[TM->TYPE]);
 }
-
-# only one scope!!!
 
 sub scope {
     my $self   = shift;
@@ -346,11 +381,6 @@ sub new {
     return bless { @_ }, $class;
 }
 
-## NO id
-
-## no reifier
-
-
 
 
 sub player {
@@ -381,17 +411,169 @@ use Data::Dumper;
 
 =head1 NAME
 
-TM::DM - Topic Maps, TMDM layer
+TM::DM - Topic Maps, read-only TMDM layer
 
 =head1 SYNOPSIS
 
+   # somehow acquire a map (see TM and its subclasses)
+   my $tm = ....
+
+   # put a TMDM layer on top of it
+   use TM::DM;
+   my $tmdm = new TM::DM (map => $tm);
+
+   # get the TMDM topic map item
+   my $topicmap = $tmdm->topicmap;
+
+   # ask for all topics
+   my @topics = $topicmap->topics;
+   # for all associations
+   my @assocs = $topicmap->associations;
+
+   # get a particula topic
+   my $adam = $topicmap->topic ('adam');
+
+   # get some of its properties
+   $adam->id;
+   $adam->subjectLocators;
+   $adam->subjectIdentifiers;
+   $adam->parent;
+   my @ns = $adam->names;
+   my @os = $adam->occurrence;
+
+   # similar for assocs
+   my @as = $topicmmap->associations (iplayer => 'adam');
+   $as[0]->type;
+   $as[0]->parent;
+   my @rs = $as[0]->roles;
+
 =head1 ABSTRACT
+
+This package provides a TMDM-ish (read-only) view on an existing topic map.
 
 =head1 DESCRIPTION
 
-@@@@@@@@ read-only for now
+TMDM, the Topic Maps Data Model
 
-=head1 INTERFACE
+   http://www.isotopicmaps.org/sam/sam-model/
+
+is the ISO standard for the I<high-level> model for Topic Maps. 
+
+
+=head2 TMDM Concepts
+
+TMDM's main concepts are the
+
+=over
+
+=item I<topic map item>
+
+containing any number of topic and association items
+
+=item I<topic item>
+
+containing any number of names, occurrence items, subject
+locators and subject identifiers
+
+=item I<association item>
+
+containing a type, a scope and any number of role items
+
+=item I<name item>
+
+containing a string, a type and a scope
+
+=item I<occurrence item>
+
+containing a data value (together with its data type), a type
+and a scope
+
+=item I<role item>
+
+containing a type and a player
+
+=back
+
+All items have an I<item id> and all (except the map) have a parent
+which links back to where the item belongs.
+
+This package implements for each of the above a class and access methods to retrieve actual
+structure and values from an existing map. Nota bene, there are some deviations:
+
+=over
+
+=item
+
+only ONE identifier per item is supported
+
+=item
+
+at most ONE subject locator per topic is supported
+
+=item
+
+no variants are supported (might be added at some stage, poke me)
+
+=item
+
+a scope consists only of a single topic
+
+=item
+
+role items do not have an identity, so they also cannot be reified
+
+=back
+
+=head2 Modus Operandi
+
+Before you can use the TMDM layer, you need TM information in the form of a L<TM> object. Any
+subclass should do, materialized and non-materialized maps both should be fine. Only with such
+a map you can instantiate a layer:
+
+  use TM::Materialized::AsTMa;
+  my $tm = new TM::Materialized::AsTMa (file => 'test.atm');
+
+  use TM::DM;
+  my $tmdm = new TM::DM (map => $tm);
+
+Probably the first thing you need to do is to get a handle on the whole topic map:
+
+  my $topicmap = $tmdm->topicmap;
+
+That is delivered as an instance of TM::DM::TopicMap as described below. From then you start to
+extract topics and associations and that way drill down.
+
+=head2 Implementation Notes
+
+This implementation only supports B<reading> map information, not changing it or modifying the
+structure of the map. Not that it is impossible to do, but many applications get their map content
+from elsewhere and a read/write interface is an overkill in these cases.
+
+All objects generated here are B<ephemeral>, i.e. they are only instantiated because you wanted the
+map information embedded into them. This implies that if you ask for one and the same topic twice,
+you are getting two copies of the topic information. The following will not work as expected:
+
+   my $t0 = $topicmap->topic ('adam');
+   my $t1 = $topicmap->topic ('adam');
+
+   warn "have the same topic!" if $t0 == $t1;
+
+This will work:
+
+   warn "have the same topic!" if $t0->id eq $t1->id;
+
+=head1 INTERFACES
+
+=head2 TM::DM
+
+The TM::DM class itself does not offer much functionality itself. It one keeps the connection to the
+background map.
+
+=head3 Constructor
+
+The constructor expects exactly one parameter, namely the background map.
+
+I<$tmdm> = new TM::DM (map => I<$tm>)
 
 =cut
 
@@ -403,6 +585,20 @@ sub new {
     return bless { %options }, $class;
 }
 
+=pod
+
+=head3 Methods
+
+=over
+
+=item B<topicmap>
+
+I<$topicmap> = I<$tmdm>->topicmap
+
+This method generates a Topic Map item. See TM::DM::TopicMap
+
+=cut
+
 sub topicmap {
     my $self = shift;
     return new TM::DM::TopicMap (tmdm => $self);
@@ -411,36 +607,266 @@ sub topicmap {
 
 =pod
 
+=back
+
+=head2 TM::DM::TopicMap
+
+This class provides access to all TMDM properties:
+
+=over
+
+=item B<id>
+
+This returns the item identifier.
 
 =item B<topics>
 
-I<@topics> = I<$tmdm>->topics (I<@list-of-ids>)
+I<@topics> = I<$topicmap>->topics (I<@list-of-ids>)
 
-I<@topics> = I<$tmdn>->topics
+I<@topics> = I<$topicmap>->topics
 
-@@@
+I<@topics> = I<$topicmap>->topics (I<$selection-spec>
 
-This method expects a list containing topic identifiers and returns C<TM::DM::Topic> references
-representing these topics. If any of the input identifiers do not denote a valid topic in the map,
-undef will be returned in its place.
+This method expects a list containing topic valid identifiers and returns for each of the topics a
+C<TM::DM::Topic> reference. If any of the input identifiers do not denote a valid topic in the map,
+undef will be returned in its place. If the parameter list is empty, B<all> topics will be
+returned. Have fun, I mean, use with care.
 
-If the parameter list is empty, B<all> toplets will be returned. Have fun, I mean, use with care.
-
- Example:
+Examples:
 
     # round tripping topic ids
-    print map { $_->[ID] } $tmdm->topics ('abel', 'cain' );
+    print map { $_->id } $topicmap->topics ('abel', 'cain' );
 
-    print "topic known" if $tmdm->topics ('god');
+    print "he again" if $topicmap->topics ('god');
 
-=cut
+If a search specification is used, it has to be passed in as string reference. That string contains
+the selection specification using the following simple language:
 
+    specification -> { ( '+' | '-' ) group }
 
-=pod
+whereby I<group> is one of the following:
+
+=over
+
+=item C<all>
+
+refers to B<all> topics in the map. This includes those supplied by the application, but also all
+associations, names and occurrences. The list also includes all infrastructure topics which the
+software maintains for completeness.
+
+=item C<associations>
+
+refers to all topics which are actually associations
+
+=item C<names>
+
+refers to all topics which are actually name characteristics
+
+=item C<occurrences>
+
+refers to all topics which are actually occurrences
+
+=item C<infrastructure>
+
+refers to all topics the infrastructure has provided. This implies that
+
+   all - infrastructure
+
+is everything the user (application) has supplied.
+
+=back
+
+Examples:
+
+     # all topics except those from TM::PSI
+     $tm->topics (\ '+all -infrastructure')
+
+     # everything from the user
+     $tm->topics (\ '+user')
+
+     # like above, without assocs but with names and occurrences
+     $tm->topics (\ '+user -assocs')
+
+=item B<associations>
+
+I<@as> = I<$topicmap>->associations
+
+I<@as> = I<$topicmap>->associations (I<%search_spec>);
+
+This method retrieves the list of ALL associations when it is invoked without a search
+specification. See L<TM> for that.
+
+=item B<reifier>
+
+This returns the topic item which reifies the association. C<undef> is returned if there is none.
+
+=item B<topic>
+
+This returns a topic item with that id. This method will die if the id is invalid. Note that
+always new copies are made.
+
+=back
+
+=head2 TM::DM::Topic
+
+=over
+
+=item B<subjectLocators>
+
+Returns the (only) subject locator (URI string) in the topic item or C<undef> if there is none.
+
+=item B<subjectIdentifiers>
+
+Returns a list of URI strings. Might be empty.
+
+=item B<id>
+
+Returns the item id.
+
+=item B<parent>
+
+Returns a TM::DM::TopicMap item in which this topic is embedded.
+
+=item B<names>
+
+I<@names> = I<$topic>->names
+
+Returns a list of name items.
+
+=item B<occurrences>
+
+I<@occurrences> = I<$topic>->occurrences
+
+Returns a list of occurrences items.
+
+=item B<roles>
+
+I<@roles> = I<$topic>->roles
+
+Returns a list of TM::DM::Role items where this topic plays any role.
+
+=back
+
+=head2 TM::DM::Association
+
+=over
+
+=item B<id>
+
+Returns the item id.
+
+=item B<type>
+
+Returns a TM::DM::Topic item which is the type of the association.
+This is always defined.
+
+=item B<scope>
+
+Returns the scope of the association in the form of a single TM::DM::Topic
+item. This is always defined.
+
+=item B<roles>
+
+I<@roles> = I<$assoc>->roles
+
+Returns a list of roles of the association. Each role is a TM::DM::Role item.
+
+=item B<parent>
+
+Returns a TM::DM::TopicMap item for the embedding map.
+
+=item B<reifier>
+
+Returns a TM::DM::Topic item if this association is reified. C<undef> otherwise.
+
+=back
+
+=head2 TM::DM::Occurrence
+
+=over
+
+=item B<id>
+
+Returns the item id.
+
+=item B<value>
+
+Returns the value (together with the data type) in the form of a L<TM::Literal>
+object.
+
+=item B<type>
+
+Returns a TM::DM::Topic item which is the type of the occurrence
+This is always defined.
+
+=item B<scope>
+
+Returns the scope of the occurrence in the form of a single TM::DM::Topic
+item. This is always defined.
+
+=item B<reifier>
+
+Returns a TM::DM::Topic item if this occurrence is reified. C<undef> otherwise.
+
+=item B<parent>
+
+Returns the TM::DM::Topic item of the topic where this occurrence is part of.
+
+=back
+
+=head2 TM::DM::Name
+
+=over
+
+=item B<id>
+
+Returns the item id.
+
+=item B<value>
+
+Returns the string value of the name.
+
+=item B<type>
+
+Returns a TM::DM::Topic item which is the type of the name.
+This is always defined.
+
+=item B<scope>
+
+Returns the scope of the name in the form of a single TM::DM::Topic
+item. This is always defined.
+
+=item B<reifier>
+
+Returns a TM::DM::Topic item if this name is reified. C<undef> otherwise.
+
+=item B<parent>
+
+Returns the TM::DM::Topic item of the topic where this name is part of.
+
+=back
+
+=head2 TM::DM::Role
+
+=over
+
+=item B<player>
+
+Returns a TM::DM::Topic item for the topic which is the player in this role.
+
+=item B<type>
+
+Returns a TM::DM::Topic item for the topic which is the type of this role.
+
+=item B<parent>
+
+Returns a TM::DM::Association item of the association where this role is in.
+
+=back
 
 =head1 SEE ALSO
 
-L<TM::PSI>
+L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -451,456 +877,10 @@ itself.
 
 =cut
 
-our $VERSION  = '0.01';
-our $REVISION = '$Id: DM.pm,v 1.2 2006/11/17 09:22:45 rho Exp $';
+our $VERSION  = '0.02';
+our $REVISION = '$Id: DM.pm,v 1.3 2006/11/22 07:40:33 rho Exp $';
 
 1;
 
 __END__
-
-
-=head1 Mid-Level Interface
-
-=cut
-
-
-
-#-- Characteristics -------------------------------------------------------
-struct 'Characteristic' => [
-       sid     => '$',
-       scope   => '$',
-       type    => '$',
-       kind    => '$',
-       value   => '$',
-       hash    => '$',
-];
-
-use constant KIND_ASSOC => 0;
-use constant KIND_BN    => 1;
-use constant KIND_OC    => 2;
-
-our @Chars    = (KIND_ASSOC, KIND_BN, KIND_OC);
-our @CharInfo = ( [], # empty, so what?
-		  [ 'name' ,               'value' ],
-		  [ 'has-occurrence',  'value' ]);
-
-
-
-#-- Toplets ---------------------------------------------------------------
-struct 'Toplet' => [
-       lid     => '$',
-       sad     => '$',
-       sids    => '@',
-       chars   => '@',
-];
-
-#use constant LID      => 0;
-use constant SAD      => 1;
-use constant SIDS     => 2;
-use constant CHARS    => 3;
-
-#use constant SCOPE    => 1;
-#use constant TYPE     => 2;
-#use constant KIND     => 3;
-use constant VALUE    => 4;
-use constant HASH     => 5;
-
-#-- Maplets ---------------------------------------------------------------
-struct Maplet => [
-        lid         => '$',
-        scope       => '$',
-        type        => '$',
-	kind        => '$', # not used
-        roles       => '$',
-	players     => '$',
-];
-
-#use constant ROLES   => 4;
-#use constant PLAYERS => 5;
-
-=pod
-
-=head2 Toplets and Maplets
-
-Where the classical introductions of XTM Topic Maps introduce the
-concept of a topic and the association, we here have a slightly
-different view to organize Topic Map data.
-
-A I<maplet> is very similar to an association in that it consists of a
-association type topic, topics for roles and player topics and a topic
-for the scope of the association. A I<full maplet> also includes
-B<ALL> information about the involved topics. In this implementation
-you only get the references to the topics; or rather not to the topics
-themselves, but to I<toplet>s.
-
-I<toplet>s consist only of topic characteristics, like the (scoped)
-basename(s), (scoped) occurrence(s) and subject indicators.
-
-=head2 Toplets and Maplets
-
-For retrieval there are several ways: If the identifier is known, then
-toplets (and maplets, respectively) can be quickly extracted. This is
-mostly useful for toplets, though, unless you happen to know an
-identifier for the maplet.
-
-To retrieve these, probably more useful is to use query specifications.
-These constrain parts (or all) of the information you are looking for.
-For example,
-
-   type    => 'isa',
-   aplayer => 'dog',
-   arole   => 'class'
-
-would be looking for all maplets being a (direct or indirect) instance
-of C<isa> which have a player C<dog> which plays the role C<class>
-there.
-
-Most general but also the slowest method, is to query the map with a
-@@@@ path expression (see L<TM::AsTMa::Path>).
-
-=head2 Identifiers
-
-Identifiers with TMs in general are a BIG pain. This interface adopts
-the approach that developers can use a I<local identifier> as long as
-possible and only have to fall back to full URI (URNs or URLs) in
-cases this does not work.
-
-A I<local identifier> is a string which can identify a toplet in a
-map. Normally, these identifiers are maintained by the parsers when a
-map is read from a file, although there is no obligation to do so
-(neither by this package nor by the TMDM).
-
-Internally, toplets are B<always> identified through URIs which are
-built from the local identifier prefixed by the base URI. So, when you
-have loaded a map with a base URI C<http://something/> and in that
-map was a topic defined labelled C<else>, then the toplet's full
-URI is C<http://something/else>.
-
-You can use either this consistently or you may use the function
-C<mids>.
-
-I<Global identifiers> can also be used to identify toplets. In either
-case, these must be fully-fledged URIs. To distinguish between URIs
-which are a I<subject address> and those which refer to a I<subject
-indicator> we have the convention that for the latter you always have
-to use Perl string references.
-
-=head2 Copy Semantics
-
-Whenever you extract information via this interface, you will get a
-Perl data structure. The policy is that no underlying data structures
-are passed back to the calling application.
-
-This means that it should be safe for you to alter everything you get
-(although you mostly will not do this), without actually changing the
-content of the map.
-
-The downside of this is that every implementation of this interface has to copy the whole
-information and cannot simply pass on references.  This certainly has an impact on the
-performance. If that is an issue then you might want to consider to use the underlying technology.
-
-=head2 Identifier-related Methods
-
-Every implementation of this class must offer a method to convert a I<short identifier> into its
-long, canonical form.
-
-=over
-
-=item B<mids> [ ABSTRACT ]
-
-I<@sids> = I<$tm>->mids (I<@list-of-ids>)
-
-I<$sids> = I<$tm>->mids (I<$id>)
-
-This method takes a list of identifiers (relative or absolute ones)
-and tries to expand all into their absolute form. C<undef> will be
-mapped to C<undef>. Identifiers which are unknown remain as they are.
-
-=cut
-
-#@@@@@@@@@@@@@@
-
-=pod
-
-=item B<maplets> [ ABSTRACT ]
-
-I<@maplets> = I<$tm>->maplets (I<%match_specification>)
-
-This method takes a match specification returns a list of maplet references which match the specification.
-
-TBW: match specification
-
-=cut
-
-sub maplets {
-  my $self  = shift;
-
-#warn "maplets mat";
-#warn "return ".Dumper #
-
-  my %query = @_;                                             # query spec is actually a hash
-
-  grep ($query{$_} = $_ eq 'char' ? 
-                        $_ : (
-		     $_ eq 'roles' || $_ eq 'players' ?
-                        [ $self->mids (@{$query{$_}}) ] :
-			$self->mids ($query{$_})
-			      ),
-	keys %query); # make sure that all identifiers are map-absolute
-
-  return
-      map { defined $_ ?
-		bless [ 
-			$_->[LID],
-			$_->[SCOPE],
-			$_->[TYPE],
-			undef,
-			[ @{ $_->[ROLES] } ],
-			[ @{ $_->[PLAYERS] } ],
-			], 'Maplet' 
-		:
-		undef }
-         $self->match (FORALL, %query);
-}
-
-=pod
-
-=item B<assert_toplets>
-
-I<$tm>->assert_toplets (I<@toplet_list>)
-
-This method takes a list of toplets and puts it into the underlying
-store. All topic references which are relative will be automatically
-made absolute.
-
-As toplets consist only of characteristics, only these are added. No
-further information about the topic itself is stored. If you want that
-that topic should be an instance of something, then this must either
-be done with a separate maplets.
-
-The method returns nothing.
-
-=cut
-
-my %kind2type = (TM->KIND_BN  => 'has-basename',
-		 TM->KIND_OC  => 'has-uri-occurrence',
-		 TM->KIND_IN  => 'has-data-occurrence');
-
-my %kind2role = (TM->KIND_BN  => 'basename',
-		 TM->KIND_OC  => 'xtm-psi-occurrence',
-		 TM->KIND_IN  => 'xtm-psi-occurrence');
-
-sub assert_toplets {
-  my $self = shift;
-
-  foreach my $t (@_) {
-      my $id = $t->[LID];
-#warn "dealing with $id";
-      foreach my $c (@{$t->[CHARS]}) {
-	  $self->assert ( [ undef,                                                     # lid
-			    $c->[SCOPE],                                 # scope
-			    $kind2type{$c->[KIND]},                      # type
-			    $c->[KIND],                                  # kind
-			    [ 'thing', $kind2role{$c->[KIND]} ],         # roles
-			    [ $id,     \$c->[VALUE]],                    # players
-			    undef                                                      # canon
-			    ]
-			  );
-      }
-  }
-  $self->{last_mod} = Time::HiRes::time;
-}
-
-
-
-=pod
-
-=item B<retract_toplets>
-
-I<$tm>->retract_toplets (I<@identifier_list>)
-
-This method takes a list of (local or global) identifiers and removes
-all B<maplet> information about these topics. This method does not
-return anything.
-
-B<Note>: To get completely rid of these toplets (and also all which
-have been orphaned by deleting the maplets), you will have to use
-C<consolidate>.
-
-=cut
-
-sub retract_toplets {
-  my $self = shift;
-
-  foreach ($self->mids (@_)) {
-      $self->retract (map { $_->[LID] } $self->match (FORALL, anyid => $_));
-  }
-  $self->{last_mod} = Time::HiRes::time;
-}
-
-=pod
-
-=item B<assert_maplets>
-
-I<$tm>->assert_maplets (I<@maplet_list>)
-
-This method takes a list of maplets and stores then into the underlying
-store.
-
-The method does not return anything.
-
-=cut
-
-sub assert_maplets {
-  my $self  = shift;
-
-  map {
-      $self->assert ( [ $_->[LID],               # lid
-			 $_->[SCOPE],             # scope
-			 $_->[TYPE],              # type
-			 ASSOC,                      # kind
-			 [ @{$_->[ROLES]} ],      # roles (cloned)
-			 [ @{$_->[PLAYERS]} ],    # players (cloned)
-			 undef                                  # canon
-			 ]
-		       );
-  } @_;
-  $self->{last_mod} = Time::HiRes::time;
-}
-
-=pod
-
-=item B<retract_maplets>
-
-I<$tm>->retract_maplets (I<@identifier_list>)
-
-This method takes a list of identifiers and removes the maplets for these
-identifiers.
-
-The method does not return anything.
-
-=cut
-
-sub retract_maplets {
-  my $self = shift;
-
-  $self->retract (@_);
-  $self->{last_mod} = Time::HiRes::time;
-}
-
-=pod
-
-=back
-
-=head2 Maplet-related Functions
-
-While maplet components are all accessible, we provide here some useful functions to test maplets for particular
-role/player combinations or to extract particular players.
-
-=over
-
-=item B<is_player>, B<is_x_player>
-
-I<$tm>->is_player (I<$maplet>, I<$player_lid>, [ I<$role_lid> ])
-
-I<$ms>->is_x_player (I<$maplet>, I<$player_id>, [ I<$role_id> ])
-
-This function returns true (1) if the identifier specified by the second parameter plays any role in the maplet
-provided as first parameter. If the role id is provided as third parameter then it must be exactly this role that is
-played.
-
-The 'x'-version is using equality instead of 'subclassing'.
-
-=cut
-
-sub xxxxis_player {
-    my $self = shift;
-    my $m = shift;
-
-    my $p = $self->mids (shift) or die "must specify player"; # : ".Dumper ([ $m ])." and role is ".shift;
-    my $r = $self->mids (shift); # may be undefined
-
-    die "must specify a player '$p' for role '$r'" unless $p;
-
-    if ($r) {
-	my ($ps, $rs) = ($m->[PLAYERS], $m->[ROLES]);
-
-	for (my $i = 0; $i < @$ps; $i++) {
-	    next unless $ps->[$i] eq $p;
-	    next unless $self->is_subclass ($rs->[$i], $r);
-	    return 1;
-	}
-    } else {
-	return 1 if grep ($_ eq $p, @{$m->[PLAYERS]});
-    }
-    return 0;
-}
-
-sub xxxxxis_x_player {
-    my $self = shift;
-    my $m = shift;
-    my $p = $self->mids (shift) or die "must specify x-player"; #: ".Dumper ([ $m ]);
-    my $r = $self->mids (shift); # may be undefined
-
-    if ($r) {
-	my ($ps, $rs) = ($m->[PLAYERS], $m->[ROLES]);
-
-	for (my $i = 0; $i < @$ps; $i++) {
-	    next unless $ps->[$i] eq $p;
-	    next unless $rs->[$i] eq $r;
-	    return 1;
-	}
-    } else {
-	return 1 if grep ($_ eq $p, @{$m->[PLAYERS]});
-    }
-    return 0;
-}
-
-=pod
-
-=item B<get_players>
-
-I<@ps> = I<$tm>->get_players (I<$maplet>, I<$role_id> )
-
-This function returns the players for the given role. As several players could play the same role this returns a list
-
-=cut
-
-sub xxxxxget_players {
-    my $self = shift;
-    my $a = shift;
-    my $r = $self->mids (shift) or die "must specify role";
-    
-    my ($ps, $rs) = ($a->[PLAYERS], $a->[ROLES]);
-    
-    my @ps;
-    for (my $i = 0; $i < @$ps; $i++) {
-	next unless $self->is_subclass ($rs->[$i], $r);
-	push @ps, $ps->[$i];
-    }
-    return @ps;
-}
-
-=pod
-
-=item B<is_role>
-
-I<$tm>->is_role (I<$maplet>, I<$role_id>)
-
-This function returns true (1) if the identifier specified by the second parameter is a role in the maplet provided
-as first parameter.
-
-=cut
-
-sub xxxxis_role {
-    my $self = shift;
-    my $m    = shift;
-    my $r    = $self->mids (shift) or die "must specify role"; # .Dumper ([ $m ]);
-
-    return 1 if grep ($self->is_subclass ($_, $r), @{$m->[ROLES]});
-}
-
-=pod
-
-=back
 

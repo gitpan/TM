@@ -2,7 +2,8 @@ package TM::Materialized::MLDBM;
 
 use TM;
 use base qw (TM);
-use Class::Trait qw(TM::Synchronizable::MLDBM TM::Synchronizable TM::ResourceAble);
+#use Class::Trait qw(TM::Synchronizable::MLDBM TM::Synchronizable TM::ResourceAble);
+use Class::Trait qw(TM::Synchronizable::MLDBM);
 
 =pod
 
@@ -76,7 +77,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.02';
-our $REVISION = '$Id: MLDBM.pm,v 1.4 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: MLDBM.pm,v 1.5 2006/11/23 10:02:55 rho Exp $';
 
 1;
 

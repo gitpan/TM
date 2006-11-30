@@ -1,7 +1,10 @@
 package TM::Synchronizable::MLDBM;
 
-use TM::Synchronizable;
-use base qw (TM::Synchronizable);
+use Class::Trait 'base';
+use Class::Trait 'TM::Synchronizable';
+
+##use TM::Synchronizable;
+##use base qw (TM::Synchronizable);
 
 use Data::Dumper;
 
@@ -70,7 +73,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.02';
-our $REVISION = '$Id: MLDBM.pm,v 1.1 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: MLDBM.pm,v 1.2 2006/11/23 10:02:55 rho Exp $';
 
 1;
 

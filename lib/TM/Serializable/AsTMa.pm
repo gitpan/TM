@@ -1,6 +1,7 @@
 package TM::Serializable::AsTMa;
 
-use base qw (TM::Serializable);
+use Class::Trait 'base';
+use Class::Trait 'TM::Serializable';
 
 use Data::Dumper;
 
@@ -132,7 +133,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.2';
-our $REVISION = '$Id: AsTMa.pm,v 1.1 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: AsTMa.pm,v 1.3 2006/11/29 10:31:16 rho Exp $';
 
 1;
 

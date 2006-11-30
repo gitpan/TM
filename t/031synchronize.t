@@ -24,7 +24,7 @@ Class::Trait->initialize();
 
 require_ok( 'TM::Synchronizable::Null' );
 
-Class::Trait->apply ('TM', qw(TM::Synchronizable::Null TM::Synchronizable TM::ResourceAble));
+Class::Trait->apply ('TM', qw(TM::Synchronizable::Null));
 
 { # structural tests
     my $tm = new TM (baseuri => 'tm:');

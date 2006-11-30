@@ -2,8 +2,7 @@ package TM::Tau::Filter;
 
 use TM;
 use base qw(TM);
-use Class::Trait (TM::Synchronizable => { exclude => 'sync_out' },
-		  TM::ResourceAble   => { exclude => 'mtime' });
+use Class::Trait (TM::Synchronizable => { exclude => [ 'mtime', 'sync_out' ] });
 
 use Data::Dumper;
 
@@ -56,7 +55,7 @@ will do its work.
 =head2 Transformations
 
 Filters are not constrained in what they are doing. Some filters might only extract a particular
-portion out of a map. Others will map more complex conversions, say, to adapt to a different
+portion out of a map. Others will make more complex conversions, say, to adapt to a different
 background ontology. Others will completely change the map, or compute new stuff from it. It is also
 possible to have transformers which actually do nothing, except than mediating between different
 formats a map is written in.
@@ -73,8 +72,8 @@ C<sync_in>, or alternatively keep it and overload only C<transform>:
        return $result;         # return it
    }
 
-Your result will be used as content for the filter (which is map itself, remember). See L<TM::Tau::Filter::Analyze>
-for an example.
+Your result will be used as content for the filter (which is a map itself, remember). See
+L<TM::Tau::Filter::Analyze> for an example.
 
 The default transformation is the empty one, i.e. the map is simply passed through (not copied,
 btw).
@@ -83,22 +82,19 @@ btw).
 
 =head2 Constructor
 
-The constructor of implementations should expect a hash as parameter containing the field(s) from
-L<TM>, L<TM::Resource> and one or more of the following:
+The constructor of implementations should expect a hash as parameter with the following fields:
 
 =over
 
-=item I<left>:
+=item I<left> (no default):
 
-This must be an object of class L<TM>.
+This must be an object of class L<TM>. i.e. it can also be another filter.
 
 =item I<url> (default C<null:>)
 
 If the URL is missing here (filters are resourced maps), then it defaults to C<null:>
 
 =back
-
-@@@ describe sync_in/out @@@@@@@@@@@@@@
 
 =cut
 
@@ -153,6 +149,12 @@ sub left {
 
 =pod
 
+=item B<mtime>
+
+I<$filter>->mtime
+
+This retrieves the last modification time of the resource on which this filter operates on.
+
 =cut
 
 sub mtime {
@@ -189,7 +191,12 @@ sub source_in {
 
 sub sync_out {
     my $self = shift;
-    $self->source_out; # do not think twice
+    {                                                     # temporarily delete left component, source_out should never see that
+	my $left = delete $self->{left};
+#warn "filter sync out ".$self->{left};
+	$self->source_out; # do not think twice
+	$self->{left} = $left;
+    }
 }
 
 =pod
@@ -198,20 +205,19 @@ sub sync_out {
 
 =head1 SEE ALSO
 
-L<TM>, L<TM::Tau::Filter::Analyze>, L<TM::Tau>
+L<TM>, L<TM::Tau>, L<TM::Tau::Filter::Analyze>
 
 =head1 AUTHOR INFORMATION
 
 Copyright 200[4-6], Robert Barta <drrho@cpan.org>, All rights reserved.
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-http://www.perl.com/perl/misc/Artistic.html
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl
+itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
 our $VERSION = 0.4;
-our $REVISION = '$Id: Filter.pm,v 1.7 2006/11/13 08:02:35 rho Exp $';
+our $REVISION = '$Id: Filter.pm,v 1.11 2006/11/26 22:01:32 rho Exp $';
 
 1;
 

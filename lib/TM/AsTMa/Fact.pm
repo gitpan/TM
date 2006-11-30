@@ -588,7 +588,8 @@ sub
 				} elsif ($templates->mids ( $type ) &&
 					 (my @ts    = $templates->match (TM->FORALL, type => $templates->mids ( $type )  ))) {
 #warn "found templates for $type";
-				    warn "duplicate template for '$type' found, taking one" if @ts > 1;
+				    warn "duplicate template for '$type' found (maybe typo?), taking one" if @ts > 1;
+#warn Dumper $templates if @ts > 1;
 				    my $t = $ts[0];                                   # I choose one
 #warn "YYY cloning ($type)";
 				    
@@ -633,7 +634,7 @@ sub
 	[#Rule 12
 		 'topic_definition', 7,
 sub
-#line 163 "yapp/astma-fact.yp"
+#line 164 "yapp/astma-fact.yp"
 {
 #warn "char/ind in topic: ".Dumper $_[7];
                          my $id = $_[1];
@@ -668,43 +669,43 @@ sub
 	[#Rule 14
 		 'reification_indication', 2,
 sub
-#line 193 "yapp/astma-fact.yp"
+#line 194 "yapp/astma-fact.yp"
 { [ 1, $_[2] ] }
 	],
 	[#Rule 15
 		 'reification_indication', 2,
 sub
-#line 194 "yapp/astma-fact.yp"
+#line 195 "yapp/astma-fact.yp"
 { [ 0, $_[2] ] }
 	],
 	[#Rule 16
 		 'reification_indication', 2,
 sub
-#line 195 "yapp/astma-fact.yp"
+#line 196 "yapp/astma-fact.yp"
 { [ 2, $_[2] ] }
 	],
 	[#Rule 17
 		 'types', 0,
 sub
-#line 198 "yapp/astma-fact.yp"
+#line 199 "yapp/astma-fact.yp"
 { [] }
 	],
 	[#Rule 18
 		 'types', 2,
 sub
-#line 199 "yapp/astma-fact.yp"
+#line 200 "yapp/astma-fact.yp"
 { push @{$_[1]}, @{$_[2]}; $_[1] }
 	],
 	[#Rule 19
 		 'type', 2,
 sub
-#line 202 "yapp/astma-fact.yp"
+#line 203 "yapp/astma-fact.yp"
 { [ $_[2] ] }
 	],
 	[#Rule 20
 		 'type', 3,
 sub
-#line 203 "yapp/astma-fact.yp"
+#line 204 "yapp/astma-fact.yp"
 {   $_[2]   }
 	],
 	[#Rule 21
@@ -713,7 +714,7 @@ sub
 	[#Rule 22
 		 'characteristics_indication', 2,
 sub
-#line 208 "yapp/astma-fact.yp"
+#line 209 "yapp/astma-fact.yp"
 { push @{$_[1]->[ ref($_[2]) eq 'ARRAY' ? 0 : 1 ]}, $_[2]; $_[1] }
 	],
 	[#Rule 23
@@ -725,25 +726,25 @@ sub
 	[#Rule 25
 		 '@2-1', 0,
 sub
-#line 216 "yapp/astma-fact.yp"
+#line 217 "yapp/astma-fact.yp"
 { $_[0]->{USER}->{string} ||= "\n" }
 	],
 	[#Rule 26
 		 'indication', 3,
 sub
-#line 217 "yapp/astma-fact.yp"
+#line 218 "yapp/astma-fact.yp"
 { $_[3] }
 	],
 	[#Rule 27
 		 '@3-1', 0,
 sub
-#line 220 "yapp/astma-fact.yp"
+#line 221 "yapp/astma-fact.yp"
 { $_[0]->{USER}->{string} ||= "\n" }
 	],
 	[#Rule 28
 		 'characteristic', 5,
 sub
-#line 221 "yapp/astma-fact.yp"
+#line 222 "yapp/astma-fact.yp"
 {                           # check whether we are dealing with URIs or strings
 				                                       if ($_[1] == TM->NAME) {  # names are always strings
 									   $_[5] = new TM::Literal  ($_[5], 'xsd:string');
@@ -759,19 +760,19 @@ sub
 	[#Rule 29
 		 'class', 1,
 sub
-#line 234 "yapp/astma-fact.yp"
+#line 235 "yapp/astma-fact.yp"
 { TM->NAME  }
 	],
 	[#Rule 30
 		 'class', 1,
 sub
-#line 235 "yapp/astma-fact.yp"
+#line 236 "yapp/astma-fact.yp"
 { TM->OCC  }
 	],
 	[#Rule 31
 		 'class', 1,
 sub
-#line 236 "yapp/astma-fact.yp"
+#line 237 "yapp/astma-fact.yp"
 { TM->OCC  }
 	],
 	[#Rule 32
@@ -783,7 +784,7 @@ sub
 	[#Rule 34
 		 'assoc_type', 3,
 sub
-#line 243 "yapp/astma-fact.yp"
+#line 244 "yapp/astma-fact.yp"
 {   $_[2]   }
 	],
 	[#Rule 35
@@ -792,7 +793,7 @@ sub
 	[#Rule 36
 		 'scope', 2,
 sub
-#line 247 "yapp/astma-fact.yp"
+#line 248 "yapp/astma-fact.yp"
 { $_[2] }
 	],
 	[#Rule 37
@@ -801,31 +802,31 @@ sub
 	[#Rule 38
 		 'inline_assocs', 2,
 sub
-#line 252 "yapp/astma-fact.yp"
+#line 253 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
 	[#Rule 39
 		 'inline_assoc', 2,
 sub
-#line 255 "yapp/astma-fact.yp"
+#line 256 "yapp/astma-fact.yp"
 { [ $_[1], $_[2] ] }
 	],
 	[#Rule 40
 		 '@4-1', 0,
 sub
-#line 259 "yapp/astma-fact.yp"
+#line 260 "yapp/astma-fact.yp"
 { ($_[0]->{USER}->{templates}, $_[0]->{USER}->{store}) = ($_[0]->{USER}->{store}, $_[0]->{USER}->{templates}); }
 	],
 	[#Rule 41
 		 'template_definition', 3,
 sub
-#line 262 "yapp/astma-fact.yp"
+#line 263 "yapp/astma-fact.yp"
 { ($_[0]->{USER}->{templates}, $_[0]->{USER}->{store}) = ($_[0]->{USER}->{store}, $_[0]->{USER}->{templates}); }
 	],
 	[#Rule 42
 		 'association_definition', 7,
 sub
-#line 268 "yapp/astma-fact.yp"
+#line 269 "yapp/astma-fact.yp"
 {
 ##warn "members ".Dumper $_[5];
 ## ??? TODO SCOPE ????
@@ -873,19 +874,19 @@ sub
 	[#Rule 43
 		 'association_members', 1,
 sub
-#line 313 "yapp/astma-fact.yp"
+#line 314 "yapp/astma-fact.yp"
 {                       [ $_[1] ] }
 	],
 	[#Rule 44
 		 'association_members', 2,
 sub
-#line 314 "yapp/astma-fact.yp"
+#line 315 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2];   $_[1]  }
 	],
 	[#Rule 45
 		 'member', 4,
 sub
-#line 317 "yapp/astma-fact.yp"
+#line 318 "yapp/astma-fact.yp"
 { [ $_[1], @{$_[3]} ] }
 	],
 	[#Rule 46
@@ -897,25 +898,25 @@ sub
 	[#Rule 48
 		 'ids1', 2,
 sub
-#line 324 "yapp/astma-fact.yp"
+#line 325 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
 	[#Rule 49
 		 'ids', 0,
 sub
-#line 327 "yapp/astma-fact.yp"
+#line 328 "yapp/astma-fact.yp"
 { [] }
 	],
 	[#Rule 50
 		 'ids', 2,
 sub
-#line 328 "yapp/astma-fact.yp"
+#line 329 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
 	[#Rule 51
 		 'string', 2,
 sub
-#line 331 "yapp/astma-fact.yp"
+#line 332 "yapp/astma-fact.yp"
 { die "empty string in characteristics" unless $_[1]; $_[1] }
 	]
 ],
@@ -924,7 +925,7 @@ sub
     return bless $self, $class;
 }
 
-#line 334 "yapp/astma-fact.yp"
+#line 335 "yapp/astma-fact.yp"
 
 
 sub _Error {

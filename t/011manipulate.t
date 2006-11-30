@@ -218,14 +218,27 @@ use TM;
     ok (eq_set ([ $tm->instances  ('tm:assertion-type') ],[ 'tm:isa', 'tm:is-subclass-of' ]), 'subsumption: instances 1');
 
     ok (eq_set ([ $tm->instances  ('tm:scope') ],         [ 'tm:us' ]),                       'subsumption: instances 2');
-    ok (eq_set ([ $tm->instances  ('tm:thing') ],         [  ]),                              'subsumption: instances 3');
 #warn Dumper [ $tm->instancesT ('thing') ];
-    ok (eq_set ([ $tm->instancesT ('tm:thing') ],         [ $tm->midlets ]),                  'subsumption: instances 4');
+
+    ok (eq_set ([$tm->instances  ('tm:thing')], [$tm->midlets]),                              'instances of thing');
+    ok (eq_set ([$tm->instancesT ('tm:thing')], [$tm->midlets]),                              'instances of thing');
+
     ok (eq_set ([$tm->instances ('tm:isa') ], [
                                              'tm:52f4b78b40050b928e3f0bc945ca974e',
                                              'tm:4a0acace7864ce2c66ff9ff89575b0a4',
                                              'tm:55a68be5cad02dd73034330f1407db3a'
 					    ]),                                               'subsumption: instances 5');
+
+    foreach my $a ($tm->instances ('tm:isa')) {
+	ok (eq_set ([ $tm->types($a)] , [ 'tm:isa' ]),                                       'subsumption assertions type');
+	is ($tm->retrieve ($a)->[TM->TYPE], 'tm:isa',                                        'subsumption assertions instances')
+    }
+    foreach my $a ($tm->instances ('tm:is-subclass-of')) {
+	ok (eq_set ([ $tm->types($a)] , [ 'tm:is-subclass-of' ]),                            'subsumption assertions type');
+	is ($tm->retrieve ($a)->[TM->TYPE], 'tm:is-subclass-of',                             'subsumption assertions instances')
+    }
+
+
 
     ok (eq_set ([$tm->types ('tm:isa')],  [ 'tm:assertion-type']),                           'subsumption: types 1');
     ok (eq_set ([$tm->typesT ('tm:isa')], [ 'tm:assertion-type',  'tm:class' ]),             'subsumption: typesT 1');

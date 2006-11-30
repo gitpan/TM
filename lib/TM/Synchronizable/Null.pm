@@ -1,6 +1,7 @@
 package TM::Synchronizable::Null;
 
-use base qw(TM::Synchronizable);
+use Class::Trait 'base';
+use Class::Trait qw(TM::Synchronizable);
 
 sub source_in {
     my $self = shift;

@@ -12,12 +12,12 @@ With it you can
 Future releases will add (please bear with me until I have this all
 consolidated and documented):
 
-  - read/write XTM files
+  - read/write XTM files (TODO)
   - read LTM resources
   - query topic maps via TMQL (query language)
   - create virtual topic maps
   - use a topic map backend store
-  - a command line driven workbench (tm).
+  - a command line driven workbench (tm) (TODO).
 
 Prerequisites
 -------------

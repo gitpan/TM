@@ -29,6 +29,7 @@ t/054ltm.t
 t/091taufilter.t
 t/092taufederate.t
 t/095tau.t
+t/096taumapsphere.t
 t/100mapsphere.t
 t/101mapsphere.t
 t/102mapsphere.t
@@ -49,6 +50,8 @@ lib/TM/Materialized/MLDBM.pm
 lib/TM/Materialized/Null.pm
 lib/TM/Materialized/Stream.pm
 lib/TM.pm
+lib/TM/Overview.pm
+lib/TM/FAQ.pm
 lib/TM/PSI.pm
 lib/TM/ResourceAble.pm
 lib/TM/Serializable/AsTMa.pm
@@ -61,6 +64,7 @@ lib/TM/Synchronizable/Null.pm
 lib/TM/Synchronizable.pm
 lib/TM/Tau/Federate.pm
 lib/TM/Tau/Filter.pm
+lib/TM/Tau/Filter/Analyze.pm
 lib/TM/Tau.pm
 lib/TM/Tree.pm
 lib/TM/Utils.pm

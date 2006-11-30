@@ -121,7 +121,7 @@ my $whatever3; # just a temp
 
     ok (eq_set ([ $tm->instances  ('tm:assertion-type') ],[ 'tm:isa', 'tm:is-subclass-of' ]), 'subsumption: instances 1');
     ok (eq_set ([ $tm->instances  ('tm:scope') ],         [ 'tm:us' ]),                       'subsumption: instances 2');
-    ok (eq_set ([ $tm->instances  ('tm:thing') ],         [  ]),                              'subsumption: instances 3');
+
 #warn Dumper [ $tm->instancesT ('thing') ];
     ok (eq_set ([ $tm->instancesT ('tm:thing') ],         [ $tm->midlets ]),                  'subsumption: instances 4');
     ok (eq_set ([$tm->instances ('tm:isa') ], [

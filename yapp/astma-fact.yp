@@ -118,7 +118,8 @@ topic_definition  : ID types reification_indication inline_assocs EOL
 				} elsif ($templates->mids ( $type ) &&
 					 (my @ts    = $templates->match (TM->FORALL, type => $templates->mids ( $type )  ))) {
 #warn "found templates for $type";
-				    warn "duplicate template for '$type' found, taking one" if @ts > 1;
+				    warn "duplicate template for '$type' found (maybe typo?), taking one" if @ts > 1;
+#warn Dumper $templates if @ts > 1;
 				    my $t = $ts[0];                                   # I choose one
 #warn "YYY cloning ($type)";
 				    

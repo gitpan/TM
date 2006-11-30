@@ -71,7 +71,12 @@ Symbolizes a resource which never delivers any content and which can consume any
 
 =item C<inline>
 
-An I<inlined> resource is a resource which contains all content as part of the URI.
+An I<inlined> resource is a resource which contains all content as part of the URI. Currently
+the TM content is to be written in AsTMa=.
+
+Example:
+
+  inlined:donald (duck)
 
 =back
 
@@ -182,204 +187,9 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.1;
-our $REVISION = '$Id: ResourceAble.pm,v 1.1 2006/11/13 08:02:33 rho Exp $';
+our $REVISION = '$Id: ResourceAble.pm,v 1.2 2006/11/29 10:31:15 rho Exp $';
 
 1;
 
 __END__
-
-
-
- =item B<sync_in>
-
-I<$tm>->sync_in
-
-If the map is connected to a resource, then this method will try to load the content behind the
-resource into the map. Depending on the driver, most likely any existing content will be replaced.
-
-If the resource URI is C<io:stdout>, then nothing happens.
-
-If the resource URI is C<null:>, then nothing happens.
-
-If the last modification date of the resource is not younger than that of the map, then no
-synchronisation happens.
-
-This method provides only the main logic, wether a synchronisation should occur. Implementations,
-such as materialized maps synchronizing from an XTM resource, will have to implement their specific
-mechanism which will be triggered here. This is accomplished by a virtual method
-
-@@@@@@@@@@@@@@@@
-
-   sub _sync_in {
-       my $self = shift;
-
-       # here the real work happens
-
-   }
-
-which all implementations have to provide. (See L<TM::Materialized::File> for an example.)
-
- =cut
-
-sub source_in {
-    warn "SOURCE IN";
-}
-
-sub resource {
-    my $self = shift;
-    my $res  = shift;
-
-    return $res ? $self->{_resource} = $res : $self->{_resource};
-}
-
-sub sync_in {
-    my $self = shift;
-
-    $self->source_in if $self->last_mod           # modification in map
-                        <
-                        $self->resource->last_mod # modification of resource
-}
-
-
-sub xsync_in {
-    my $self = shift;
-
-#warn "generic TM sync in";
-    if (my $url = $self->{url}) {
-#warn __PACKAGE__ . ": is it stdout? null?";
-        return if $url eq 'io:stdout';   # no syncing in from STDOUT
-        return if $url eq 'null:';       # no syncing in from null
-#warn __PACKAGE__ . ":syncing in native, checking last mods (tm = ".$self->{last_mod}." resource= ".$self->last_mod;
-	$self->_sync_in if ! $self->{last_mod} ||                                             # virginal map, let's deflour.
-	                     $self->{last_mod} < ( $self->last_mod || Time::HiRes::time + 1); # if undef was returned, we just do it
-        $self->{last_mod} = Time::HiRes::time;
-warn "syncin last_mod".$self->{last_mod};
-    } 
-}
-
- =pod
-
- =item B<sync_out>
-
-I<$tm>->sync_out
-
-If a map is connected to a resource, then this method contains the logic under which circumstances
-to synchronize with the external resource.
-
-If the resource URI is C<io:stdin>, nothing happens.
-
-If the resource URI is C<null:>, nothing happens.
-
-If the resource URI is C<inline:..> nothing happens.
-
-If the map has not changed since the last modification of the external resource, nothing happens.
-
-The real functionality has to be provided by implementations which define
-
-  sub _sync_out {
-      my $self = shift;
-
-      # hard work here
-  }
-
- =cut
-
-sub xxxxsync_out {
-    my $self = shift;
-
-    my $url = $self->{_out_url} || $self->{url};
-warn __PACKAGE__ . "mat sync out of $self (". $url .")";
-
-    return unless $url;
-#warn __PACKAGE__ . ": $url is it stdin? null? inline?";
-    return if $url eq 'io:stdin'; # no syncing out to STDIN
-    return if $url eq 'null:';    # no syncing out to null
-    return if $url =~ /^inline:/; # no syncing out to inline
-warn __PACKAGE__ . ": no it was not (package $self)";
-warn __PACKAGE__ . ":syncing out native, lastmod (map) ".$self->{last_mod}. " last_mod (resource): ".$self->last_mod;
-    $self->_sync_out if  $self->{last_mod} &&                             # virginal map does not go out!
-	                 $self->{last_mod} > ( $self->last_mod || 0 );  # if undef was returned, we just do it
-warn __PACKAGE__. ": end of mat sync out";
-}
-
- =pod
-
-
-
-xx=head2 Constructor
-
-The constructor of implementations should expect a hash as parameter containing the field(s) from
-L<TM> and one or more of the following:
-
-x=over
-
-x=item I<url>:
-
-If given, then the instance will be read from this url whenever synced in.
-
-x=item I<file>:
-
-If given, then the data will be read/written from/to this file. This is just a convenience as it
-will be mapped to I<url>.
-
-x=item I<inline>:
-
-If given, then the instance will be read directly from this text provided inline when synced.
-
-x=back
-
-If several fields (C<file>, C<url>, C<inline>) are specified, it is undefined which one will be
-used.
-
-Examples (using the AsTMa driver as example):
-
-   # opening from an AsTMa= file
-   $atm = new TM::Materialized::AsTMa (file   => 'here.atm');
-
-   # why need a file? files are evil, anyway
-   $atm = new TM::Materialized::AsTMa (inline => '# this is AsTMa');
-
-x=cut
-
-sub new {
-  my $class   = shift;
-  my %options = @_;
-
-  my $url   = 'inline:'.delete $options{inline} if defined $options{inline};
-     $url   = 'file:'.  delete $options{file}   if defined $options{file};
-     $url   =           delete $options{url}    if defined $options{url};
-     $url ||= 'null:'; # default
-
-  return bless $class->SUPER::new (%options, url => $url), $class;
-}
-
- =pod
-
-
-
-
- =head1 SYNOPSIS
-
-@@@@@@@
-
-  # this class is probably only interesting for implementors of individual
-  # low-level drivers
-
-  # see TM for the 'application engineer' API
-
- =head1 DESCRIPTION
-
-@@@@
-
-This class is a subclass of L<TM>, so it implements map objects. It is abstract, though, as it only
-defined how a resource-backed driver package should behave. It may thus be inherited by classes
-which implement external formats (L<TM::Materialized::AsTMa>, L<TM::Materialized::XML>, ....) or
-virtual maps connected to resources.
-
-It defines synchronisations with external resources (read: local/remote files, everything which can
-be addressed via a URL) given that the map has a last-modified data as the resource.
-
-The methods C<sync_in>, C<sync_out> and C<last_mod> implement the synchronization between the
-in-memory data structure and the content on the external resource. That resource is specified via a
-URI.
 

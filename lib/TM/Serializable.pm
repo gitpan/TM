@@ -1,6 +1,9 @@
 package TM::Serializable;
 
-use base qw(TM::Synchronizable);
+#use base qw(TM::Synchronizable);
+
+use Class::Trait 'base';
+use Class::Trait 'TM::Synchronizable';
 
 =pod
 
@@ -32,7 +35,7 @@ TM::Serializable - Topic Maps, abstract trait for stream (map) based input/outpu
 
     use TM;
     use base qw(TM);
-    use Class::Trait qw(TM::ResourceAble TM::Synchronizable TM::Serializable MyFormat);
+    use Class::Trait qw(TM::Serializable MyFormat);
 
     1;
 
@@ -83,9 +86,7 @@ sub source_in {
 our $STDIN; # here we store the STDIN content to be able to reuse it later
 
 sub _get_content {
-    my $url = shift;
-
-    $main::log->logdie (scalar __PACKAGE__ . ": url is empty") unless $url;
+    my $url = shift or $main::log->logdie (scalar __PACKAGE__ . ": url is empty");
 
     if ($url =~ /^inline:(.*)/s) {
 	return $1;
@@ -93,7 +94,7 @@ sub _get_content {
 	return undef;
     } elsif ($url eq 'io:stdin') {
 	unless ($STDIN) {
-	    local $\ = undef;
+	    local $/;
 	    $STDIN = scalar <STDIN>;
 	}
 	return $STDIN;
@@ -168,7 +169,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.12;
-our $REVISION = '$Id: Serializable.pm,v 1.1 2006/11/13 08:02:33 rho Exp $';
+our $REVISION = '$Id: Serializable.pm,v 1.4 2006/11/26 22:01:32 rho Exp $';
 
 1;
 

@@ -2,7 +2,7 @@ package Rumsti;
 
 use TM;
 use base qw(TM);
-use Class::Trait ('TM::Synchronizable', 'TM::ResourceAble' => { exclude => 'mtime' } );
+use Class::Trait ('TM::Synchronizable' => { exclude => 'mtime' } );
 
 
 our $sync_in_called = 0;
@@ -21,17 +21,17 @@ sub synced {
 sub source_in {
   my $self = shift;
 
-#warn "rumsti source  $self";
+#warn "rumsti source in $self";
   $sync_in_called++;
 }
 
 sub source_out {
-##warn "rumsti source out";
+#warn "rumsti source out $self";
   $sync_out_called++;
 }
 
 sub mtime {
-#warn "Rumsti mtime";
+#warn "Rumsti mtime + 1";
     return time + 1; # fake that we always have something new
 }
 
@@ -75,6 +75,8 @@ our $log = Log::Log4perl->get_logger("TM");
 use strict;
 use warnings;
 
+#use Class::Trait 'debug';
+
 # change 'tests => 1' to 'tests => last_test_to_print';
 use Test::More qw(no_plan);
 
@@ -87,15 +89,21 @@ sub _chomp {
 }
 
 # create tmp file
-my $tmp;
+my @tmp;
 use IO::File;
 use POSIX qw(tmpnam);
-do { $tmp = tmpnam().".atm" ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
-
+for (0..1) {
+    do { $tmp[$_] = tmpnam().".atm" ;  } until IO::File->new ($tmp[$_], O_RDWR|O_CREAT|O_EXCL);
+}
 ##warn "tmp is $tmp";
 
-my $fh = IO::File->new ("> $tmp") || die "so what?";
-print $fh "
+
+END { unlink (@tmp) || die "cannot unlink '@tmp' file(s), but I am finished anyway"; }
+
+sub _mk_file {
+    my $file = shift;
+    my $fh = IO::File->new ("> $file") || die "so what?";
+    print $fh "
 aaa (bbb)
 bn: AAA
 
@@ -104,16 +112,17 @@ ddd: eee
 fff: ggg
 ";
 $fh->close;
+}
 
-END { unlink ($tmp) || die "cannot unlink '$tmp' file, but I am finished anyway"; }
+_mk_file ($tmp[0]);
+
+#close STDIN;
+open (STDIN, $tmp[0]);
 
 #== TESTS =====================================================================
 
 require_ok ('TM::Tau');
 
-#{
-#    my $tm = new TM::Tau ('(null: * null: + null:) > (null:) > (null:)', sync_in => 0, sync_out => 0);
-#}
 
 { # basic tests
     my $tm = new TM::Tau ('null: > null:', sync_in => 0, sync_out => 0);
@@ -123,17 +132,17 @@ require_ok ('TM::Tau');
     ok ($tm->isa ('TM::Tau'),              'class');
     ok ($tm->isa ('TM::Tau::Filter'),      'class');
     ok ($tm->isa ('TM'),                   'class');
-    ok ($tm->does ('TM::Serializable::AsTMa'), 'default: filter trait');
+    ok ($tm->does ('TM::Serializable::Dumper'), 'default: filter trait');
 
     ok ($tm->left->isa ('TM::Materialized::Null'),     'left null becomes a memory map');
 }
 
 { # default
-    my $tm = new TM::Tau;
+    my $tm = new TM::Tau (undef, sync_in => 0, sync_out => 0);
     ok ($tm->isa ('TM::Tau::Filter'),              'default: top level');
     ok ($tm->left->isa ('TM::Materialized::Null'), 'default: left');
 
-    ok ($tm->does ('TM::Serializable::AsTMa'), 'default: filter trait');
+    ok ($tm->does ('TM::Serializable::Dumper'), 'default: filter trait');
 
 #    warn "this is it ".Dumper $tm;
 }
@@ -145,6 +154,63 @@ eval { # errors
 eval { # error
   my $tm = new TM::Tau ('rumsti:');
 }; like ($@, qr/undefined scheme/, _chomp $@);
+
+{ # test to override driver module
+    my $tm = new TM::Tau ('ramsti: { Rumsti }', sync_in => 0, sync_out => 0);
+    ok (ref ($tm->left) eq 'Rumsti',       'override: in special driver');
+
+    { # test to override driver module
+	eval {
+	    my $tm = new TM::Tau ('> ramsti: { Rxxxumsti }');
+	}; like ($@, qr/cannot instantiate/, _chomp $@);
+    }
+}
+
+{ # canonicalization trivia
+    foreach my $s ('null:', '> null: <', '> null: >', '< null: >') {
+	my $tm = new TM::Tau ($s, sync_in => 0, sync_out => 0);
+	ok (1,                                          "canonical: parsing $s");
+	ok ($tm->isa ('TM::Tau'),                       'canonical: class');
+	ok ($tm->does ('TM::Serializable::Dumper'),     'canonical: filter trait');
+	ok ($tm->left->isa ('TM::Materialized::Null'),  'canonical: left null becomes a memory map');
+    }
+}
+
+{ # complex structure
+    my $tm = new TM::Tau ('(null: * null: + null:) > (null:) > (null:)', sync_in => 0, sync_out => 0);
+
+    ok ($tm->isa ('TM::Tau'),                                          'top level');
+    ok ($tm->does ('TM::Serializable::Dumper'),                        'top level does');
+
+    ok ($tm->left->isa ('TM::Tau::Filter'),                            'second level');
+
+    ok ($tm->left->left->isa ('TM::Tau::Federate'),                    'third level');
+
+    ok ($tm->left->left->right->isa ('TM::Materialized::Null'),        'federate right level');
+    ok ($tm->left->left->left->isa  ('TM::Tau::Filter'),               'federate left level');
+
+    ok ($tm->left->left->left->left->isa  ('TM::Materialized::Null'),  'federate left left level');
+}
+
+#-- synchronisation manual ----------------------------------
+
+{ # tests with files, explicit sync
+    my $tau = "< file:$tmp[0] <";
+    my $tm = new TM::Tau ($tau);
+
+    $tm->sync_in;
+    ok ($tm->mids ('aaa'), 'sync_in done');
+    eval {
+	$tm->sync_out; # AsTMa does not support this
+    }; like ($@, qr/not implement/, _chomp $@);
+}
+
+# avoid being bothered by STDOUT
+close STDOUT;
+open STDOUT, ">$tmp[1]";
+
+
+#-- sync automatic
 
 use TM::Tau;
 { # testing events
@@ -201,10 +267,12 @@ use TM::Tau;
 	  (my $tau = $t) =~ s/\d+\s*//;
         {
 	    my $tm = new TM::Tau ($tau);
-#	    warn Dumper $tm;
+
+#warn Dumper [ $tm->does ('TM::Serializable::AsTMa') ]; exit;
+#warn Dumper $tm;
 #warn "============> ". ref ($tm->left) . " <-- left -- " . ref ($tm);
 #warn "test $tau";
-warn Dumper $tm if $tests->{$t}->{debug};      
+#warn Dumper $tm if $tests->{$t}->{debug};      
 
 #    warn "synced after create ".Dumper Rumsti::synced;
 	    ok (eq_array ($tests->{$t}->{uc}, Rumsti::synced), "$tau : rumsti after creation");
@@ -221,178 +289,57 @@ warn Dumper $tm if $tests->{$t}->{debug};
     }
 }
 
-__END__
-
-#{ # canonicalization trivia
-#    foreach my $s ('null:', '> null: <', '> null: >', '< null: >') { # 
-#	ok (new TM::Tau ($s), "parsing $s");
-#    }
-#}
-
-__END__
-
-
-#-- synchronisation ----------------------------------
-
-{ # tests with materialized
-  my $tau;
-
-  Rumsti::reset;
-  $tau = '> rumsti: <';
-  { # 
-      my $tm = new TM::Tau ($tau);
-#      warn Dumper $tm;
-      ok ($tm->chain->isa ('Ramsti'),                  'ramsti');
-      ok ($tm->chain->left->isa ('Rumsti'),            'rumsti');
-  }
-  is ($Rumsti::sync_in_called,  1,         $tau.': tried sync in once');
-  is ($Ramsti::sync_out_called, 1,         $tau.': tried sync out once');
-
-  Rumsti::reset;
-  $tau = 'rumsti:';
-  {
-    my $tm = new TM::Tau ($tau);
-#    warn Dumper $tm;
-  }
-  is ($Rumsti::sync_in_called,  1,         $tau.': tried sync in once');
-  is ($Rumsti::sync_out_called, 0,         $tau.': tried sync out never');
-
-  Rumsti::reset;
-  $tau = 'rumsti: >';
-  { # only reading
-    my $tm = new TM::Tau ($tau);
-  }
-  is ($Rumsti::sync_in_called,  1,         $tau.': tried sync in once');
-  is ($Rumsti::sync_out_called, 0,         $tau.': tried sync out never');
-
-
-  Rumsti::reset;
-  $tau = ' > rumsti:';
-  { # only writing
-    my $tm = new TM::Tau ($tau);
-  }
-  is ($Ramsti::sync_in_called,  0,         $tau.': tried sync in never');
-  is ($Rumsti::sync_out_called, 1,         $tau.': tried sync out once');
-
-}
-
-{ # test to override driver module
-  my $tm = new TM::Tau ('> ramsti: { Rumsti } > ');
-  ok (ref ($tm->{map}->{map}) eq 'Rumsti',       'override: in special driver');
-
-  { # test to override driver module
-      eval {
-	  my $tm = new TM::Tau ('> ramsti: { Rxxxumsti } > ');
-      }; like ($@, qr/cannot instantiate/, _chomp $@);
-  }
-}
-
-{ # tests with files, explicit sync
-    my $tau = "< file:$tmp >";
-    my $tm = new TM::Tau ($tau);
-    ok ($tm->{map}->isa ('TM::Tau::Filter') &&
-	$tm->{map}->{map}->isa ('TM::Materialized::AsTMa'), "$tau: filter structure");
-    is ($tm->{map}->{map}->{last_mod}, undef, "$tau : no sync in");
-    $tm->sync_in;
-    ok ($tm->{map}->{map}->{last_mod},        "$tau : synced in");
-
-    eval {
-	$tm->sync_out; # AsTMa does not support this
-    }; like ($@, qr/not implement/, _chomp $@);
-}
-
 { # test with +
-    foreach (1..4) {
+    foreach my $i (1..4) {
 	Rumsti::reset;
-	{
-	   my $tm = new TM::Tau (join (" + ", ('rumsti:') x $_). ' > ');
-	}
-	is ($Rumsti::sync_in_called,  $_,                                "merged ($_): sync in");
-	is ($Rumsti::sync_out_called, 0,                                 "merged ($_): sync out");
+	  {
+	      my $tm = new TM::Tau ('('. join (" + ", ('rumsti:') x $i). ' ) > -');
+
+#warn "============> ". ref ($tm->left) . " <-- left -- " . ref ($tm);
+	  }
+#warn Dumper Rumsti::synced;
+	  ok (eq_array (Rumsti::synced,	[ $i, 0 ]), "$i: federated sync in/out");
+    }
+}
+
+{ # testing auto registration of filters
+    eval {
+	my $tm = new TM::Tau ('null: * http://psi.tm.bond.edu.au/queries/1.0/analyze');
+    }; like ($@, qr/undefined scheme/, 'auto reg: '._chomp ($@));
+
+    {
+	eval "use TM::Tau::Filter::Analyze;"; # we do it to postpone the loading
+	my $tm = new TM::Tau ('null: * http://psi.tm.bond.edu.au/queries/1.0/analyze');
+    }; 
+    ok (1, 'auto reg: detected');
+}
+
+foreach my $tau ('io:stdin > io:stdout', 'io:stdin > -', '- > -', '- > io:stdout') { # testing stdin and stdout
+    # redirect all to the file
+    open STDOUT, ">$tmp[1]";
+    {
+	my $tm = new TM::Tau ($tau);
+#warn Dumper $tm;
+    }
+
+    my $fh = IO::File->new ($tmp[1]) || die "cannot reopen what I just wrote";
+    local $/ = undef;
+    my $s = <$fh>;
+    close $fh;
+#    warn $s;
+
+    like ($s, qr/\$tm = bless/, "$tau: dumper found");
+    {
+	my $tm;
+	eval $s; # Perl is so sick :-)
+	ok ($tm->isa ('TM'), "$tau: map found");
+	ok ($tm->mids ('thing'), "map has things");
     }
 }
 
 __END__
 
-#%TM::Tau::STDIN  = (module => 'TM::Materialized::AsTMa',  url => 'io:stdin');
-#%TM::Tau::STDOUT = (module => 'TM::Materialized::Memory', url => 'io:stdout');
-
-
-{ # test mapsphere
-    my $tm = new TM::Tau ("file:$tmp > tm:/test/");
-    $tm->{map}->sync_out;
-
-    like ($tm->{mapsphere}->{maps}->{'/test/'}->mids ('aaa'), qr/aaa$/, 'map established in mapsphere');
-}
-
-{ # test with +, one virtual
-  $TM::Tau::schemes{'rumsti:'} = 'Rumsti';
-  $TM::Tau::schemes{'ramsti:'} = 'Ramsti';
-  Rumsti::reset;
-  {
-    my $tm = new TM::Tau ('ramsti: + ramsti: + rumsti: > ');
-#    is (scalar ($tm->maplets), 1,                             'found maplets');
-#    is ($tm->toplet ('xxx-1'), 1,                             'found toplets');
-  }
-  is ($Rumsti::sync_in_called,  1,                            'merged: sync in');
-  is ($Rumsti::sync_out_called, 0,                            'merged: sync out');
-}
-
 
 
 __END__
-
-__END__
-
-
-$TM::Tau::schemes{'ramsti:'} = 'Ramsti';
-
-{
-    # this should not try to sync_in/out, otherwise an exception would be raised
-    my $tm = new TM::Tau ('> ramsti: >');
-    ok (1, 'no sync_in/out on virtual'); 
-}
-
-
-{ # testing (), + and *
-    my $tm = new TM::Tau ('> null: + null: >');
-    ok (ref ($tm->{transit})          eq 'TM::Materialized::Merge',  '+ parsed');
-    ok (ref ($tm->{transit}->{left})  eq 'TM::Materialized::Memory', '+ parsed');
-    ok (ref ($tm->{transit}->{right}) eq 'TM::Materialized::Memory', '+ parsed');
-
-    $tm = new TM::Tau ('> null: * null: > ');
-    ok (ref ($tm->{transit})          eq 'TM::Materialized::Filter', '* parsed');
-    ok (ref ($tm->{transit}->{left})  eq 'TM::Materialized::Memory', '* parsed');
-    ok (ref ($tm->{transit}->{right}) eq 'TM::Materialized::Memory', '* parsed');
-
-    $tm = new TM::Tau ('> ( null: + null: ) * rumsti: >');
-    ok (ref ($tm->{transit}) eq                  'TM::Materialized::Filter', '()*+ parsed');
-##warn $tm->{transit}->{left};
-    ok (ref ($tm->{transit}->{left})          eq 'TM::Materialized::Merge',  '()*+ parsed');
-    ok (ref ($tm->{transit}->{left}->{left})  eq 'TM::Materialized::Memory', '* parsed');
-    ok (ref ($tm->{transit}->{left}->{right}) eq 'TM::Materialized::Memory', '* parsed');
-    ok (ref ($tm->{transit}->{right})         eq 'Rumsti', '()*+ parsed');
-
-    $tm = new TM::Tau ('> ( null: * ramsti: ) + rumsti: >');
-    ok (ref ($tm->{transit}) eq                  'TM::Virtual::Merge',       '+* parsed');
-    ok (ref ($tm->{transit}->{left})          eq 'TM::Virtual::Filter',      '()+* parsed');
-    ok (ref ($tm->{transit}->{left}->{left})  eq 'TM::Materialized::Memory', '* parsed');
-    ok (ref ($tm->{transit}->{left}->{right}) eq 'Ramsti',                   '* parsed');
-    ok (ref ($tm->{transit}->{right})         eq 'Rumsti',                   '()*+ parsed');
-}
-
-
-
-
-__END__
-
-eval {
-  require TM::Virtual::DNS;
-  $TM::schemes{'dns:'} = 'TM::Virtual::DNS';
-  my $tm = new TM (tau => 'dns:whatever');
-  ok ($tm->toplet ('localhost'), 'dns: found localhost');
-##print Dumper $localhost;
-}; if ($@) {
-  like ($@, qr/Can't locate/, "skipping DNS test ("._chomp($@).")");
-}
 

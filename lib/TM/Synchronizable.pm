@@ -5,9 +5,11 @@ use warnings;
 
 use Data::Dumper;
 
-use TM::ResourceAble;
-use base qw(TM::ResourceAble);
+use Class::Trait 'base';
+use Class::Trait 'TM::ResourceAble';
 
+#use TM::ResourceAble;
+#use base qw(TM::ResourceAble);
 ##our @REQUIRES = qw(source_in source_out);
 
 =pod
@@ -132,7 +134,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.2;
-our $REVISION = '$Id: Synchronizable.pm,v 1.1 2006/11/13 08:02:33 rho Exp $';
+our $REVISION = '$Id: Synchronizable.pm,v 1.4 2006/11/26 22:01:32 rho Exp $';
 
 1;
 

@@ -4,13 +4,9 @@ use TM;
 use base qw(TM);
 use Class::Trait ('TM::MapSphere',
 		  'TM::Synchronizable::MLDBM' => {
-#		      alias   => { "source_in"  => "mldbm_source_in",
-#				   "source_out" => "mldbm_source_out" },
-#		      exclude => [ "source_in", "source_out" ]
+		      exclude => [ "sync_in", "sync_out" ] # these are provided by Synchronizable::MapSphere
 		  },
-		  'TM::Synchronizable::MapSphere',
-#		  'TM::Synchronizable',
-		  'TM::ResourceAble');
+		  'TM::Synchronizable::MapSphere');
 1;
 
 # test alternative:
@@ -28,6 +24,8 @@ our $log = Log::Log4perl->get_logger("TM");
 
 use strict;
 use warnings;
+
+#use Class::Trait 'debug';
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 use Test::More qw(no_plan);

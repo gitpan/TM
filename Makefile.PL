@@ -73,16 +73,20 @@ manifesto:
 	find t    -iname '*.t'  | sort
 
 MAKE
-
 }
-
 
 sub debian {
     return <<MAKE
 
 debian: dh-make-perl --build -cpan TM
 
+MAKE
+}
+
+sub UML {
+    return <<MAKE
+
+UML: autodia.pl -F -H -d ~/projects/tm_base/TM-1.22/lib/ -r -Z
 
 MAKE
-
 }

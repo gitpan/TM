@@ -169,7 +169,7 @@ if (0) { # lazy index, built by use
 
     my $idx = new TM::Index::Match ($tm);
 
-    warn "\n# verifying first run, testing speed....";
+#    warn "\n# verifying first run, testing speed....";
 
     my $start = Time::HiRes::time;
     verify ($tm, $taxo, 1);
@@ -177,7 +177,7 @@ if (0) { # lazy index, built by use
 
 #    warn Dumper $idx->{cache};
 
-    warn "# verifying second run, testing speed....";
+#    warn "# verifying second run, testing speed....";
     $start = Time::HiRes::time;
     verify ($tm, $taxo, 1);
     my $indexed = (Time::HiRes::time - $start);
@@ -199,19 +199,19 @@ if (0) { # prepopulated
     my $idx = new TM::Index::Match ($tm);
 
     my $start = Time::HiRes::time;
-    warn "\n# verifying first run, should be medium fast";
+#    warn "\n# verifying first run, should be medium fast";
     verify ($tm, $taxo, 1);
     my $unindexed = (Time::HiRes::time - $start);
 
     $idx->detach;
 
     $idx = new TM::Index::Match ($tm, closed => 1);
-    warn "# prepopulating, takes time";
+#    warn "# prepopulating, takes time";
     $idx->discard and $idx->populate (@optimized_keys);
 #    warn Dumper $idx->{cache}; exit;
 
     $start = Time::HiRes::time;
-    warn "# verifying second run, should be faster";
+#    warn "# verifying second run, should be faster";
     verify ($tm, $taxo, 1);
     my $indexed = (Time::HiRes::time - $start);
     ok ($indexed < $unindexed, "measurable speedup with eager (populated) index ($indexed < $unindexed)");
@@ -252,14 +252,14 @@ END { map { unlink <$_*> } @tmp; };
 
 	my $idx = new TM::Index::Match ($tm, cache => \%cache);
     
-	warn "\n# verifying first run, should be medium fast";
+#	warn "\n# verifying first run, should be medium fast";
 	my $start = Time::HiRes::time;
 	verify ($tm, $taxo, 1);
 	$unindexed = (Time::HiRes::time - $start);
 
 #	warn "# ====== total time =============== ".(Time::HiRes::time - $start);
 
-	warn "# verifying second run, should be faster";
+#	warn "# verifying second run, should be faster";
 	$start = Time::HiRes::time;
 	verify ($tm, $taxo, 1);
 	my $indexed = (Time::HiRes::time - $start);
@@ -282,7 +282,7 @@ END { map { unlink <$_*> } @tmp; };
 
 	my $idx = new TM::Index::Match ($tm, cache => \%cache);
     
-	warn "\n# re-verifying second run, should be as fast";
+#	warn "\n# re-verifying second run, should be as fast";
 	my $start = Time::HiRes::time;
 	verify ($tm, $taxo, 1);
 	my $indexed = (Time::HiRes::time - $start);

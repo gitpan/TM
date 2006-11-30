@@ -1,6 +1,8 @@
 package TM::Serializable::LTM;
 
-use base qw (TM::Serializable);
+use Class::Trait 'base';
+use Class::Trait 'TM::Serializable';
+##use base qw (TM::Serializable);
 
 use Data::Dumper;
 
@@ -182,16 +184,8 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.3';
-our $REVISION = '$Id: LTM.pm,v 1.1 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: LTM.pm,v 1.2 2006/11/23 10:02:55 rho Exp $';
 
 1;
 
 __END__
-
-  use XTM::LTM::MemoryBuilder;
-  my $ap = new XTM::LTM::MemoryBuilder(tm => new XTM::Memory (consistency => $consistency));
-  $ap->handle_ltm (text          => $ltm_stream,
-		   ##		     log_level     => 2,
-		   #auto_complete => $self->{auto_complete}
-		  );
-  return $ap->{tm};

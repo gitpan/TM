@@ -1,12 +1,20 @@
 package TM::Serializable::Dumper;
 
-use base qw(TM::Serializable);
+use Class::Trait 'base';
+use Class::Trait 'TM::Serializable';
+
+use Data::Dumper;
 
 sub serialize {
     my $self = shift;
     use Data::Dumper;
 
-    return Data::Dumper->Dump ([$self], ['tm']);
+    my $s;
+    {
+	local $Data::Dumper::Purity = 1;
+	$s = Data::Dumper->Dump ([$self], ['tm']);         # NB: we have recursive data structures
+    }
+    return $s;
 }
 
 sub deserialize {

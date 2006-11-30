@@ -23,6 +23,8 @@ sub _chomp {
     return $s;
 }
 
+use Class::Trait;
+
 #== TESTS =====================================================================
 
 require_ok ('TM::Analysis');
@@ -56,9 +58,11 @@ qqq: www
     ');
     $tm->sync_in;
 
-#warn Dumper $tm;
+#warn Dumper $tm; exit;
 
-    my $clusters = TM::Analysis::clusters ($tm, use_lid => 0);
+    Class::Trait->apply ($tm, 'TM::Analysis');
+
+    my $clusters = $tm->clusters (use_lid => 0);
 #    foreach (@$clusters) {
 #	print "we are connnected: ", join (",", @$_), "\n\n";
 #    }
@@ -83,17 +87,20 @@ qqq: www
     my ($c3) = grep (grep ($_ eq 'tm:sss', @$_), @$clusters);
     ok (eq_set ($c3, [    'tm:sss',  ]), 'cluster 3');
 
-    $clusters = TM::Analysis::clusters ($tm, use_roles => 1, use_type => 1, use_lid => 0);
+    $clusters = $tm->clusters (use_roles => 1, use_type => 1, use_lid => 0);
 #warn Dumper $clusters;
     my ($c4) = grep (grep ($_ eq 'tm:aaa', @$_), @$clusters);
+
     is (scalar @$c4, 33, 'cluster 4');
 }
 
 { # statistics
     use TM;
     my $tm1 = new TM;
+    Class::Trait->apply ($tm1, 'TM::Analysis');
 
-    my $stats1 = TM::Analysis::statistics ($tm1);
+
+    my $stats1 = $tm1->statistics;
 #warn Dumper $stats1;
 
     is ($stats1->{'nr_maplets'},  8, 'nr_maplets');
@@ -110,7 +117,8 @@ bbb is-a ccc
     $tm2->sync_in;
 #warn Dumper $tm2;
 
-    my $stats2 = TM::Analysis::statistics ($tm2);
+    Class::Trait->apply ($tm2, 'TM::Analysis');
+    my $stats2 = $tm2->statistics;
 #warn Dumper $stats;
 
     is ($stats2->{'nr_maplets'},  $stats1->{'nr_maplets'} + 2,     'nr_maplets');
@@ -119,7 +127,37 @@ bbb is-a ccc
     
 }
 
-    require_ok ('TM::Tree');
+{ # orphanage
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					  inline => '
+aaa subclasses bbb
+
+bbb is-a ccc
+    ');
+    $tm->sync_in;
+    Class::Trait->apply ($tm, 'TM::Analysis');
+
+    my $o = $tm->orphanage;
+#warn Dumper $o;
+
+    ok (!grep ($_ eq 'tm:bbb', @{$o->{untyped}}),        'bbb is not untyped');
+    ok ( grep ($_ eq 'tm:ccc', @{$o->{untyped}}),        'ccc is     untyped');
+
+    ok (!grep ($_ eq 'tm:ccc', @{$o->{empty}}),          'ccc is not untyped');
+    ok ( grep ($_ eq 'tm:aaa', @{$o->{empty}}),          'aaa is     untyped');
+
+    ok (!grep ($_ eq 'tm:aaa', @{$o->{unclassified}}),   'aaa is not unclassified');
+    ok ( grep ($_ eq 'tm:ccc', @{$o->{unclassified}}),   'ccc is     unclassified');
+
+    ok (!grep ($_ eq 'tm:bbb', @{$o->{unspecified}}),    'bbb is not unspecified');
+    ok ( grep ($_ eq 'tm:aaa', @{$o->{unspecified}}),    'aaa is     unspecified');
+
+    $o = TM::Analysis::orphanage ($tm, 'untyped');
+    ok ($o->{untyped}, 'only untyped');
+}
+
+require_ok ('TM::Tree');
 
 { # tree
 

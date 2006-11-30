@@ -3,7 +3,8 @@ package TM::Materialized::AsTMa;
 use TM::Materialized::Stream;
 use base qw (TM::Materialized::Stream);
 
-use Class::Trait qw(TM::Serializable::AsTMa TM::Serializable TM::Synchronizable TM::ResourceAble);
+#use Class::Trait qw(TM::Serializable::AsTMa TM::Serializable TM::Synchronizable TM::ResourceAble);
+use Class::Trait qw(TM::Serializable::AsTMa);
 
 use Data::Dumper;
 
@@ -62,7 +63,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.18';
-our $REVISION = '$Id: AsTMa.pm,v 1.18 2006/11/13 08:02:34 rho Exp $';
+our $REVISION = '$Id: AsTMa.pm,v 1.19 2006/11/23 10:02:55 rho Exp $';
 
 1;
 

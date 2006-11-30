@@ -3,6 +3,8 @@ package TM::Tau::Federate;
 use Data::Dumper;
 use Time::HiRes;
 
+# this is just a stub, much work to do here
+
 use TM;
 use base qw(TM);
 
@@ -10,10 +12,10 @@ sub new {
     my $class   = shift;
     my %self    = @_;
 
-    $self{left}  and ($self{left} ->isa ('TM::Tau::Filter') or 
-		      $self{left} ->isa ('TM::Tau::Federate'))        or die "no left operand";
-    $self{right} and ($self{left} ->isa ('TM::Tau::Filter') or 
-		      $self{left} ->isa ('TM::Tau::Federate'))        or die "no right operand";
+    $self{left}              or die "no left operand";
+    $self{left}->isa ('TM')  or die "left operand no map";
+    $self{right}             or die "no right operand";
+    $self{right}->isa ('TM') or die "right operand no map";
 
     return $class->SUPER::new (%self);
 }
@@ -30,34 +32,37 @@ sub right {
 
 sub mtime {
     my $self = shift;
-##warn "mtime fed";
+#warn "mtime fed";
     my $mtimeleft  = $self->{left}->mtime;
     my $mtimeright = $self->{right}->mtime;
+#warn "$mtimeleft  $mtimeright ";
     return $mtimeleft < $mtimeright ? $mtimeleft : $mtimeright;    # take the younger one
 }
 
-sub sync_in {
+sub source_in {
     my $self = shift;
 
-    $self->{left}->sync_in;
-    $self->{right}->sync_in;
-#	$self->melt ($self->{left}->{map});
-#	$self->add  ($self->{right}->{map});
-    $self->{melted} = 1;                                       # this indicates to later that local map is of significance
-    $self->consolidate;
+    $self->{left}->source_in;
+    $self->{right}->source_in;
+# here decide whether to materialize or not
+#    $self->melt ($self->{left});
+#    $self->add  ($self->{right});
+#    $self->{melted} = 1;                                       # this indicates to later that local map is of significance
+#    $self->consolidate;
 }
 
 sub sync_out {
     my $self = shift;
+# will depend on ...
     $self->source_out; # do not think twice, just do it
 }
 
 
-sub melt {
-    my $self = shift;
-
-    die "not yet implemented";
-}
+#sub melt {
+#    my $self = shift;#
+#
+#    die "not yet implemented";
+#}
 
 sub consolidate {
   my $self = shift;

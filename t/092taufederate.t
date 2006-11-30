@@ -2,7 +2,7 @@ package Rumsti;
 
 use TM;
 use base qw(TM);
-use Class::Trait ('TM::Synchronizable', 'TM::ResourceAble' => { exclude => 'mtime' } );
+use Class::Trait ('TM::Synchronizable' => { exclude => 'mtime' } );
 
 sub reset {
     my $self = shift;
@@ -101,6 +101,9 @@ eval {
 								   right => new TM::Tau::Filter (left    => new Remsti (url => 'in3:'),
 												 url     => 'what:ever'),
 								   url   => 'what:ever'));
+    use Class::Trait;
+    Class::Trait->apply ($f, 'TM::Synchronizable', { exclude => [ 'mtime', 'sync_out' ] });
+
     $f->sync_in;
 
     is ($f->left->left->{sync_in_called},            1,         'tried sync in once');
@@ -108,6 +111,8 @@ eval {
     is ($f->right->right->left->{sync_in_called},    1,         'tried sync in once');
 
     $f->{last_mod} = time + 1; # make sure we fake change
+
+# MUCH TO BE DONE HERE
 #     $f->sync_out;
 
 #     is ($f->left->left->{sync_in_called},            1,         'tried sync in once');
