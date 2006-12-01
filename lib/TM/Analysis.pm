@@ -235,7 +235,7 @@ it under the same terms as Perl itself.
 =cut
 
 our $VERSION  = 0.4;
-our $REVISION = '$Id: Analysis.pm,v 1.3 2006/11/29 10:31:11 rho Exp $';
+our $REVISION = '$Id: Analysis.pm,v 1.4 2006/11/30 08:38:10 rho Exp $';
 
 
 1;

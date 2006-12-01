@@ -216,10 +216,10 @@ child: noam
 
 #warn Dumper $tm;
 
-  my $pedigree =  $tm->tree (          'adam',
+  my $pedigree =  $tm->tree ($tm->mids ('adam',
                                        'begets',
                                        'parent',
-                                       'child',
+                                       'child')
                                         );
 
 #warn Dumper $pedigree;
@@ -230,7 +230,19 @@ child: noam
   my ($seth) = grep ($_->{lid} eq 'tm:seth', @{$pedigree->{children}});
   ok (eq_set([ map { $_->{lid} } @{$seth->{children}} ],
              [ 'tm:noam', 'tm:enosh' ]), 'tree');
+
+  my $pedigree2 =  $tm->tree_x ($tm->mids ('adam',
+                                           'begets',
+                                           'parent',
+                                           'child')
+                                           );
+
+#warn Dumper $pedigree2;
+    use Test::Deep;
+
+    cmp_deeply( $pedigree2,$pedigree, "tree = tree_x" );
 }
+
 
 { # taxonomy
     use TM::Materialized::AsTMa;
@@ -250,7 +262,7 @@ ddd subclasses aaa
 
 #warn Dumper $tm;
 
-    my $taxo =  $tm->taxonomy ('aaa');
+    my $taxo =  $tm->taxonomy ($tm->mids ('aaa'));
 
 #warn Dumper $taxo;
 
@@ -259,12 +271,14 @@ ddd subclasses aaa
 	       [ 'tm:ccc', 'tm:ddd' ]),          'taxo 2');
 
     $taxo =  $tm->taxonomy;
+#warn Dumper $taxo;
     ok ($taxo->{lid} eq 'tm:thing',              'taxo 3');
     ok (eq_set([ map { $_->{lid} } @{$taxo->{children}} ],
 	       [ 'tm:aaa', 'tm:bbb' ]),          'taxo 4');
     my ($aaa) = grep ($_->{lid} eq 'tm:aaa', @{$taxo->{children}});
     ok (eq_set([ map { $_->{lid} } @{$aaa->{children}} ],
 	       [ 'tm:ccc', 'tm:ddd' ]),          'taxo 5');
+
 }
 
 __END__

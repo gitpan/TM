@@ -1,5 +1,10 @@
 Revision history for Perl extension TM
 
+1.23  Fri Dec  1 17:56:09 EST 2006
+	- modified: TM: match_forall hook char.irole -> char.topic, old deprecated
+	- created: TM::Index to hold all index-related functionality
+	- modified: TM index handling now can used lists of indices in match_forall
+
 1.22  Thu Nov 30 18:22:51 EST 2006
 	- improved: TM::DM documentation
 	- rearranged traits to do 'inheritance'

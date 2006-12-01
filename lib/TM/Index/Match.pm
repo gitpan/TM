@@ -4,8 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-require Exporter;
-use base qw(Exporter);
+use base qw(TM::Index);
 
 =pod
 
@@ -46,139 +45,18 @@ TM::Index::Match - Topic Maps, Indexing support (match layer)
 
 =head1 DESCRIPTION
 
-One performance bottleneck when using the L<TM> package or any of its subclasses are the low-level
-query functions C<match_forall> and C<match_exists>. They are looking for assertions of a certain
-nature. Almost all high-level functions, and certainly L<TM::QL> use these.
-
-This package provides an indexing mechanism to speed up the C<match_*> functions by caching some
-results in a very specific way. When an index is attached to a map, then it will intercept all
-queries going to these functions.
-
-=head2 Open vs. Closed Index
-
-There are two options:
-
-=over
-
-=item C<open>:
-
-The default is to keep the index I<lazy>. In this mode the index is empty at the start and it will
-learn more and more by its own. In this sense, the index lives under an I<open world assumption>
-(hence the name), as the absence of information does not mean that there is no result.
-
-=item C<closed>:
-
-A I<closed world> index has to be populated to be useful. If a query is launched and the result is
-stored in the index, then it will be used, like for an open index. If no result in the index is
-found for a query, the empty result will be assumed.
-
-=back
-
-=head2 Hash Technology
-
-The default implementation uses an in-memory hash, no further fancy. Optionally, you can provide
-your own hash object. Also one which is I<tied> to an DBM file, etc.
-
-=head2 Map Attachment
-
-To activate an index, you have to attach it to a map. This is done at constructor time.
-
-It is possible (not sure how useful it is) to have one particular index to be attached to several
-different maps. It is not possible to have several L<TM::Index::Match> indices attached to one map.
-Indices of a different nature (non-match related) are not affected.
+This index implements a generic query cache which can capture all queries not handled by more
+specific indices. This class inherits directly from L<TM::Index>.
 
 =head1 INTERFACE
 
 =head2 Constructor
 
-The only mandatory parameter for the constructor is the map for which this index should apply. The
-map must be an instance of L<TM> or any of its subclasses, otherwise an exception is the
-consequence. If the map already has an index of this nature, the constructor will fail with an
-exception as well.
-
-Optional parameters are
-
-=over
-
-=item C<closed> (default: C<0>)
-
-This controls whether the index is operating under closed or open world assumptions.
-
-=item C<cache> (default: C<{}>)
-
-You optionally can pass in your own HASH reference.
-
-=back
-
-Example:
-
-   my $idx = new TM::Index::Match ($tm)
-
-B<NOTE>: When the index object goes out of scope, the destructor will make the index detach itself
-from the map. Unfortunately, the exact moment when this happens is somehow undefined in Perl, so it
-is better to do this manually at the end.
-
-Example:
-
-   {
-    my $idx2 = new TM::Index::Match ($tm, closed => 1);
-    ....
-    } # destructor called and index detaches automatically, but only in theory
-
-   {
-    my $idx2 = new TM::Index::Match ($tm, closed => 1);
-    ....
-    $idx2->detach; # better do things yourself
-    }
-
-=cut
-
-sub new {
-    my $class = shift;
-    my $tm    = shift;
-    $main::log->logdie (scalar __PACKAGE__.": first parameter must be an instance of TM") unless ref ($tm) && $tm->isa ('TM');
-
-    my %options = @_;
-    $options{closed} ||= 0;  # we assume that this is 'open' and not 'closed'
-    $options{cache}  ||= {};
-
-    my $self = bless { 
-		      %options,
-		      map       => $tm
-		  }, $class;
-
-    $main::log->logdie (scalar __PACKAGE__.": cannot implant index as map has already one") if $tm->{indices}->{match};
-    $self->{map}->{indices}->{match} = $self;
-    return $self;
-}
-
-# has to be done, if reattachment is the plan
-
-sub DESTROY {
-    shift->detach;
-}
-
-=pod
+The constructor/destructors are the same as that described in L<TM::Index>.
 
 =head2 Methods
 
 =over
-
-=item B<detach>
-
-I<$idx>->detach
-
-Makes the index detach safely from the map. The map is not harmed in this process.
-
-=cut
-
-sub detach {
-    my $self = shift;
-    $self->{map}->{indices}->{match} = undef;
-    $self->{map}                     = undef;
-}
-
-=pod
 
 =item B<populate>
 
@@ -204,7 +82,7 @@ sub populate {
     my @halfkeys = @_ or return;
     my $map  = $self->{map};
 
-    $map->{indices}->{match} = undef; # detach
+    my $indices = delete $map->{indices}; # detach temporarily
 
     my @mids = $map->midlets;
     foreach my $halfkey (@halfkeys) {
@@ -212,7 +90,7 @@ sub populate {
 #warn "keys ".(join "    ", @keys);
 	_combinatorial (\@mids, [], scalar @keys - 1, \@keys, $self->{closed}, $map, $self->{cache});
     }
-    $map->{indices}->{match} = $self; # re-attach
+    $map->{indices} = $indices; # re-attach
 
 sub _combinatorial {
     my $mids   = shift; # will be passed through
@@ -254,21 +132,6 @@ sub _combinatorial {
 
 =pod
 
-=item B<discard>
-
-I<$idx>->discard
-
-This throws away the index content.
-
-=cut
-
-sub discard {
-    my $self = shift;
-    $self->{cache} = {};
-}
-
-=pod
-
 =item B<statistics>
 
 I<$hashref> = I<$idx>->statistics
@@ -299,32 +162,13 @@ sub statistics {
     return \%stats;
 }
 
-
-# these do the actual work
-# like always, the working class is not even mentioned in the glossy brochure
-
-sub is_cached {
-    my $self = shift;
-    my $key  = shift;
-    $self->{reads}->{$key}++;
-    return $self->{closed} ? $self->{cache}->{$key} || []  # we this is to be understood 'closed', then "Not stored" means "not true", i.e. empty result
-                           : $self->{cache}->{$key};       # in an open interpretation, we never know
-}
-
-sub do_cache {
-    my $self = shift;
-    my $key = shift;
-    my $data = shift;
-    return $self->{cache}->{$key} = $data;
-}
-
 =pod
 
 =back
 
 =head1 SEE ALSO
 
-L<TM>
+L<TM>, L<TM::Index>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -335,8 +179,8 @@ itself.
 
 =cut
 
-our $VERSION = 0.1;
-our $REVISION = '$Id: Match.pm,v 1.1 2006/11/21 09:14:10 rho Exp $';
+our $VERSION = 0.3;
+our $REVISION = '$Id: Match.pm,v 1.2 2006/12/01 08:01:00 rho Exp $';
 
 1;
 

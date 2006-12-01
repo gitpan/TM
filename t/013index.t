@@ -21,6 +21,9 @@ $Data::Dumper::Indent = 1;
 
 use Time::HiRes;
 
+use TM;
+use TM::Literal;
+
 sub _chomp {
     my $s = shift;
     chomp $s;
@@ -55,12 +58,16 @@ sub implant {
 
     my ($root) = keys %$ta;
 
+    $tm->assert (Assertion->new (type => 'name',       kind=> TM->NAME, roles => [ 'thing', 'value' ], players => [ $root, new TM::Literal ($root."_name") ]));
+
     foreach my $ch (@{$ta->{$root}}) {
 	if (ref ($ch)) { # this is a subtree
 	    $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ (keys %$ch)[0], $root ]));
 	    implant ($tm, $ch);
 	} else { # this is just an instance
 	    $tm->assert (Assertion->new (type => 'isa',            roles => [ 'class', 'instance' ],      players => [ $root, $ch ]));
+	    $tm->assert (Assertion->new (type => 'name',       kind=> TM->NAME, roles => [ 'thing', 'value' ], players => [ $ch, new TM::Literal ($ch."_name") ]));
+	    $tm->assert (Assertion->new (type => 'occurrence', kind=> TM->OCC,  roles => [ 'thing', 'value' ], players => [ $ch, new TM::Literal ($ch."_occ") ]));
 	}
     }
 }
@@ -109,9 +116,25 @@ sub _flatten_tree {
 }
 
 
+sub _verify_chars {
+    my $tm = shift;
+    my $t  = shift;
+    foreach ($tm->mids (_flatten_tree ($t))) {
+	my @as = $tm->match_forall (char => 1, topic => $_);
+	if ( /i\d+/ ) { # an instance got a name and an occurrence
+	    die "char for $_: name and occurrence" unless scalar @as == 2;
+	} else { # a class only a name
+	    die "char for $_: only name" unless scalar @as == 1;
+	}
+    }
+    ok (1, 'chars');
+}
+
 #== TESTS =====================================================================
 
 use TM;
+
+# testing attachment actually
 
 require_ok( 'TM::Index::Match' );
 
@@ -119,22 +142,22 @@ eval {
     my $idx = new TM::Index::Match (42);
 }; like ($@, qr/parameter must be an instance/, _chomp ($@));
 
-eval {
-    my $tm = new TM;
-    my $idx  = new TM::Index::Match ($tm);
-    my $idx2 = new TM::Index::Match ($tm);
-}; like ($@, qr/cannot implant/, _chomp ($@));
-
 {
     my $tm = new TM;
     {
 	my $idx  = new TM::Index::Match ($tm);
 	$idx->detach;
     }
-    ok (!$tm->{indices}->{match}, 'first indexed autoremoved');
+    ok (! defined $tm->{indices}, 'first indexed autoremoved');
     {
 	my $idx2 = new TM::Index::Match ($tm);
 	ok (1, 'second index implanted');
+    }
+    {
+	my $tm = new TM;
+	my $idx  = new TM::Index::Match ($tm);
+	my $idx2 = new TM::Index::Match ($tm);
+	is (@{ $tm->{indices} }, 2, 'double trouble');
     }
 };
 
@@ -142,7 +165,7 @@ my @optimized_keys; # will be determined next
 
 #$debug = 2; # pins down somewhat the tree structure
 
-if (0) { # lazy index, built by use, functional test
+if (1) { # lazy index, built by use, functional test
     my $taxo = mk_taxo (3, 2, 3);
 #warn Dumper $taxo;
 
@@ -159,7 +182,7 @@ if (0) { # lazy index, built by use, functional test
 
 $debug = 2; # pins down somewhat the tree structure
 
-if (0) { # lazy index, built by use
+if (1) { # lazy index, built by use
     my $taxo = mk_taxo (4, 3, 3);
 #warn Dumper $taxo;
 
@@ -191,7 +214,7 @@ if (0) { # lazy index, built by use
 
 #warn Dumper \  @optimized_keys; exit;
 
-if (0) { # prepopulated
+if (1) { # prepopulated
     my $taxo = mk_taxo (2, 1, 1);
     my $tm = new TM;
     implant ($tm, $taxo);
@@ -217,6 +240,31 @@ if (0) { # prepopulated
     ok ($indexed < $unindexed, "measurable speedup with eager (populated) index ($indexed < $unindexed)");
 
 }
+
+require_ok( 'TM::Index::Characteristics' );
+
+{
+    my $taxo = mk_taxo (4, 4, 4);
+#warn Dumper $taxo;
+    my $tm = new TM;
+    implant ($tm, $taxo);
+
+    my $start = Time::HiRes::time;
+    _verify_chars ($tm, $taxo);
+    my $unindexed = (Time::HiRes::time - $start);
+
+    my $idx = new TM::Index::Characteristics ($tm, closed => 1);
+
+#    warn Dumper $idx->{cache}; exit;
+    $start = Time::HiRes::time;
+    _verify_chars ($tm, $taxo);
+    my $indexed = (Time::HiRes::time - $start);
+
+    ok ($indexed < $unindexed / 2, "measurable speedup with eager char index ($indexed < $unindexed)");
+
+}
+
+#-- persistent indices
 
 my @tmp;
 

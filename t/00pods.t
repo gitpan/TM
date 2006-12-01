@@ -42,6 +42,8 @@ my @PODs = qw(
 	      lib/TM/Tau.pm
 	      lib/TM/Tau/Filter.pm
 	      lib/TM/Tau/Filter/Analyze.pm
+	      lib/TM/Index.pm
+	      lib/TM/Index/Characteristics.pm
 	      lib/TM/Index/Match.pm
 	      );
 plan tests => scalar @PODs;

@@ -38,6 +38,8 @@ lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/DM.pm
+lib/TM/Index.pm
+lib/TM/Index/Characteristics.pm
 lib/TM/Index/Match.pm
 lib/TM/Literal.pm
 lib/TM/LTM/Parser.pm

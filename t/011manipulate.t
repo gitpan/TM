@@ -334,6 +334,23 @@ use TM;
 		  'tm://nirvana/aaa' ]),                             'instances 2');
 }
 
+{ # testing characteristics
+    my $tm = new TM;
+
+    use TM::Literal;
+
+    $tm->assert (Assertion->new (kind => TM->NAME, type => 'name', scope => 'us', roles => [ 'thing', 'value' ], players => [ 'aaa', new TM::Literal ('AAA') ]));
+    $tm->assert (Assertion->new (kind => TM->NAME, type => 'name', scope => 'us', roles => [ 'thing', 'value' ], players => [ 'aaa', new TM::Literal ('AAAA') ]));
+    $tm->assert (Assertion->new (kind => TM->OCC,  type => 'occurrence', scope => 'us', roles => [ 'thing', 'value' ], players => [ 'aaa', new TM::Literal ('OOOO') ]));
+    $tm->assert (Assertion->new (kind => TM->NAME, type => 'name', scope => 'us', roles => [ 'thing', 'value' ], players => [ 'ccc', new TM::Literal ('CCC') ]));
+#warn Dumper $tm;
+
+    ok (eq_set ([ map { $_->[0] } map { $_->[TM->PLAYERS]->[1] } $tm->match_forall (char => 1, topic => $tm->mids ('aaa')) ] ,
+		[ 'AAA',
+		  'OOOO',
+                  'AAAA' ]),                             'chars of aaa');
+}
+
 __END__
 
 TODO: are_instances, ...filters

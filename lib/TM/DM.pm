@@ -878,7 +878,7 @@ itself.
 =cut
 
 our $VERSION  = '0.02';
-our $REVISION = '$Id: DM.pm,v 1.3 2006/11/22 07:40:33 rho Exp $';
+our $REVISION = '$Id: DM.pm,v 1.4 2006/11/30 08:38:10 rho Exp $';
 
 1;
 

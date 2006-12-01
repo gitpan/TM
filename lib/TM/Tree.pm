@@ -58,6 +58,13 @@ I<$treeref> = I<$tm>->tree (
                  I<$role_topic>,
                  [ depth => I<$integer> ])
 
+I<$treeref> = I<$tm>->tree_x (
+                 I<$start_topic>,
+                 I<$type_topic>,
+                 I<$role_topic>,
+                 I<$role_topic>,
+                 [ depth => I<$integer> ])
+
 This function will analyze the topic map and will detect all maplets of the given type (direct and
 indirect ones) having the specified roles. Starting from the I<start topic> it will so find other
 topics playing the I<brole>. Those will be used as a next starting point, and so forth.
@@ -86,8 +93,28 @@ considerations).
 
 =back
 
+The version C<tree_x> does not honor subclassing of roles and type (but C<tree> does). This means
+that is can be considerably faster, especially if you use it for taxonomy stuff with C<isa> and
+C<is-subclass-of>.
+
 
 =cut
+
+
+
+sub tree {
+  my $self  = shift;
+  my ($lid, $type, $arole, $brole) = $self->mids (shift, shift, shift, shift);
+  my $depth = shift;
+
+  return       _tree ($self,
+		      $lid,
+		      {},
+		      [ $self->match_forall (type => $type) ],  # where are the associations which are relevant? (do not recompute them over and over, again
+		      $arole,
+		      $brole,
+		      0,                               # current depth
+		      $depth);
 
 sub _tree {
     my $self      = shift;
@@ -97,7 +124,7 @@ sub _tree {
     my ($a, $b)   = (shift, shift);                                  # the roles
     my ($cd, $md) = (shift, shift);                                  # current depth, maxdepth
 
-#warn "aids". Dumper $aids;
+#warn "aids";#. Dumper $aids;
 
     return $visited->{$lid} if $visited->{$lid};                     # been there, done that
 
@@ -109,8 +136,10 @@ sub _tree {
 
     return $n if defined $md && $cd >= $md;
 
-    foreach (grep ($self->is_player ($_, $lid, $a), @{$aids})) {  # shortcut OO method resolution
-	foreach ($self->get_players ($_, $b)) {
+    foreach (grep ($self->is_x_player ($_, $lid, $a), @{$aids})) {  # shortcut OO method resolution
+#warn "working on $_";
+	foreach ($self->get_x_players ($_, $b)) {
+#warn "    $_";
 	    my $child = _tree ($self,
 			       $_,
 			       $visited,
@@ -128,20 +157,59 @@ sub _tree {
     return $n;
 }
 
+}
 
-sub tree {
-  my $self  = shift;
-  my ($lid, $type, $arole, $brole) = $self->mids (shift, shift, shift, shift);
-  my $depth = shift;
 
-  return       _tree ($self,
-		      $lid,
-		      {},
-		      [ $self->match (TM->FORALL, type => $type) ],  # where are the associations which are relevant? (do not recompute them over and over, again
-		      $arole,
-		      $brole,
-		      0,                               # current depth
-		      $depth);
+sub tree_x {
+    my $self  = shift;
+    my ($lid, $type, $arole, $brole) = (shift, shift, shift, shift);
+    my $depth = shift;
+    
+    my @aids = $self->match_forall (type => $type);
+    my $n = {                                                        # we create a node for that topic
+	      lid         => $lid,
+	      children    => [],                                     # contains direct children
+#	      'children*' => []                                      # contains also indirect one
+	     };
+    return $n unless @aids;
+
+    my $ai; # index for arole
+    my $bi; # index for brole
+    {                                             # figure out the static indices in one prototype assoc
+	my $rs = $aids[0]->[TM->ROLES];           # we know that there must be at least one
+	for (my $i = 0; $i < @$rs; $i++) {
+	    if ($rs->[$i] eq $arole) {
+		$ai = $i;
+	    } elsif ($rs->[$i] eq $brole) {
+		$bi = $i;
+	    }
+	}
+    }
+    my %arcs;
+    foreach my $a (@aids) {
+	my ($a, $b) = @{ $a->[TM->PLAYERS] }[$ai,$bi];
+	push @{ $arcs{$a}}, $b;
+    }
+#warn Dumper \%arcs;
+    return _tree_x (\%arcs, $lid, {}, 0, $depth);
+
+sub _tree_x {
+    my $arcs      = shift;
+    my $lid       = shift;                                           # the current node
+    my $visited   = shift;                                           # a hash ref where we record what we have seen
+    my ($cd, $md) = (shift, shift);                                  # current depth, maxdepth
+    return $visited->{$lid} if $visited->{$lid};                     # been there, done that
+    my $n = {                                                        # we create a node for that topic
+	      lid         => $lid,
+	      children    => [],                                     # contains direct children
+	     };
+    return $n if defined $md && $cd >= $md;
+    foreach my $ch (@{ $arcs->{$lid} }) {
+	push @{$n->{'children'}}, _tree_x ($arcs, $ch, $visited, $cd+1, $md);
+    }
+    $visited->{$n->{lid}} = $n;                                      # global hash which remembers already built subtrees
+}
+
 }
 
 =pod
@@ -161,9 +229,9 @@ parameter is missing, C<thing> is assumed.
 
 sub taxonomy {
     my $self = shift;
-    my $top  = shift || 'thing';
+    my $top  = shift || $self->mids ('thing');
 
-    return $self->tree ($top, 'is-subclass-of', 'superclass', 'subclass');
+    return $self->tree_x ($top, $self->mids ('is-subclass-of', 'superclass', 'subclass'));
 }
 
 =pod
@@ -183,8 +251,8 @@ itself.
 
 =cut
 
-our $VERSION  = 0.3;
-our $REVISION = '$Id: Tree.pm,v 1.1 2006/11/13 08:02:33 rho Exp $';
+our $VERSION  = 0.4;
+our $REVISION = '$Id: Tree.pm,v 1.2 2006/12/01 08:01:00 rho Exp $';
 
 
 1;

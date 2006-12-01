@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.22';
+our $VERSION  = '1.23';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -304,7 +304,7 @@ B<NOTE>: After merging some of the I<lids> might not be reliably point to a topi
 =cut
 
 # NOTE: Below there much is done regarding speed. First the toplets are swept detecting which have
-# to be merged. This is not done immediately (as this is an expensive operation, but a 'merger' hash
+# to be merged. This is not done immediately (as this is an expensive operation), instead a 'merger' hash
 # is built. Note how merging information A -> B and A -> C is morphed into A -> B and B -> C using
 # the _find_free function.
 
@@ -1172,14 +1172,25 @@ our %forall_handlers = ('' =>
 				      values %{$self->{assertions}}));
 		       },
 #--
-
 		       'char.irole' =>
 		       sub {
+			   warn "char.irole is deprecated. use char.topic instead";
 			   my $self   = shift;
 			   my $topic  = $_[1];
 			   return undef unless $topic;
 			   return
 			       grep ($self->is_player ($_, $topic) &&                              # TODO: optimize this grep away (getting chars is expensive)
+				        NAME <= $_->[KIND] && $_->[KIND] <= OCC,
+					   values %{$self->{assertions}});
+		       },
+
+		       'char.topic' =>
+		       sub {
+			   my $self   = shift;
+			   my $topic  = $_[1];
+			   return undef unless $topic;
+			   return
+			       grep ($_->[PLAYERS]->[0] eq $topic &&                         # first role is always the 'thing'
 				        NAME <= $_->[KIND] && $_->[KIND] <= OCC,
 					   values %{$self->{assertions}});
 		       },
@@ -1352,16 +1363,33 @@ sub match_forall {
     my $skeys = join ('.', @skeys);
     my @svals = map { $query{$_} } @skeys;
 
-    if (my $index = $self->{indices}->{match}) {                                            # there exists a dedicated index
+#     if (my $index = $self->{indices}->{match}) {                                            # there exists a dedicated index
+# 	my $key   = "$skeys:" . join ('.', @svals);
+# 	if (my $lids  = $index->is_cached ($key)) {                                         # if result was cached, lets take the list of lids
+# 	    return map { $self->{assertions}->{$_} } @$lids;                                # and return fully fledged
+# 	} else {                                                                            # not defined means not cache => recompute
+# 	    my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                     # do it the hard way
+# 	    $index->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later
+# 	    return @as;
+# 	}
+#     } else {                                                                                # no cache, let's do the ochsentour
+# 	return _dispatch_forall ($self, \%query, $skeys, @svals);
+#     }
+
+    if (my $idxs = $self->{indices}) {                                                      # there are indices to help me
 	my $key   = "$skeys:" . join ('.', @svals);
-	if (my $lids  = $index->is_cached ($key)) {                                         # if result was cached, lets take the list of lids
-	    return map { $self->{assertions}->{$_} } @$lids;                                # and return fully fledged
-	} else {                                                                            # not defined means not cache => recompute
-	    my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                     # do it the hard way
-	    $index->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later
-	    return @as;
+	foreach my $idx (@$idxs) {
+	    if (my $lids  = $idx->is_cached ($key)) {                                       # if result was cached, lets take the list of lids
+#		warn "using cached for $key". Dumper $lids;
+		return map { $self->{assertions}->{$_} } @$lids;                            # and return fully fledged
+	    }
 	}
+	# obviously we have not found it                                                    # not defined means not cache => recompute
+	my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                         # do it the hard way
+	$idxs->[0]->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later, simply use the first [0]
+	return @as;
     } else {                                                                                # no cache, let's do the ochsentour
+#	warn "ochsen";
 	return _dispatch_forall ($self, \%query, $skeys, @svals);
     }
 
@@ -1576,6 +1604,7 @@ sub mids {
     my $self    = shift;
     my $baseuri = $self->{baseuri};
     my @ks;
+    my $mid2iid = $self->{mid2iid};
   MID:
     foreach my $k (@_) {
 	if (! defined $k) {                                            # someone put in undef
@@ -1583,9 +1612,9 @@ sub mids {
 	} elsif (ref ($k)) {                                           # would be subject indicator ref
 	    my $kk = $$k;
 
-	    foreach my $k2 (keys %{$self->{mid2iid}}) {
+	    foreach my $k2 (keys %{$mid2iid}) {
 		if (grep ($_ eq $kk, 
-			  @{$self->{mid2iid}->{$k2}->[TM->INDICATORS]}
+			  @{$mid2iid->{$k2}->[TM->INDICATORS]}
 			  )) {
 		    push @ks, $k2;
 		    next MID;
@@ -1594,16 +1623,16 @@ sub mids {
 	    push @ks, undef;
 
 	} elsif ($k =~ /^$baseuri/) {                                  # we already have something which looks like a mid
-	    push @ks, $self->{mid2iid}->{$k} ? $k : undef;
+	    push @ks, $mid2iid->{$k} ? $k : undef;
 
 	} elsif ($k =~ /^\w+:/) {                                      # must be some other uri, must be subject address
 	    no warnings;
-	    my @k2 = grep ($self->{mid2iid}->{$_}->[TM->ADDRESS] eq $k, keys %{$self->{mid2iid}});
+	    my @k2 = grep ($mid2iid->{$_}->[TM->ADDRESS] eq $k, keys %{$mid2iid});
 	    push @ks,  @k2 ? $k2[0] : undef;
 
 	} else {                                                       # only a string, like 'aaa'
 	    my $k2 = $baseuri.$k;                                      # make it absolute, and...
-	    push @ks, $self->{mid2iid}->{$k2} ? $k2 : undef;           # see whether there is something
+	    push @ks, $mid2iid->{$k2} ? $k2 : undef;                   # see whether there is something
 	}
     }
 #warn "mids ".Dumper (\@_)." returning ".Dumper (\@ks);
@@ -1701,6 +1730,9 @@ i.e. there is an assertion of type I<is-subclass-of> in the context map. It also
 superclass is a $TM::PSI::THING or if subclass and superclass are the same (reflexive).
 
 =cut
+
+#use Memoize;
+#memoize('is_subclass');
 
 sub is_subclass {
     my $self  = shift;
@@ -2111,7 +2143,7 @@ itself.
 
 =cut
 
-our $REVISION = '$Id: TM.pm,v 1.39 2006/11/29 10:31:10 rho Exp $';
+our $REVISION = '$Id: TM.pm,v 1.40 2006/12/01 08:01:00 rho Exp $';
 
 
 1;
