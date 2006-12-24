@@ -134,7 +134,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.2;
-our $REVISION = '$Id: Synchronizable.pm,v 1.4 2006/11/26 22:01:32 rho Exp $';
+our $REVISION = '$Id: Synchronizable.pm,v 1.6 2006/12/13 10:46:58 rho Exp $';
 
 1;
 

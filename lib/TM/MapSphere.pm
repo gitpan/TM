@@ -22,13 +22,14 @@ TM::MapSphere - Topic Maps, trait for a hierarchical TM repository
 =head1 SYNOPSIS
 
     # construct an adhoc-ish map sphere
+
     use TM;
-    use base qw(TM);
-    use Class::Trait qw(TM::MapSphere);
+    my $tm = new TM;                            # create a map
 
-    my $tm = new TM;                  # create a sphere
+    use Class::Trait;
+    Class::Trait->apply ($tm, 'TM::MapSphere'); # make it a sphere
 
-    $tm->mount ('/abc/' => new TM);   # mount a map into location /abc/
+    $tm->mount ('/abc/' => new TM);             # mount a map into location /abc/
     # this creates a topic in the map with a reference to another (empty) map
 
     # any subclass of TM can used
@@ -326,7 +327,7 @@ available.
 =cut
 
 our $VERSION  = 0.04;
-our $REVISION = '$Id: MapSphere.pm,v 1.23 2006/11/13 08:02:33 rho Exp $';
+our $REVISION = '$Id: MapSphere.pm,v 1.25 2006/12/13 10:46:58 rho Exp $';
 
 1;
 
@@ -454,18 +455,5 @@ x=pod
 
 
 
-    if (!$opts{BaseURL}) {
-	use TM::MapSphere::Memory;
-	return new TM::MapSphere::Memory (AutoList => $opts{AutoList});
-    } elsif ($opts{BaseURL} =~ /^tm:/) { # here we try to load the remote driver
-	eval "use TM::MapSphere::Client;";
-	die $@ if $@;
-	return new TM::MapSphere::Client (AutoList => $opts{AutoList}, MapSphere => $opts{BaseURL});
-    } elsif ($opts{BaseURL} =~ /^file:/) {
-	use TM::MapSphere::MLDBM;
-	return new TM::MapSphere::MLDBM (AutoList => $opts{AutoList}, FileBase => $opts{BaseURL});
-    } else {
-	$main::log->logdie (scalar __PACKAGE__ . ": unknown BaseURL method '$opts{BaseURL}'");
-    }
 }
 

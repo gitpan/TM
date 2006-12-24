@@ -58,9 +58,9 @@ use Data::Dumper;
 
     ok ($tm->is_mounted ('/xxx/'),                       'mount of xxx');
     ok ($tm->mids ('xxx'),                               'topic xxx');
-    is ($tm->midlet ('xxx')->[TM->ADDRESS], 
+    is ($tm->midlet ($tm->mids ('xxx'))->[TM->ADDRESS], 
 	'tm://nirvana/',                                 'mounted midlet, address');
-    ok (eq_array ($tm->midlet ('xxx')->[TM->INDICATORS], 
+    ok (eq_array ($tm->midlet ($tm->mids('xxx'))->[TM->INDICATORS], 
 		  [
 		   ]),                                   'mounted midlet, indicators');
     eval { # use a taken mount point
@@ -175,9 +175,9 @@ __END__
 
     ok ($ms->mids ('rumsti'),                            'mounted map, midlet');
 
-    is ($ms->midlet ('rumsti')->[TM->ADDRESS], 
+    is ($ms->midlet ($tms->mids('rumsti'))->[TM->ADDRESS], 
 	'tm://nirvana/',                                 'mounted midlet, address');
-    ok (eq_array ($ms->midlet ('rumsti')->[TM->INDICATORS], 
+    ok (eq_array ($ms->midlet ($ms->mids('rumsti'))->[TM->INDICATORS], 
 		  [
 		   'inline:xxx (yyy)
 '		   

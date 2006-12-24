@@ -174,7 +174,9 @@ Makes the index detach safely from the map. The map is not harmed in this proces
 sub detach {
     my $self = shift;
     $self->{map}->{indices} = _del ($self->{map}->{indices}, $self);
-    $self->{map}->{indices} = undef if @{ $self->{map}->{indices} } == 0; # make it undef, allows for a faster test
+    $self->{map}->{indices} = undef if (  $self->{map}
+                                    &&    $self->{map}->{indices} 
+                                    && @{ $self->{map}->{indices} } == 0); # make it undef, allows for a faster test
     $self->{map}            = undef;
 
 sub _del {         # gets rid of a particular entry in a list
@@ -260,7 +262,7 @@ itself.
 =cut
 
 our $VERSION = 0.1;
-our $REVISION = '$Id: Index.pm,v 1.1 2006/12/01 08:01:00 rho Exp $';
+our $REVISION = '$Id: Index.pm,v 1.3 2006/12/13 10:46:58 rho Exp $';
 
 1;
 

@@ -1,761 +1,9 @@
 <use-cases>
 
-   <version>$Id: tmql-use-cases.xml,v 1.46 2006/10/01 02:38:12 rho Exp $</version>
-
-   <database visible="no" title="PE Database">
-     <description>
-       Test database for low-level path expressions
-     </description>
-
-     <data language="astma">
-aaa
-bn: AAA
-
-bbb (ccc)
-bn: BBB
-bn@sss: BBBS
-oc: http://something
-oc (homepage): http://something2
-oc: http://somethingelse
-in@sss: something
-in (comment): Bondpeoplearesoodumb
-
-(special2)
-r3 : p3
-r4 : bbb
-(special)
-r1 : instance
-r2 : something
-
-(is-subclass-of)
-subclass: bbb
-superclass: sss
-
-yyy (xxx)
-
-zzz (xxx)
-
-www (xxx)
-
-#-- reification tests
-
-(yyy) is-reified-by bbb
-xxx : yyy
-www : zzz
-     </data>
-
-     <use-case qid="*s000" title="null">
-       <query title="null constant">
-	 <interface>
-	   <output type="list">
-[null]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( void )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0001" title="undef">
-       <query title="undef constant">
-	 <interface>
-	   <output type="list"></output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0002" title="all">
-       <query title="all constant">
-	 <interface>
-	   <output type="list">
-[...]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( %_ )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( %_ === %_ )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s001" title="literals">
-       <query title="single numbers">
-	 <interface>
-	   <output type="list">
-3
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 3 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( tmql:add_int_int (2, 1) )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( tmql:add_int_int (tmql:add_int_int (1, 1), 1) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="single strings">
-	 <interface>
-	   <output type="list">
-["rumsti"]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( "rumsti" )
-]]></code>
-	 </solution>
-       </query>
-       <query title="single decimals">
-	 <interface>
-	   <output type="list">
-[-3.14]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( -3.14 )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s002" title="simple tuples">
-       <query title="literals">
-	 <interface>
-	   <output type="list">
-[3,4,5]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 3, 4, 5 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( tmql:add_int_int (2, 1), 4, tmql:add_int_int (2, 3) )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if ( 2 ) then ( 3, 4, 5 ) else ( 4, 5, 6 ) fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if ( (2) === (2) ) then ( 3, 4, 5 ) else ( 4, 5, 6 ) fi
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s003" title="tuple multivalue">
-       <query title="multivalue">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-1,2,3
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 1, 2, 3 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( 1, 2, 3 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( $1, $0, $2)
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( $0..2 ) . ( $1, $0, $2)
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( $0.. ) . ( $1, $0, $2)
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( $0, $1.. ) . ( $1, $0, $2)
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( 2, 1, 3 ) . ( $1, $0, $2) . ( $2, $1, $0 ) . ( $2, $1, $0 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( (1), (1, 2) . ( $1 ), 3 )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0031" title="===">
-       <query title="constant TSes">
-	 <interface>
-	   <output type="list">
-3,[bbb],4
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-           <code><![CDATA[
-( ( 3, bbb, 4 ) === ( 3, bbb, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="variable TSes I">
-	 <interface>
-	   <output type="list">
-3,[bbb],4
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ( 3, bbb, 4 ) === ( 3, bbb superclasses :>: thing, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="variable TSes II">
-	 <interface>
-	   <output type="set">
-3,[sss],[sss]
-3,[bbb],[sss]
-3,[sss],[bbb]
-3,[bbb],[bbb]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ( 3, bbb superclasses :>: thing, bbb superclasses :>: thing ) === ( 3, bbb superclasses :>: thing, bbb superclasses :>: thing ) )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0032" title="|||">
-       <query title="constant TSes">
-	 <interface>
-	   <output type="list">
-3,[bbb],4
-3,[bbb],4
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-           <code><![CDATA[
-( ( 3, bbb, 4 ) ||| ( 3, bbb, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="variable TSes I">
-	 <interface>
-	   <output type="list">
-3,[bbb],4
-3,[bbb],4
-3,[sss],4
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ( 3, bbb, 4 ) ||| ( 3, bbb superclasses :>: thing, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0033" title="---">
-       <query title="constant TSes">
-	 <interface>
-	   <output type="list">
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-           <code><![CDATA[
-( ( 3, bbb, 4 ) --- ( 3, bbb, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="variable TSes I">
-	 <interface>
-	   <output type="list">
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ( 3, bbb, 4 ) --- ( 3, bbb superclasses :>: thing, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-       <query title="variable TSes II">
-	 <interface>
-	   <output type="list">
-3,[sss],4
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ( 3, bbb superclasses :>: thing, 4 ) --- ( 3, bbb, 4 ) )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s004" title="if">
-       <query title="if constant">
-	 <interface>
-	   <output type="list">
-[3,4,5]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if ( 2 ) then ( 3, 4, 5 ) else ( 4, 5, 6 ) fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if 
-   if ( 2 ) then ( 1 ) else ( ) fi
-   then ( 3, 4, 5 )
-   else ( 4, 5, 6 )
-fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if 
-   if ( ) then ( ) else ( 1 ) fi
-   then ( 3, 4, 5 )
-   else ( 4, 5, 6 )
-fi
-]]></code>
-	 </solution>
-
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if ( ) then ( 4, 5, 6 ) else ( 3, 4, 5 ) fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if
-   if ( ) then ( 1 ) else ( ) fi
-   then ( 4, 5, 6 )
-   else ( 3, 4, 5 ) 
-fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if
-   if ( 1 ) then (   ) else ( 1 ) fi
-   then ( 4, 5, 6 )
-   else ( 3, 4, 5 ) 
-fi
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s0041" title="if-n-project">
-       <query title="project then if">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-[aaa]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa ) . if (1) then ($0) else () fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa ) . if () then () else ($0) fi
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa, bbb ) . if () then () else ($1, $0) fi . ( $1 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if () then (aaa, bbb) else (bbb, aaa) fi . ( $1 )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-if () then (aaa, bbb) else (bbb, aaa) fi . ( $1 ) . if ($0) then ($0) else () fi
-]]></code>
-	 </solution>
-       </query>
-       <query title="if-append-TS">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">  <!-- actually unordered list -->
-[yyy]
-[yyy]
-[yyy]
-[yyy]
-[yyy]
-[yyy]
-[aaa]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: thing, aaa ) . if ( ($0 classes :>: thing) === ( homepage ) ) then ($1) else (yyy) fi 
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
-     <use-case qid="*s005" title="items-n-navigation">
-<!-- todo: roles in, scope, reify -->
-       <query title="topics and epsilon">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-[aaa]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa epsilon :>: thing )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( aaa epsilon :>: thing epsilon :<: thing )
-]]></code>
-	 </solution>
-       </query>
-       <query title="classes">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-[ccc]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb classes :>: thing )
-]]></code>
-	 </solution>
-       </query>
-       <query title="instance">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-[bbb]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( ccc classes :<: thing )
-]]></code>
-	 </solution>
-       </query>
-       <axiom language="tau" operational="yes">
-<code><![CDATA[
-( bbb classes :>: thing classes :<: thing ) === ( bbb )
-]]></code>
-       </axiom>
-       <axiom language="tau" operational="yes">
-	 <code><![CDATA[
-( ccc classes :<: thing classes :>: thing ) === ( ccc )
-]]></code>
-       </axiom>
-
-       <query title="sub/superclasses">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-[bbb]
-[sss]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb superclasses :>: thing )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( sss superclasses :<: thing )
-]]></code>
-	 </solution>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( sss superclasses :<: thing superclasses :>: thing )
-]]></code>
-	 </solution>
-       </query>
-
-       <query title="in players">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-[d6d34dc2d74e8dcd3c022a48cd541cea]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb players :<: r4 )
-]]></code>
-	 </solution>
-       </query>
-
-       <query title="out players">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-[p3]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb players :<: r4 players :>: r3 )
-]]></code>
-	 </solution>
-       </query>
-
-       <query title="roles">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-[r3]
-[r4]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb players :<: r4 roles :>: thing )
-]]></code>
-	 </solution>
-       </query>
-
-     </use-case>
-
-     <use-case qid="*s007" title="characteristics">
-       <query title="all characteristics (raw)">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-[f67e25e94b6aa11e7b976c9e8478a0c1]
-[6a7ddcfcfbb236a86915d998d10d3b1e]
-[3e4d4b6503da2f753632217c6ff93516]
-[24958515ed7c66e3eb58047d0c6e5e01]
-[85fc90e2099e0a3a3f2173aecba60fc4]
-[02ffdb58fc783f1b9e0753d19b1df6aa]
-[4a557e3a4e1246f3d760880ea2a53f45]
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: thing )
-]]></code>
-	 </solution>
-       </query>
-       <query title="all characteristics (literal)">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"BBB"
-"BBBS"
-"something"
-"http://something"
-"http://something2"
-"http://somethingelse"
-"Bondpeoplearesoodumb"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: thing ) #
-]]></code>
-	 </solution>
-       </query>
-
-       <query title="all occurrences">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"something"
-"http://something"
-"http://something2"
-"http://somethingelse"
-"Bondpeoplearesoodumb"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: occurrence  ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="all data occurrences">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"something"
-"Bondpeoplearesoodumb"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: has-data-occurrence  ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="all uri occurrences">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"http://something"
-"http://something2"
-"http://somethingelse"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: has-uri-occurrence ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="all homepages">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"http://something2"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: homepage ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="all comments">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"Bondpeoplearesoodumb"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: comment  ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="untyped name">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"BBB"
-"BBBS"
-	   </output>
-	 </interface>
-	 <solution language="tau" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb characteristics :>: name ) #
-]]></code>
-	 </solution>
-       </query>
-       <query title="scoped name">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"BBBS"
-	   </output>
-	 </interface>
-       </query>
-     </use-case>
-
-   </database>
-
+   <version>$Id: tmql-use-cases.xml,v 1.48 2006/12/23 10:37:08 rho Exp $</version>
 
    <database visible="no" title="TMQL Database">
-     <description>
-       Test database.
-     </description>
+     <description>TMQL Test database.</description>
 
      <data language="astma">
 aaa
@@ -813,12 +61,12 @@ bn: Rimsti
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( void )
+( null )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-void
+null
 ]]></code>
 	 </solution>
        </query>
@@ -869,79 +117,6 @@ void
        </query>
      </use-case>
 
-     <use-case qid="**s002" title="???TODO: integer operation">
-       <query title="integer constant">
-	 <interface>
-           <output type="list">
-[42]
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-( 42 + 0)
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-( 42 - 21 + 21)
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-( 80 div 4 + 22 )
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-( 42 * 2 - 42 )
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-42
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-42 [0]
-]]></code>
-	 </solution>
-       </query>
-       <query title="integer comparison">
-	 <interface>
-           <output type="list">
-[1]
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="y??es">
-           <code><![CDATA[
-( 42 == 42 )
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="y???es">
-           <code><![CDATA[
-( 0 + 42 == 43 - 1 )
-]]></code>
-	 </solution>
-       </query>
-
-       <query title="multivalue">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-1,2,3
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="y**********************es">
-	   <code><![CDATA[
-( 2-1, 1*2, 6 div 3+1 )
-]]></code>
-	 </solution>
-       </query>
-     </use-case>
-
      <use-case qid="*s0021" title="tuple multivalue">
        <query title="multivalue">
 	 <interface>
@@ -965,11 +140,6 @@ void
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
 ( (1), (1, 2) ( $1), 3 )
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="y****************es">
-	   <code><![CDATA[
-( 1, ( (0, 1) * (1, 2) ) ( $1 ), 3 )
 ]]></code>
 	 </solution>
        </query>
@@ -1022,12 +192,12 @@ void
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ 1 = 1 ]
+%_ [ 1 == 1 ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ . = . ]
+%_ [ . == . ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1037,12 +207,12 @@ void
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-(%_, %_) [ $0 = $1 ] ( $1 )
+(%_, %_) [ $0 == $1 ] ( $1 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-(%_, %_) [ $1 = $0 ] ( $0 )
+(%_, %_) [ $1 == $0 ] ( $0 )
 ]]></code>
 	 </solution>
 <!-- solution language="tmql" style="pe" operational="tyes">
@@ -1068,7 +238,7 @@ void
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( %_, %_ ) [  $# = $#  ]
+( %_, %_ ) [  $# == $#  ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1092,9 +262,9 @@ void
 ( %_ ) 
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
-( %_, %_ ) [ ($0) = ($1) ] ($0) 
+( %_, %_ ) [ ($0) === ($1) ] ($0) 
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1222,22 +392,17 @@ void
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( bbb ) [ (1) = (1) ] 
+( bbb ) [ 1 == 1 ] 
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( bbb ) [ ($#) = (0) ] 
+( bbb ) [ $# == $# ] 
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( bbb ) [ ($#) = ($#) ] 
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-( bbb ) [ $# = 0 ] 
+( bbb ) [ $# == 0 ] 
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1252,23 +417,23 @@ bbb  [ 0 ]
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ . = bbb ]
+%_ [ . == bbb ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ bbb = . ]
+%_ [ bbb == . ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-(%_,%_) [ ( $0, bbb ) = ( bbb, $1 ) ] ( . )
+(%_,%_) [ ( $0, bbb ) == ( bbb, $1 ) ] ( . )
 ]]></code>
 	 </solution>
        </query>
        <axiom language="tmql" operational="yes">
 	 <code><![CDATA[
-%_ ( $# ) [ . = 2 ] === 2
+%_ ( $# ) [ . == 2 ] === 2
 ]]></code>
        </axiom>
      </use-case>
@@ -1283,18 +448,17 @@ bbb  [ 0 ]
 [body]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
-%_ [ $# = 0 ]
+%_ [ $# == 0 ]
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 %_ [ 0 ]
 ]]></code>
 	 </solution>
-
-	 <solution language="tmql" style="pe" operational="ty************************es">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 (%_,%_) [ @@@@@@@@@@@@@@@  $1 = bbb ] [ 0 ] ( $1 )
 ]]></code>
@@ -1311,7 +475,7 @@ bbb  [ 0 ]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	 <code><![CDATA[
-%_ [ $0 = bbb ] ( $0, $0 )
+%_ [ $0 == bbb ] ( $0, $0 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1320,32 +484,6 @@ bbb  [ 0 ]
 ]]></code>
 	 </solution>
        </query>
-     </use-case>
-
-     <use-case qid="*******s0052" title="loop counter">
-<!-- problem: where does $# refer to? -->
-       <query title="loop counter">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="list">
-[0]
-[1]
-[2]
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-%_ [ * xxx ] ( $# )
-]]></code>
-	 </solution>
-       </query>
-       <axiom language="tmql" operational="y********************es">
-	 <code><![CDATA[
-%_ ( $# )  === %_ ( $# ) ( $# )
-]]></code>
-       </axiom>
      </use-case>
 
 <!-- navigation -->
@@ -1362,18 +500,18 @@ bbb  [ 0 ]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( %_ epsilon :>: )
+( %_ >> epsilon )
 ]]></code>
 	 </solution>
        </query>
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-( %_ epsilon :<: ) === ( %_ epsilon :>: )
+( %_ << epsilon ) === ( %_ >> epsilon )
 ]]></code>
        </axiom>
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-( %_ epsilon :<: epsilon :<: ) === ( %_ )
+( %_ << epsilon << epsilon ) === ( %_ )
 ]]></code>
        </axiom>
      </use-case>
@@ -1390,10 +528,16 @@ bbb  [ 0 ]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( bbb classes :>: )
+( bbb >> classes )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( bbb ^ )
 ]]></code>
 	 </solution>
        </query>
+
        <query title="instance navigation">
 	 <interface>
 	   <input>
@@ -1405,31 +549,15 @@ bbb  [ 0 ]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( ccc classes :<: )
+( ccc << classes)
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( ccc instances :>: )
+( ccc >> instances)
 ]]></code>
 	 </solution>
        </query>
-
-       <axiom language="tmql" operational="yes">
-<code><![CDATA[
-( bbb classes :>: classes :<: ) === ( bbb )
-]]></code>
-       </axiom>
-       <axiom language="tmql" operational="yes">
-	 <code><![CDATA[
-( bbb classes :>: instances :>: ) === ( bbb )
-]]></code>
-       </axiom>
-       <axiom language="tmql" operational="yes">
-	 <code><![CDATA[
-( ccc instances :>: classes :>: ) === ( ccc )
-]]></code>
-       </axiom>
 
        <query title="predicated instance navigation">
 	 <interface>
@@ -1440,14 +568,14 @@ bbb  [ 0 ]
 [bbb]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="tyes">
+	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ . classes :>: = ccc ]
+%_ [ . >> classes == ccc ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-%_ [ * ccc ] ((
+%_ [ ^ ccc ]
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1456,9 +584,35 @@ bbb  [ 0 ]
 ]]></code>
 	 </solution>
        </query>
+
+       <axiom language="tmql" operational="yes">
+<code><![CDATA[
+( bbb >> classes << classes) === ( bbb )
+]]></code>
+       </axiom>
        <axiom language="tmql" operational="yes">
 	 <code><![CDATA[
-%_ // xxx === %_ [ * xxx ]
+( bbb >> classes >> instances) === ( bbb )
+]]></code>
+       </axiom>
+       <axiom language="tmql" operational="yes">
+	 <code><![CDATA[
+( ccc >> instances >> classes) === ( ccc )
+]]></code>
+       </axiom>
+       <axiom language="tmql" operational="yes">
+	 <code><![CDATA[
+( ccc >> instances >> classes ) === ( ccc )
+]]></code>
+       </axiom>
+       <axiom language="tmql" operational="yes">
+	 <code><![CDATA[
+( ccc >> instances >> classes ) === ( ccc )
+]]></code>
+       </axiom>
+       <axiom language="tmql" operational="yes">
+	 <code><![CDATA[
+%_ // xxx === %_ [ ^ xxx ]
 ]]></code>
        </axiom>
      </use-case>
@@ -1476,36 +630,36 @@ bbb  [ 0 ]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb superclasses :>:
+bbb >> superclasses
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-sss  subclasses :>:
+sss  >> subclasses
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb superclasses :>: subclasses :>:
+bbb >> superclasses >> subclasses
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-sss superclasses :<:
+sss << superclasses
 ]]></code>
 	 </solution>
        </query>
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-( bbb superclasses :>: superclasses :>: ) === ( bbb superclasses :>: )
+( bbb >> superclasses >> superclasses ) === ( bbb >> superclasses)
 ]]></code>
        </axiom>
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-sss superclasses :<: superclasses :<: === sss superclasses :<:
+sss << superclasses << superclasses === sss << superclasses
 ]]></code>
        </axiom>
-<!-- @@@ examples with more convoluted subclassing -->
+<!-- TODO @@@ examples with more convoluted subclassing -->
      </use-case>
 
      <use-case qid="*s0064" title="player navigation">
@@ -1520,7 +674,7 @@ sss superclasses :<: superclasses :<: === sss superclasses :<:
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( bbb players :<: r4 )
+( bbb << players r4 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1532,12 +686,12 @@ sss superclasses :<: superclasses :<: === sss superclasses :<:
 
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-( bbb players :<: r4 players :>: r4 ) === ( bbb )
+( bbb << players r4 >> players r4 ) === ( bbb )
 ]]></code>
        </axiom>
        <axiom language="tmql" operational="yes">
 <code><![CDATA[
-( bbb players :<: r4 epsilon :>: players :>: r4 ) === ( bbb )
+( bbb << players r4 >> epsilon >> players r4 ) === ( bbb )
 ]]></code>
        </axiom>
        <axiom language="tmql" operational="yes">
@@ -1545,30 +699,35 @@ sss superclasses :<: superclasses :<: === sss superclasses :<:
 bbb <- r4 -> r4 === bbb
 ]]></code>
        </axiom>
-     </use-case>
-
-     <use-case qid="*s010" title="atomification">
        <query title="characteristics unatomified">
 	 <interface>
 	   <input>
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[f67e25e94b6aa11e7b976c9e8478a0c1]
-[6a7ddcfcfbb236a86915d998d10d3b1e]
-[3e4d4b6503da2f753632217c6ff93516]
-[24958515ed7c66e3eb58047d0c6e5e01]
-[85fc90e2099e0a3a3f2173aecba60fc4]
-[02ffdb58fc783f1b9e0753d19b1df6aa]
-[4a557e3a4e1246f3d760880ea2a53f45]
+[e36181ad953ed4db60bfdbd5c3d88946]
+[dae2dd9316eceaf1e463eddc3af415ac]
+[187dfe2be3ad3363818854477e99177f]
+[542d25b7dbcf9aa933fb2cb66a4a8447]
+[06dce4b4dd20c95677b8af59ed3dc80b]
+[a7de8027d9b624d3f37dbf44383f04db]
+[d58d49c7ee507c51937a9667d7f4ab33]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: thing
+bbb >> characteristics
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+bbb >> characteristics thing
 ]]></code>
 	 </solution>
        </query>
+     </use-case>
+
+     <use-case qid="*s010" title="atomification">
        <query title="all characteristics atomified">
 	 <interface>
 	   <input>
@@ -1586,12 +745,172 @@ bbb characteristics :>: thing
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: thing atomify :>:
+bbb >> characteristics >> atomify
+]]></code>
+	 </solution>
+       </query>
+       <query title="homepage atomified">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+"http://something2"
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+bbb >> characteristics homepage >> atomify
+]]></code>
+	 </solution>
+       </query>
+       <query title="homepage atomified/deatomified">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+[a7de8027d9b624d3f37dbf44383f04db]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+bbb >> characteristics homepage >> atomify << atomify
+]]></code>
+	 </solution>
+       </query>
+       <query title="deatomified">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+[542d25b7dbcf9aa933fb2cb66a4a8447]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"BBBS" << atomify
+]]></code>
+	 </solution>
+       </query>
+       <query title="deatomified/atomified">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+"BBBS"
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"BBBS" << atomify >> atomify
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="TODO">
+	   <code><![CDATA[
+"BBBS" << atomify [ @ sss ] >> atomify
+]]></code>
+	 </solution>
+       </query>
+       <query title="homepage deatomified char'ed">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+[bbb]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+http://something2 << atomify << characteristics homepage
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"BBBS" << atomify << characteristics name
 ]]></code>
 	 </solution>
        </query>
      </use-case>
 
+     <use-case qid="*s0066" title="indicator navigation">
+       <query title="indicator navigation">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+"http://rumsti.org/remsti"
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( rumsti >> indicators )
+]]></code>
+	 </solution>
+       </query>
+       <query title="indicator navigation">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+[rumsti]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://rumsti.org/remsti << indicators )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://rumsti.org/remsti ~ )
+]]></code>
+	 </solution>
+       </query>
+     </use-case>
+
+     <use-case qid="*s0067" title="locator navigation">
+       <query title="forward">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+"http://rumsti.org/ramsti"
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( rumsti >> locators )
+]]></code>
+	 </solution>
+       </query>
+       <query title="reverse">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+[rumsti]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://rumsti.org/ramsti << locators )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://rumsti.org/ramsti = )
+]]></code>
+	 </solution>
+       </query>
+     </use-case>
 
      <use-case qid="*s0081" title="scoping">
        <query title="scope retrieve">
@@ -1606,19 +925,19 @@ bbb characteristics :>: thing atomify :>:
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: name scope :>:
+bbb >> characteristics name >> scope
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: name ( . scope :>: )
+bbb >> characteristics name ( . >> scope )
 ]]></code>
 	 </solution>
        </query>
      </use-case>
 
      <use-case qid="*s012" title="reification">
-       <query title="foreward (topic to assoc)">
+       <query title="forward (topic to assoc)">
 	 <interface>
 	   <input>
 	     <param name="%_" type="map"    mutable="no"></param>
@@ -1629,12 +948,12 @@ bbb characteristics :>: name ( . scope :>: )
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-zzz <- www reifier :<:
+zzz <- www << reifier
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb reifier :>: thing reifier :<: thing
+bbb >> reifier << reifier
 ]]></code>
 	 </solution>
        </query>
@@ -1649,21 +968,21 @@ bbb reifier :>: thing reifier :<: thing
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb reifier :>:
+bbb >> reifier
 ]]></code>
 	 </solution>
        </query>
        <axiom language="tmql" operational="yes">
 	 <code><![CDATA[
-zzz <- www reifier :<:  reifier :>:  ===   zzz <- www
+zzz <- www << reifier >>  reifier  ===   zzz <- www
 ]]></code>
        </axiom>
        <axiom language="tmql" operational="yes">
 	 <code><![CDATA[
-bbb reifier :>: thing reifier :<: thing         ===   bbb
+bbb >> reifier << reifier         ===   bbb
 ]]></code>
        </axiom>
-<!-- more tests for reifiing characteristics -->
+<!-- more tests for reifying characteristics -->
      </use-case>
 
      <use-case qid="*s011" title="characteristics">
@@ -1704,39 +1023,6 @@ bbb / *
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
 bbb / occurrence
-]]></code>
-	 </solution>
-       </query>
-       <query title="all data occurrences">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"something"
-"Bondpeoplearesoodumb"
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-bbb / has-data-occurrence
-]]></code>
-	 </solution>
-       </query>
-       <query title="all uri occurrences">
-	 <interface>
-	   <input>
-	     <param name="%_" type="map"    mutable="no"></param>
-	   </input>
-	   <output type="set">
-"http://something"
-"http://something2"
-"http://somethingelse"
-	   </output>
-	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-bbb / has-uri-occurrence
 ]]></code>
 	 </solution>
        </query>
@@ -1795,29 +1081,24 @@ bbb / name
 "BBBS"
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="y******************************es">
+	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb / name [ . scope :>: = sss ]
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="tyes">
-	   <code><![CDATA[
-bbb characteristics :>: name [ . scope :>: = sss ] ( . atomify :>: thing )
+bbb >> characteristics name [ . >> scope == sss ] ( . >> atomify  )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: name [ . scope :>: = sss ] ( . atomify :>: thing )
+bbb >> characteristics name [ @ sss ] ( . >> atomify )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="y******************************es">
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+bbb / name [ . >> scope == sss ]
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
 bbb / name [ @ sss ]
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
-	   <code><![CDATA[
-bbb characteristics :>: name [ @ sss ] ( . atomify :>: )
 ]]></code>
 	 </solution>
        </query>
@@ -1827,13 +1108,13 @@ bbb characteristics :>: name [ @ sss ] ( . atomify :>: )
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[24958515ed7c66e3eb58047d0c6e5e01]
-[85fc90e2099e0a3a3f2173aecba60fc4]
+[542d25b7dbcf9aa933fb2cb66a4a8447]
+[d58d49c7ee507c51937a9667d7f4ab33]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: thing [@ sss]
+bbb >> characteristics [@ sss]
 ]]></code>
 	 </solution>
        </query>
@@ -1848,7 +1129,7 @@ bbb characteristics :>: thing [@ sss]
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-bbb characteristics :>: name [ . scope :>: = us ] ( . atomify :>: )
+bbb >> characteristics name [ . >> scope == us ] ( . >> atomify )
 ]]></code>
 	 </solution>
        </query>
@@ -1874,46 +1155,46 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $b := bbb
+for $b in bbb
 return
    ( bbb, 2 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $b := bbb
+for $b in bbb
 return
    ( $b, 2 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	   <code><![CDATA[
-for $b := %_ // ccc
+for $b in %_ // ccc
 return
    ( $b, 2 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	   <code><![CDATA[
-for $a := aaa
-  for $b := bbb
+for $a in aaa
+  for $b in bbb
   return
      ( $b, 2 )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	   <code><![CDATA[
-for $a := 2
-  for $b := bbb
+for $a in 2
+  for $b in bbb
   return
      ( $b, $a )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	   <code><![CDATA[
-for $b := ccc
-   for $a := 2
-      for $b := bbb
+for $b in ccc
+   for $a in 2
+      for $b in bbb
 return
      ( $b, $a )
 ]]></code>
@@ -1930,7 +1211,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	   <code><![CDATA[
-for $b := %_
+for $b in %_
 return
    ( $b )
 ]]></code>
@@ -1950,7 +1231,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     true
 return
@@ -1959,7 +1240,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     not not true
 return
@@ -1978,7 +1259,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     not (not true)
 return
@@ -1987,7 +1268,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     $a is-a ccc & (not $a is-a ddd)
 return
@@ -1996,7 +1277,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     $a is-a ccc & (not $a is-a ccc | not $a is-a ddd)
 return
@@ -2014,7 +1295,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     false
 return
@@ -2033,7 +1314,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := bbb
+for $a in bbb
 where
     not false
 return
@@ -2041,7 +1322,7 @@ return
 ]]></code>
 	 </solution>
        </query>
-       <query title="some satisfy">
+       <query title="some satisfies">
 	 <interface>
 	   <input>
 	     <param name="%_" type="map"    mutable="no"></param>
@@ -2052,52 +1333,80 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
-    some $b := %_ satisfy true
-return
-    $a
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="flwr" operational="ty**************es">
-	 <code><![CDATA[
-for $a := %_ // ccc
-where
-    some $_ := %_ satisfy $a classes :>: thing
-return
-    $a
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="flwr" operational="y*****************es">
-	 <code><![CDATA[
-for $a := %_ // ccc
-where
-    exists $a classes :>: thing
-return
-    $a
-]]></code>
-	 </solution>
-	 <solution language="tmql" style="flwr" operational="y******************es">
-	 <code><![CDATA[
-for $a := %_ // ccc
-where
-    $a classes :>: thing
+    some $b in %_ satisfies true
 return
     $a
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
-    $a classes :>: thing = ccc
+    some $_ in %_ satisfies not false
 return
     $a
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
+where
+    some $_ in %_ satisfies $a >> classes == ccc
+return
+    $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
+where
+    some $_ in $a >> classes thing satisfies true
+return
+    $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
+where
+    exists $a >> classes *
+return
+    $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
+where
+    $a >> classes *
+return
+    $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
+where
+    some $_ in %_ satisfies $a >> classes *
+return
+    $a
+]]></code>
+	 </solution>
+
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
+where
+    $a >> classes == ccc
+return
+    $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_ // ccc
 where
     $a is-a ccc
 return
@@ -2116,7 +1425,7 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     true |  $a is-a ccc & false
 return
@@ -2125,7 +1434,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     not false & not $a is-a ddd | false
 return
@@ -2134,7 +1443,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     not true & $a is-a ccc | not false
 return
@@ -2143,7 +1452,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     true &  $a is-a ccc | false
 return
@@ -2152,7 +1461,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     false |  $a is-a ccc | false
 return
@@ -2161,7 +1470,7 @@ return
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_ // ccc
+for $a in %_ // ccc
 where
     $a is-a ccc | $a is-a ddd
 return
@@ -2180,18 +1489,18 @@ return
 	 </interface>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_
+for $a in %_
 where
-  every $b := %_ // ccc satisfy true
+  every $b in %_ // ccc satisfies true
 return
    ( $a )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
-for $a := %_
+for $a in %_
 where
-  every $b := %_ // ccc satisfy $b is-a ccc
+  every $b in %_ // ccc satisfies $b is-a ccc
 return
    ( $a )
 ]]></code>
@@ -2246,7 +1555,7 @@ return
 	 <solution language="tmql" style="flwr" operational="yes">
 	 <code><![CDATA[
 return
-   if ( bbb superclasses :>: ) then aaa else bbb
+   if ( bbb >> superclasses  ) then aaa else bbb
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="flwr" operational="yes">
@@ -2284,6 +1593,8 @@ return
        </query>
      </use-case>
 
+<!-- SELECT -->
+
      <use-case qid="*s030" title="basic SELECT">
        <query title="SELECT results">
 	 <interface>
@@ -2306,7 +1617,7 @@ where
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a, 42
-   where some $b := xxx satisfy $a is-a $b
+   where some $b in xxx satisfies $a is-a $b
 ]]></code>
 	 </solution>
        </query>
@@ -2322,13 +1633,13 @@ select $a, 42
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a
-   where some $b := %_ satisfy $a = $b
+   where some $b in %_ satisfies $a == $b
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a
-   where some $b := %_ satisfy $b = $a
+   where some $b in %_ satisfies $b == $a
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
@@ -2340,7 +1651,7 @@ select $a
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a
-   where ( some $b := %_ // ccc satisfy true )
+   where ( some $b in %_ // ccc satisfies true )
          &
          $a is-a thing
 ]]></code>
@@ -2357,13 +1668,13 @@ select $a
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a
-   where some $b := %_ satisfy false
+   where some $b in %_ satisfies false
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
 select $a, $c
-   where some $b := %_ satisfy false
+   where some $b in %_ satisfies false
          &
          $a is-a ccc
          &
@@ -2373,7 +1684,20 @@ select $a, $c
        </query>
      </use-case>
 
-     <use-case qid="*s040" title="prefixes-n-identifiers">
+
+
+
+
+
+
+
+<!-- development horizon here -->
+
+
+
+
+
+     <use-case qid="*****s040" title="prefixes-n-identifiers">
        <query title="identifiers and indication">
 	 <interface>
 	   <input>
@@ -2395,19 +1719,19 @@ return ( ~ http://rumsti.org/remsti / name)
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
-for $b := http://rumsti.org/ramsti
+for $b in http://rumsti.org/ramsti
 return ($b / name)
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
-for $b := =http://rumsti.org/ramsti
+for $b in =http://rumsti.org/ramsti
 return ($b / name)
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="select" operational="yes">
 	   <code><![CDATA[
-for $b := ~http://rumsti.org/remsti
+for $b in ~http://rumsti.org/remsti
 return ($b / name)
 ]]></code>
 	 </solution>
@@ -2479,8 +1803,7 @@ return
 <!-- TODO: predefined prefixes tmql, xsd, op, .... -->
      </use-case>
 
-
-     <use-case qid="*s041" title="inlined ontology">
+     <use-case qid="******s041" title="inlined ontology">
        <query title="using AsTMa=">
          <interface>
            <input>
@@ -2505,9 +1828,18 @@ using adhoc import http://adhoc.org/ {
 
 
 
+
+
 <!-- rubicon 
 
-for %_ := http://adhoc.org/ //*
+	 <solution language="tmql" style="pe" operational="y****************es">
+	   <code><![CDATA[
+( 1, ( (0, 1) * (1, 2) ) ( $1 ), 3 )
+]]></code>
+	 </solution>
+
+
+for %_ in http://adhoc.org/ //*
 return (remsti, 42)
 
 %_ // xxx
@@ -2518,6 +1850,112 @@ return (remsti, 42)
 
 
 -->
+
+
+     <use-case qid="*******s0052" title="loop counter">
+<!-- problem: where does $# refer to? -->
+       <query title="loop counter">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+[0]
+[1]
+[2]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+%_ [ * xxx ] ( $# )
+]]></code>
+	 </solution>
+       </query>
+       <axiom language="tmql" operational="y********************es">
+	 <code><![CDATA[
+%_ ( $# )  === %_ ( $# ) ( $# )
+]]></code>
+       </axiom>
+     </use-case>
+
+
+
+
+     <use-case qid="**s002" title="???TODO: integer operation">
+       <query title="integer constant">
+	 <interface>
+           <output type="list">
+[42]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( 42 + 0)
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( 42 - 21 + 21)
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( 80 div 4 + 22 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( 42 * 2 - 42 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+42
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+42 [0]
+]]></code>
+	 </solution>
+       </query>
+       <query title="integer comparison">
+	 <interface>
+           <output type="list">
+[1]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+           <code><![CDATA[
+( 42 == 42 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="y???es">
+           <code><![CDATA[
+( 0 + 42 == 43 - 1 )
+]]></code>
+	 </solution>
+       </query>
+
+       <query title="multivalue">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+1,2,3
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="y**********************es">
+	   <code><![CDATA[
+( 2-1, 1*2, 6 div 3+1 )
+]]></code>
+	 </solution>
+       </query>
+     </use-case>
+
+
+
 
 
 <!-- TODO: empty result 
@@ -2768,6 +2206,8 @@ serializer
 
    </database>
 
+</use-cases>
+
 <!--
 %_ // bbb < . , . -> instance / class >
  
@@ -2775,1782 +2215,6 @@ serializer
 
 -->
 
-   <database visible="no" title="Opera Database" path="tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/">
-     <description>
-       This is a fake database to host queries regarding operas. Its motivation is mainly to capture
-       the queries we drafted in the Amsterdam 2004 meetings.
-     </description>
-
-     <query qid="q1" title="non-existential query (forall)">
-       <description>
-	 Return all composers where every opera they composed had its premiere after 1900.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // person [ ! . -> composer \ composed-by / opera # in [* premiere-date] <= 1900 ] # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $person IN $m // person
-WHERE
-    EVERY $opera IN $m // opera SATISFIES
-         composed-by ($person : composer, $opera : opera)
-         AND
-         SOME $pr IN $opera # in [* premiere-date] SATISFIES
-             $pr > 1900
-return
-   ( $person # bn )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q2" title="existential query (exists)">
-       <description>
-         Return all composers where at least one opera they composed had its premiere after 1900.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // person [ . -> composer \ composed-by / opera # in [* premiere-date] > 1900 ] # bn
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q3" title="FUNCTIONs on return">
-       <description>
-	 Return (in capital letters) all opera names.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <!-- does not work        solution language="tmql" style="pe">
-	 <code><![CDATA[
-string:uppercase ($m // opera # bn)
-]]></code>
-       </solution -->
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $bn IN $m // opera # bn
-return
-    ( string:uppercase ($bn) )
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* \rho does not like comments starting with /*
-NOTE: The following does embed a list of basename items into a string,
-      so the result is different from returning all basename. Very different,
-      in fact. */
-SELECT string:uppercase ($opera # bn)
-FROM $m
-WHERE
-   $opera : opera
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* NOTE: This does not what the use case says. */
-SELECT string:uppercase ($opera # bn)
-FROM $m
-WHERE
-   is-instance-of ($opera : instance, opera: class)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q4a" title="conditions in WHERE">
-       <description>
-	 Return all Puccini opera names premiered after 1900.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // opera [ in [* premiere-date] < 1900 ] [ . -> opera \ composed-by / composer = puccini ] # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $opera IN $m // opera
-WHERE
-    $opera # in [* premiere-date] < 1900
-    AND
-    composed-by ($opera : opera, puccini : composer)
-return
-    ($opera # bn)
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-SELECT $opera # bn
-FROM $m
-WHERE
-    $opera # in [* premiere-date] < 1900
-    AND
-    composed-by ($opera : opera, puccini : composer)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q4" title="path expressions on return">
-       <description>
-	 Return all Puccini opera names (english), the operas sorted by premiere-date
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // composed-by [ . / composer = puccini ] / opera order by in [* premiere-date] asc # bn [@ english]
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $a IN $m // composed-by
-LET $opera := $a / opera
-WHERE
-   $a / composer = puccini
-ORDER BY $opera # in [* premiere-date] ASCENDING
-return
-   ( $opera # bn [@ english] )
-]]></code>
-       </solution>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // opera [ . -> opera \ composed-by / composer = puccini ] order by ./in [* premiere-date] asc # bn [@ english] )
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-SELECT $opera # bn [@ english]
-FROM $m
-WHERE
-   composed-by ($opera : opera, puccini : composer)
-ORDER BY $opera # in [* premiere-date] ASCENDING
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $opera IN $m // opera
-WHERE
-   composed-by ($opera : opera, puccini : composer)
-ORDER BY $opera # in [* premiere-date] ASCENDING
-return 
-   ($opera # bn [@ english])
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q5" title="omission of roles">
-       <description>
-	 Return Puccinis operas.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-/* \rho is not sure whether this is such a good idea: How is this controlled? /*
-($m + tm://.../opera.ont) // opera [ . -> composed-by puccini] # bn 
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* \rho is not sure whether this is such a good idea: How is this controlled? /*
-SELECT $opera : opera
-FROM $m + tm://.../opera.ont
-WHERE
-   composed-by ($opera, puccini)
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* \rho is not sure whether this is such a good idea: How is this controlled? /*
-FOR $opera IN ($m + tm://.../opera.ont) // opera
-WHERE
-   composed-by ($opera, puccini)
-return
-   ($opera # bn)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q6" title="returning association items">
-       <description>
-	 Return all 'composed-by' associations where Puccini is the composer.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-$m // composed-by [ . / composer = puccini ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* NOTE: \rho thinks that the 'as' is as ugly as hell */
-SELECT $puccini-operas
-FROM $m
-WHERE
-   composed-by ($_ : opera, puccini : composer) AS $puccini-operas
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $puccini-operas IN $m // composed-by
-WHERE
-   $puccini-operas / composer = puccini
-return $puccini-operas
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q7" title="simplified instance-of">
-       <description>
-	 Return the city and the number of operas which had premiere there.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-/* NOTE: This may count operas twice.
-   NOTE: Multiple 'located-in' are not honored. */
-$m // city < . , count ( . -> location \ premiere / opera || . -> object \ located-in / location -> location \ premiere / opera ) >
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-/* NOTE: This may count operas twice.
-   NOTE: Multiple 'located-in' are not honored. */
-
-FOR $city IN $m // city
-LET @p := $city -> location \ premiere / opera
-return
-    ($city, COUNT (@p ||
-                  {
-                   WHERE
-                     located-in ($theatre: object, $city: location)
-                     premiere   ($theatre: location, $_: opera) as $p,
-                     return
-                         ($p)
-                   }
-                  )
-    )
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-/* NOTE: This may count operas twice.
-   NOTE: Multiple 'located-in' are not honored. */
-SELECT $city: city, COUNT (@p || @q)
-FROM $m
-WHERE
-   premiere ($city: location, $_: opera) as @p
-   |
-   (
-    premiere ($theatre: location, $_: opera) as @q,
-    located-in ($theatre: object, $city: location)
-    )
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-SELECT $city: city, COUNT ($opera)
-FROM $m
-WHERE
-   premiere ($city: city, $opera: opera)
-   OR
-   (
-    premiere ($theatre: location, $opera: opera)
-    AND
-    located-in ($theatre: object, $city: location)
-    )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q8" title="returning XML in FLWR">
-       <description>
-	 Return XML code for the cities and the number of operas which had premiere there.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="xml"/>
-       </interface>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-<cities-operas>{
-   FOR $city IN $m // city
-   WHERE
-      premiere ($city: city, ...) as @p
-      OR
-      SOME $theatre IN $city -> location \ located-in / object  SATISFIES
-         premiere   ($theatre: location, ...) as @q
-   return
-       <city no="{COUNT (@p & @q)}">{$city}</city>
-}</cities-operas>]]></code>
-       </solution>
-     </query>
-
-     <query qid="q9" title="all Puccini operas">
-       <description>
-	 Return all Puccini operas
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-SELECT $opera
-FROM $m
-WHERE
-  is-composed-by ($opera: opera, puccini: composer)
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-$m // is-composed-by [ ./composer = puccini ] / opera # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $opera IN $m // opera
-WHERE
-  is-composed-by ($opera: opera, puccini: composer)
-return
-   ($opera)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $a IN $m // is-composed-by [ composer = puccini ] 
-return
-   ($a / opera)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $opera IN $m // is-composed-by [ composer = puccini ] / opera
-return
-   ($opera)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q10" title="sounds like Toska">
-       <description>
-	 Return all operas which name sounds like 'Toska'.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-using soundex for http://astma.it.bond.edu.au/ns/query/ext/soundex
-$m // opera [ soundex:similar ( . # bn, 'toska') ] # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-using soundex for http://astma.it.bond.edu.au/ns/query/ext/soundex
-SELECT $opera : opera # bn
-FROM $m
-WHERE
-   soundex:similar ( $opera # bn, 'toska')
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-using soundex for http://astma.it.bond.edu.au/ns/query/ext/soundex
-FOR $opera IN $m // opera
-WHERE
-    soundex:similar ( $opera # bn, 'toska')
-return
-    ( $opera # bn )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q11" title="use several ontologies">
-       <description>
-	 Find the cities and all opera premieres (except that of London).
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-using opera   for http://psi.ontopia.net/opera/
-using geolang for http://psi.ontopia.net/geolang/ as geolang
-SELECT $city: opera:city, COUNT ($opera)
-FROM $m
-WHERE
-   $city != geolang:london,
-  (
-   premiere ($city: location, $opera: opera),
-   |
-   (
-    premiere   ($theatre: location, $opera: opera),
-    located-in ($theatre: object, $city: location)
-    )
-   )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q12" title="query several maps, precombine">
-       <description>
-	 Find all operas of a particular composer (passed in as parameter $composer) in various maps.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="sql">
-	 <code><![CDATA[
-SELECT $opera : opera
-FROM $m1 + $m2
-WHERE
-    is-composed ($composer: composer, $opera: opera)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-FOR $opera IN ($m1 + $m2) // opera
-WHERE
-    is-composed ($composer: composer, $opera: opera)
-return ($opera)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-($m1 + $m2) // opera [ . -> opera \ is-composed / composer = $composer ]
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="q12" title="query several maps, keep separate">
-       <description>
-	 Find all corresponding operas in two maps which have the same composer.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/opera/</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="flwr">
-	 <code><![CDATA[
-## from where do identifiers come?
-FOR $opera1 IN $m1 // opera
-   FOR $opera2 IN $m2 // opera-play ## use different type to make it more obvious
-   WHERE
-      is-composed ($composer: composer, $opera1: $m1:opera)
-      AND
-      is-composed ($composer: composer, $opera2: opera-play)
-return
-   ($opera1, $opera2)
-]]></code>
-       </solution>
-       <solution language="tmql" style="pe">
-	 <code><![CDATA[
-## from where do identifiers come?
-$m1 // opera < . , $m2 // opera-play > [ .[0] -> opera \ is-composed / composer = .[1] -> opera-play \ is-composed / composer ]
-]]></code>
-       </solution>
-     </query>
-
-   </database>
-
-   <database visible="no" title="Cluster Database" path="???/">
-     <description>
-       This fake database should contain information about computers organized into clusters. These clusters
-provide services, which are up-and-running as long as a single machine in the cluster is operative.
-     </description>
-
-     <query qid="cl01" title="dead clusters">
-       <description>
-	 Retrieve all clusters which are inoperative, i.e. where all machines in that
-cluster are down.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">???</param>
-	 </input>
-	 <output type="list"/>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // cluster [ not ./ whole \ is-part-of / part # in [*status] != 'down' ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $cluster IN $m // cluster
-WHERE
-   EVERY $computer IN $cluster -> whole \ is-part-of / part SATISFIES
-       $computer # in [*status] = 'down'
-return
-   ( $cluster )
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $cluster IN $m // cluster
-WHERE
-   NOT SOME $computer IN $cluster -> whole \ is-part-of / part SATISFIES
-       $computer # in [*status] != 'down'
-return
-   ( $cluster )
-]]></code>
-       </solution>
-     </query>
-
-   </database>
-
-   <database visible="no" title="Literature Database" path="tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/">
-     <description>
-      <ulink href="http://www.isotopicmaps.org/tmql/use-cases.html#id2610492">Use Case description
-      (Section 5)</ulink>
-      <ulink href="http://astma.it.bond.edu.au/supplements/query/uc-literature.atm">Source (AsTMa)</ulink>
-      <ulink href="http://astma.it.bond.edu.au/cvt/index.mc?atmurl=http://astma.it.bond.edu.au/supplements/query/uc-literature.atm&amp;action=download&amp;auto_complete=on&amp;format=on">Source (XTM)</ulink>
-     </description>
-
-     <query qid="luc52201" title="all authors"> <!-- 5.2.2.01: -->
-       <description>
-	 Retrieve all author names, i.e. the name of a topic which plays the role
-	 <code>author</code> in an <code>is-author-of</code> association.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Holger Rath"
-"Michel Biezunski"
-"Steve Pepper"
-"Steve Newcomb"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of / author # bn [@uc] <"{.}">
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT "{$author # bn [@uc]}"
-FROM $m
-WHERE
-    is-author-of ($author: author, ...)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $author IN $m // person
-WHERE
-   is-author-of ($author: author, ...)
-return
-   "{$author # bn [@uc]}"
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52202" title="all authors, sorted"> <!-- 5.2.2.02: -->
-       <description>
-	 Retrieve the name of all authors, this time ordered by the sort name provided in
-	 <code>person</code> topics.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Michel Biezunski"
-"Steve Newcomb"
-"Steve Pepper"
-"Holger Rath"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of / author order by . # bn [@sort] uniq # bn [@uc] <"{.}">
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $author IN $m // is-author-of / author
-return
-    "{$author # bn [@uc]}"
-ORDER BY $author # bn [@sort] UNIQUE
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT "{$author # bn [@uc]}"
-FROM $m
-WHERE
-   is-author-of ($author: author, ...)
-ORDER BY $author # bn [@sort] UNIQUE
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52203" title="list title of tutorials"> <!-- 5.2.2.03: -->
-       <description>
-	 Retrieve the titles of all tutorials. The titles should be preferably those in scope
-	 <code>en</code>, <code>de</code> or in the <emph>unconstrained scope</emph>, in that order.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Making topic maps more colourful"
-"Euler, Topic Maps und Revolution"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // tutorial # bn [@en | @de | @uc] <"{.}">
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $d IN $m // tutorial
-return
-    "{$d # bn [@en | @de | @uc]}"
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT "{$d # bn [@en | @de | @uc]"}
-FROM $m
-WHERE
-   $d is-a tutorial
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52204" title="all non-authors"> <!-- 5.2.2.04: -->
-       <description>
-	 Retrieve the names of all persons who have not authored anything.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"John Smith"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // person [ ! . -> author \ is-author-of ] # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $person IN $m // person
-WHERE
-    NOT EXISTS is-author-of ($person: author, ...)
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $person # bn
-FROM $m
-WHERE
-    $person is-a person,
-    NOT is-author-of ($person: author, ...)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52205" title="authors with publications"> <!-- 5.2.2.05: -->
-       <description>
-	 Retrieve a list of all author names together with the title of their publications.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Holger Rath", "Making topic maps more colourful"
-"Steve Pepper", "Euler, topic maps, and revolution"
-"Steve Pepper", "Navigating haystacks and discovering needles"
-"Steve Pepper", "The TAO of Topic Maps"
-"Steve Newcomb", "XML topic maps: finding aids for the Web"
-"Michel Biezunski", "XML topic maps: finding aids for the Web"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of < "{. / author # bn [@sort]}" , "{. / opus # bn}" >
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $a IN $m // is-author-of
-LET $author := $a / author
-LET $opus   := $a / opus
-return
-   ("{$author # bn [@sort]}", "{$opus # bn}")
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-## automatic stringification??
-SELECT $author # bn [@sort], $opus # bn
-FROM $m
-WHERE
-   is-author-of ($author: author, $opus: opus)
-]]></code>
-       </solution>
-     </query>
-
-      <query qid="luc52206" title="list title of tutorials, publication date"> <!-- 5.2.2.06: -->
-	<description>
-	  Retrieve a list of all titles of documents which are tutorials (i.e. are a direct or
-	  indirect instance of class <code>tutorial</code>) sorted by publication date, descending.
-	</description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Making topic maps more colourful", 2000
-"Euler, topic maps, and revolution", 1999
-	 </output>
-       </interface>
-	<solution language="tmql" style="pe" operational="no">
-	  <code><![CDATA[
-$m // tutorial < "{. # bn}", "{. # in [* publication-date]}">  order by $_[1] desc )
-]]></code>
-	</solution>
-	<solution language="tmql" style="flwr" operational="no">
-	  <code><![CDATA[
-FOR $d IN $m // tutorial
-return
-    ("{$d # bn}", "{$d # in [* publication-date]}")
-ORDER BY $d # in [* publication-date] DESCENDING
-]]></code>
-	</solution>
-	<solution language="tmql" style="sql" operational="no">
-	  <code><![CDATA[
-SELECT $d # bn, $d # in [* publication-date]
-FROM $m
-WHERE
-    $d is-a tutorial
-ORDER BY $d # in [* publication-date] DESCENDING
-]]></code>
-	</solution>
-     </query>
-
-     <query qid="luc52207" title="list of documents, sliced"> <!-- 5.2.2.07: -->
-       <description>
-	 Retrieve a list of documents, sorted by publication date
-	 (ascending), only number 3 to 5 (provided by the parameters
-	 $from and $to), inclusive, together with this order number.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m"    type="map"     mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	   <param name="from" type="integer" mutable="yes">3</param>
-	   <param name="to"   type="integer" mutable="yes">5</param>
-	 </input>
-	 <output type="list">
-3,"The TAO of Topic Maps", 2000
-4,"Making topic maps more colourful", 2000
-5,"XML topic maps: finding aids for the Web", 2001
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // document < .#, . # bn, . # in [* publication-date] > order by $_[2] asc [ $from .. $to ] )
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT counter($from), $d # bn, $d # in [* publication-date]
-FROM $m
-   $d is-a document
-ORDER BY $d # in [* publication-date]
-LIMIT $to - $from + 1 OFFSET $from     ## is this ugly....brrr
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $d IN $m // document
-ORDER BY $d # in [* publication-date]
-return
-  (position(), "{$d # bn}", "{$d # in [* publication-date]}") [ $from .. $to ]
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52208" title="list of documents with download URLs"> <!-- 5.2.2.08: -->
-       <description>
-	 Retrieve all topic identifiers of documents which have a download URL.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepper99a
-pepp00
-d-topicmaps-color
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // document [ . # oc [* download] ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-## does this EXISTS work in WHERE?
-SELECT $d
-FROM $m
-WHERE
-   $d is-a document,
-   EXISTS ?? $d # oc [* download]
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $d IN $m // document
-WHERE
-   EXISTS $d # oc [* download]
-return
-   ($d)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52209" title="authors with with no URL for documents"> <!-- 5.2.2.09: -->
-       <description>
-	 Retrieve a list of author's email addresses where the author has authored documents for
-	 which no download URL exists. Include the topic identifiers of these documents.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepper@n0spam.ontopia.net, pepper99b
-srn@n0spam.coolheads.com, bienew01
-mb@n0spam.coolheads.com, bienew01
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of [! ./opus # oc [*download] ] < ./ author # oc [*email] , ./opus >
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $author # oc [*email], $d
-FROM $m
-WHERE
-   is-author-of ($author: author, $d : opus),
-   NOT EXISTS $d # oc [*download]
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $a IN $m // is-author-of
-LET $author := $a / author
-LET $opus   := $a / opus
-WHERE
-   NOT EXISTS $opus # oc [*download]
-return
-   ("{$author # oc [*email]}", $opus)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52210" title="all authors of more-than-one document"> <!-- 5.2.2.10: -->
-       <description>
-	 Retrieve a list of author names where the author has written more than 1 document.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Steve Pepper"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // person [ count (. -> author \ is-author-of)  > 1 ] # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $person # bn
-FROM $m
-WHERE
-   is-author-of ($person: author, $opus : opus),
-   is-author-of ($person: author, $opus': opus)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $person IN $m // person
-WHERE
-   is-author-of ($person: author, $opus : opus)
-   AND
-   is-author-of ($person: author, $opus': opus)
-return
-   ( "{$person # bn}" )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52211" title="all authors, single-handed"> <!-- 5.2.2.11: -->
-       <description>
-	 A list of author names where the author has not written a single document with someone
-	 else. As the person must be an author, she must have written at least one document.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-"Steve Pepper"
-"Holger Rath"
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of / author [ . = . -> author \ is-author-of / opus -> opus \ is-author-of / author ]  # bn
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $author # bn
-FROM $m
-WHERE
-        is-author-of ($author : author,  $opus : opus),
-   NOT (is-author-of ($author' : author, $opus : opus))
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $author IN $m // person
-WHERE
-       is-author-of ($author : author, $opus : opus)
-   AND
-   NOT is-author-of ($author' : author, $opus : opus)
-return
-   ( "{$author # bn}" )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52212" title="all documents with non-working URL"> <!-- 5.2.2.12: -->
-       <description>
-	 Retrieve all (topic identifiers of) documents and their URLs which have a non-working URL at
-	 query time.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepp00, http://www.broken.example.com/
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-using http for http://astma.it.bond.edu.au/ns/query/ext/http
-$m // document [ ! http:head (. # oc [*download] ] < . , . # oc [*download] >
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-using http for http://astma.it.bond.edu.au/ns/query/ext/http
-SELECT $d, $d # oc [*download]
-FROM $m
-WHERE
-    $d is-a document,
-    NOT http:head ($d # oc[*download])
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-using http for http://astma.it.bond.edu.au/ns/query/ext/http
-FOR $d IN $m // document
-WHERE
-   NOT http:head ($d # oc(download))
-return      
-   ( $d, $d # oc [*download] )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52213" title="all documents with english abstract contains keywords"> <!-- 5.2.2.13: -->
-       <description>
-	 Retrieve all topic identifiers for documents for which the abstract in english (i.e. the
-	 occurrence of type <code>abstract</code> in scope <code>en</code>) contains the phrase
-	 'topic map' or 'topic maps', case-insensitive.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepp00
-bienew01
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // document [ .# in [@en & *abstract] ] =~ 'topic maps?/i' ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-using re for http://astma.it.bond.edu.au/ns/query/ext/regexp
-SELECT $d
-FROM $m
-WHERE
-   $d is-a document,
-   re:match ($d # in [@en & *abstract], "topic maps?", 'i')
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-using re for http://astma.it.bond.edu.au/ns/query/ext/regexp
-FOR $d IN $m // document
-WHERE
-   re:match ($d # in [@en & *abstract], "topic maps?", 'i')
-return
-   ($d)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52214" title="list of documents with german header"> <!-- 5.2.2.14: -->
-       <description>
-	 Retrieve all documents which have a title in german (i.e. a basename in the scope
-	 <code>de</code>).
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-[ empty list ]
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // document [ . # bn [@de] ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT $d
-FROM $m
-WHERE
-   $d is-a document,
-????
-    $d # bn @ de
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $d IN $m // document
-WHERE
-   $d # bn [@de]
-  return
-     ($d)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52215" title="all documents sharing title keywords"> <!-- 5.2.2.15: -->
-       <description>
-	 Retrieve all topic identifiers of the pairs of documents which share at least one word in
-	 the title, ignoring stopwords like 'and', 'of', 'the'. No duplicates in this list are
-	 allowed. Note: Duplicates of the form (a, b) and (b, a) may be allowed. The result should
-	 be sorted by the identifiers.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-d-topicmaps-color, bienew01
-pepp00, bienew01
-pepp00, d-topicmaps-color
-pepper99a, bienew01
-pepper99a, d-topicmaps-color
-pepper99a, pepp00
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-using ex for http://astma.it.bond.edu.au/ns/query/ext/example
-< $m // document, $m // document > [ .[0] != .[1] ] [ ex:hasCommonWord (.[0]# bn, .[1]# bn, ("the", "and", "of")) ] order by .[0], .[1]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-using ex for http://astma.it.bond.edu.au/ns/query/ext/example
-SELECT $d, $d'
-FROM $m
-WHERE
-   $d  is-a document,
-   $d' is-a document,
-   ex:hasCommonWord ($d # bn, $d' # bn, ("the", "and", "of"))
-ORDER BY $d, $d'
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-using ex for http://astma.it.bond.edu.au/ns/query/ext/example
-FOR $d IN $m // document
-  FOR $d' IN $m // document  # means implicit [ . <> $d ]
-  WHERE
-      ex:hasCommonWord ($d # bn, $d' # bn, ("the", "and", "of"))
-  return
-      ($d, $d')
-  ORDER BY $d, $d'
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52216" title="all documents on ontopia.net"> <!-- 5.2.2.16: -->
-       <description>
-	 Retrieve the identifiers of all topics which represent information resources on the
-	 <code>ontopia.net</code> server(s).
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepper99a
-pepp00
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // document [ . / ^ =~ 'ontopia\.net/i' ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT $topic
-FROM $m
-WHERE
-   re:match ($topic / ^, 'ontopia\.net', 'i')
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $topic IN $m // *
-WHERE
-   re:match ($topic / ^, 'ontopia\.net', 'i')
-return
-   ( $topic )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52217" title="all documents not in english"> <!-- 5.2.2.17: -->
-       <description>
-	 Retrieve the topic identifiers of all documents which are not written in the language
-	 English (or where there is no information about that), i.e. where there is no occurrence of
-	 type <code>language</code>.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepper99b
-pepp00
-d-topicmaps-color
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // document [ ! . # in[* language] = 'english' ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT $d: document
-FROM $m
-WHERE
-????
-   NOT EXISTS $d # in [* language] = 'english'
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $d IN $m // document
-WHERE
-   NOT EXISTS $d # in [* language] = 'english'
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52218" title="list of Pepper influenced documents"> <!-- 5.2.2.18: -->
-       <description>
-	 Retrieve the topic identifiers of all documents which are directly or indirectly influenced
-	 by something which Steve Pepper wrote (i.e. interpreting "influenced by" as non-reflexive,
-	 but transitive relation). Copy the topic identifiers of the influential papers to the
-	 output.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m"          type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	   <param name="influencer" type="id"     mutable="yes">steve-pepper</param>
-	 </input>
-	 <output type="list">
-pepper99b,		'influenced by', pepper99a
-d-topicmaps-color,	'influenced by', pepper99b
-d-topicmaps-color,	'influenced by', pepper99a
-bienew01,		'influenced by', pepper99b
-bienew01,		'influenced by', pepper99a
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-using adhoc for
-   predicate is-influenced-transitive ($A : influence, $C : influenced) is
-   WHERE
-      is-influenced-by         ($A: influence, $B : influenced),
-      is-influenced-transitive ($B: influence, $C : influenced)
-
-$m // is-author-of [ author = $influencer ] / opus < . , 
-                                                   'is influenced by' , 
-                                                    . -> influence \ adhoc:is-influenced-transitive / influenced 
-                                                   >
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-using adhoc for
-   predicate is-influenced-transitive ($A : influence, $C : influenced) is
-   WHERE
-      is-influenced-by         ($A: influence, $B : influenced),
-      is-influenced-transitive ($B: influence, $C : influenced)
-
-SELECT $influenced, 'is influenced by' , $influence
-FROM $m
-WHERE
-   is-author-of ($influencer: author, $influence: opus),
-   adhoc:is-influenced-transitive ($influence: influence, $influenced: influenced)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-using adhoc for
-   predicate is-influenced-transitive ($A : influence, $C : influenced) is
-   WHERE
-      is-influenced-by         ($A: influence, $B : influenced),
-      is-influenced-transitive ($B: influence, $C : influenced)
-
-FOR $influence, $influenced IN $m // document
-WHERE
-   is-author-of ($influencer: author, $influence: opus)
-   AND
-   adhoc:is-influenced-by ($influence: influence, $influenced: influenced)
-return
-   ($influenced, 'is influenced by' , $influence)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52219" title="list tutorial or paper identifiers"> <!-- 5.2.2.19: -->
-       <description>
-	 Retrieve all identifiers of topics which are either (direct or indirect) instances of
-	 <code>paper</code> or <code>tutorial</code>. Duplicates should be suppressed.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-pepper99a
-pepper99b
-d-topicmaps-color
-bienew01
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // (tutorial | paper) uniq
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $d
-FROM $m
-WHERE
-   $d is-a tutorial
-   |
-   $d is-a paper
-UNIQUE
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $d in $m // (tutorial | paper)
-return
-    ($d)
-UNIQUE
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52220" title="list of publication titles and closest type"> <!-- 5.2.2.20: -->
-       <description>
-	 Retrieve all titles of all publications (regardless their scope) together with their
-	 <emph>most specific class</emph>, i.e. that class where this publication is directly (and
-	 not indirectly) an instance of.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-Euler, topic maps, and revolution, conference-paper
-Euler, topic maps, and revolution, tutorial
-Euler, Topic Maps und Revolution, conference-paper
-Euler, Topic Maps und Revolution, tutorial
-Navigating haystacks and discovering needles, journal-paper
-The TAO of Topic Maps, article
-Making topic maps more colourful, tutorial
-XML topic maps: finding aids for the Web, journal-paper
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-## NOTE: WHOA, ugly things get really ugly
-$m // publication < . # bn, . / ^ > [ $_[1] [ ! . -> superclass \ is-subclass-of / subclass [ . -> class \ is-a / instance = $_[0] ] ] ]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT $d # bn, $type
-FROM $m
-WHERE
-   $d is-a $type, ## get ALL, also superclasses
-   NOT EXISTS subclasses ($type', $type),
-   $d is-a $type'
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $d in $m // *
-WHERE
-   $d is-a $type
-   AND
-   NOT SOME $type' IN $m // * SATISFIES
-       $type' is-subclass-of $type
-       AND
-       $d is-a $type'
-  return
-     ( $d # bn, $type )
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52221" title="all author items"> <!-- 5.2.2.21: -->
-       <description>
-	 Retrieve all authors (i.e. all topic items which play the role <code>author</code> in an
-	 <code>is-author-of</code> association).
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-[ holger-rath ]
-[ michel-biezunski ]
-[ steve-pepper ]
-[ steve-newcomb ]
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-         <code><![CDATA[
-$m // is-author-of / author
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-         <code><![CDATA[
-SELECT $author    ## or how to symbolize 'item not stringify'?
-FROM $m
-WHERE
-   is-author-of ($author: author, ...)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-         <code><![CDATA[
-FOR $author IN $m // *
-WHERE
-   is-author-of ($author: author, ...)
-return
-   ($author)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52222" title="all authors, all basename items"> <!-- 5.2.2.22: -->
-       <description>
-	 Retrieve all basename items of topics which play the role <code>author</code> in an
-	 <code>is-author-of</code> association).
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-[ "Holger Rath", unconstrained-scope ]
-[ "Michel Biezunski", unconstrained-scope ]
-[ "Steve Pepper", unconstrained-scope ]
-[ "Steve Newcomb", unconstrained-scope ]
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // is-author-of / author # {bn})
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-SELECT $author # bn
-FROM $m
-WHERE
-   is-author-of ($author: author, ...)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $author IN $m // *
-WHERE
-  is-author-of ($author: author, ...)
-return
-  ($author # bn)
-]]></code>
-       </solution>
-     </query>
-
-     <query qid="luc52223" title="all authors, all email occurrence items"> <!-- 5.2.2.23: -->
-       <description>
-	 Retrieve a list of all occurrence items being of type <code>email</code>.
-       </description>
-       <interface>
-	 <input>
-	   <param name="m" type="map"    mutable="no">tm:/internet/web/semantic-web/topicmaps/tmql/usecases/literature/</param>
-	 </input>
-	 <output type="list">
-[ email, srn@n0spam.coolheads.com, unconstrained-scope ]
-[ email, mb@n0spam.coolheads.com, unconstrained-scope ]
-[ email, pepper@n0spam.ontopia.net, unconstrained-scope ]
-[ email, holger.rath@n0spam.empolis.com, unconstrained-scope ]
-[ email, j.smith@example.com, unconstrained-scope ]
-	 </output>
-       </interface>
-       <solution language="tmql" style="pe" operational="no">
-	 <code><![CDATA[
-$m // * # oc [*email]
-]]></code>
-       </solution>
-       <solution language="tmql" style="sql" operational="no">
-	 <code><![CDATA[
-## ??? nostringify
-## ??? several of these
-SELECT $x # oc [*email]
-FROM $m
-WHERE
-   $x is-a topic,
-   ????EXISTS $x # oc (email)
-]]></code>
-       </solution>
-       <solution language="tmql" style="flwr" operational="no">
-	 <code><![CDATA[
-FOR $x IN $m // * [ . # oc[*email]]
-return
-     ($x # oc[*email]) ## if there are several of them, then this does show all
-]]></code>
-       </solution>
-     </query>
-       
-<!--
-	    <item>
-	      <p> Return all titles of papers (conference papers, journal papers) together with the
-		author names. The use of white-spaces should be exactly as depicted.
-	      </p>
-
-	      <p> 
-		<pre>
-&lt;papers&gt;
-   &lt;paper&gt;
-      &lt;head&gt;Euler, topic maps, and revolution&lt;/head&gt;
-      &lt;author&gt;Steve Pepper&lt;/author&gt;
-   &lt;/paper&gt;
-   &lt;paper&gt;
-      &lt;head&gt;Navigating haystacks and discovering needles&lt;/head&gt;
-      &lt;author&gt;Steve Pepper&lt;/author&gt;
-   &lt;/paper&gt;
-   &lt;paper&gt;
-      &lt;head&gt;XML topic maps: finding aids for the Web&lt;/head&gt;
-      &lt;author&gt;Steve Newcomb&lt;/author&gt;
-      &lt;author&gt;Michel Biezunski&lt;/author&gt;
-   &lt;/paper&gt;
-&lt;/papers&gt;
-</pre>
-                 whereby the XML document should adhere to the following DTD:
-		<pre>
-&lt;!ELEMENT papers (paper*)&gt;
-&lt;!ELEMENT paper  (head, author*)&gt;
-&lt;!ELEMENT head   (#PCDATA)&gt;
-&lt;!ELEMENT author (#PCDATA)&gt;
-		</pre>
-
-	      </p>
-	    </item>
-
-	    <item>
-	      <p> Return the name(s) of all authors who have authored more than one paper.</p>
-	      <p> The result should look like this:
-                <pre>
-&lt;recidivists&gt;
-   &lt;author&gt;Steve Pepper&lt;/author&gt;
-&lt;/recidivists&gt;
-</pre>
-              whereby the XML document should adhere to the following DTD:
-
-		<pre>
-&lt;!ELEMENT recidivists (author*)&gt;
-&lt;!ELEMENT author      (#PCDATA)&gt;
-</pre>
-	      </p>
-	      </item>
-
-	    <item>
-	      <p> Select only the tutorial documents from the topic map and return an RDF document
-		containing the title and the author information.
-	      </p>
-	      <p> The result should look like
-		this:
-                <pre>
-&lt;rdf:RDF xmlns:rdf="http://www.w3c.org/RDF/"
-         xmlns:lit="http://www.isotopicmaps.org/tmql/use-cases/literature/"&gt;
-
-   &lt;lit:tutorial rdf:about="http://www.ontopia.net/topicmaps/materials/euler.pdf"&gt;
-      &lt;lit:title&gt;Euler, topic maps, and revolution&lt;/lit:title&gt;
-      &lt;lit:author&gt;Steve Pepper&lt;/lit:author&gt;
-   &lt;/lit:tutorial&gt;
-
-   &lt;lit:tutorial rdf:about="http://www.gca.org/papers/xmleurope2000/papers/s29-01.html"&gt;
-      &lt;lit:title&gt;Making topic maps more colourful&lt;/lit:title&gt;
-      &lt;lit:author&gt;Holger Rath&lt;/lit:author&gt;
-   &lt;/lit:tutorial&gt;
-
-&lt;/rdf:RDF&gt;
-</pre>
-	      </p>
-	      </item>
-
-	      <item>
-	        <p> Return all persons with their name and a bibliography as nested elements.  The
-		bibliography should contain a list of publications with title and language - if
-		available - in brackets (if unavailable, the text "unknown" should be inserted).
-		This list should be sorted by the publication date in descending order.
-		</p>
-	      <p>
-		All <code>person</code> elements must contain an ID attribute holding the respective
-		topic identifier of the person's topic.
-	      </p>
-		<p> The result should look like this:
-		  <pre>
-&lt;persons&gt;
-    &lt;person id="john-smith"&gt;
-         &lt;name&gt;Smith, John &lt;/name&gt;
-         &lt;bibliography&gt;
-         &lt;/bibliography&gt;
-    &lt;/person&gt;
-    &lt;person id="holger-rath"&gt;
-         &lt;name&gt;Rath, Holger&lt;/name&gt;
-         &lt;bibliography&gt;
-              &lt;publication&gt;Making topic maps more colourful (unknown)&lt;/publication&gt;
-         &lt;/bibliography&gt;
-    &lt;/person&gt;
-    &lt;person id="steve-pepper"&gt;
-         &lt;name&gt;Pepper, Steve&lt;/name&gt;
-         &lt;bibliography&gt;
-              &lt;publication&gt;The TAO of Topic Maps (unknown)&lt;/publication&gt;
-              &lt;publication&gt;Navigating haystacks and discovering needles (unknown)&lt;/publication&gt;
-              &lt;publication&gt;Euler, topic maps, and revolution (english)&lt;/publication&gt;
-         &lt;/bibliography&gt;
-     &lt;/person&gt;
-     &lt;person id="michel-biezunski"&gt;
-         &lt;name&gt;Biezunski, Michel&lt;/name&gt;
-         &lt;bibliography&gt;
-              &lt;publication&gt;XML topic maps: finding aids for the Web (english)&lt;/publication&gt;
-         &lt;/bibliography&gt;
-     &lt;/person&gt;
-     &lt;person id="steve-newcomb"&gt;
-         &lt;name&gt;Newcomb, Steve&lt;/name&gt;
-         &lt;bibliography&gt;
-              &lt;publication&gt;XML topic maps: finding aids for the Web (english)&lt;/publication&gt;
-         &lt;/bibliography&gt;
-     &lt;/person&gt;
-&lt;/persons&gt;
-		  </pre>
-
-              whereby the XML document should adhere to the following DTD:
-
-		<pre>
-&lt;!ELEMENT persons      (person*)&gt;
-&lt;!ELEMENT person       (name bibliography)&gt;
-&lt;!ATTLIST person       id ID #REQUIRED&gt;
-&lt;!ELEMENT name         (#PCDATA)&gt;
-&lt;!ELEMENT bibliography (publication*)&gt;
-&lt;!ELEMENT publication  (#PCDATA)&gt;
-&lt;!ATTLIST publication  id ID #REQUIRED&gt;
-</pre>
-
-		</p>
-	      </item>
-
-	    <item>
-	      <p>
-		Create a topic according to the following specification:
-	      </p>
-	      <p>
-		Select only  journal papers.
-	      </p>
-	      <p>
-		Output  these   together  with  the   relevant  author
-		associations  as topic map.
-	      </p>
-	      <p>
-		There is no need to include the author topics as well.
-	      </p>
-	      <p>
-		Replace all occurrences of type <code>publication-date</code> with associations of
-		type <code>was-published-in</code>.  For the <code>date</code>role the topic players
-		should use ids of the form <code>x-dates-yyyy</code>.
-	      </p>
-
-	      <p>
-		The returned result should be equivalent with a deserialized
-		form of the following map:
-
-		<ednote>
-		  <edtext>
-		    This map is available in <loc
-		      href="http://www.isotopicmaps.org/tmql/uc-journal-expanded.xtm">XTM</loc> and in <loc
-		      href="http://www.isotopicmaps.org/tmql/uc-journal-expanded.atm">AsTMa=</loc> format. The XTM
-		    version is derived automatically from the <loc href="http://astma.it.bond.edu.au/">AsTMa=</loc> version.
-		  </edtext>
-		</ednote>
-		
-	      </p>
-	    </item>
-
-	    <item>
-	      <p>
-		Create a topic map according to the following specification:
-	      </p>
-	      <p>
-		Select only documents which have a cite code.
-	      </p>
-	      <p>
-		Select all these documents and reclassify them: all
-		conference and journal papers should
-		become an instance of <code>publication</code>. All other documents
-		should be of class <code>no-publication</code>.
-	      </p>
-	      <p>
-		Automatically add for every such document an
-		association of type <code>is-published-by</code> where
-		the document plays the role <code>document</code> and
-		the topic <code>prints-are-us</code> plays the
-		<code>publisher</code>. If the document has a
-		publication date, then an additional role
-		<code>date</code> should be added. The topic playing this role should
-		represent the date via a URI of the form <code>urn:x-date:yyyy</code>.
-	      </p>
-
-	      <p>
-		The returned result should be equivalent with a deserialized
-		form of the following map:
-
-		<ednote>
-		  <edtext>
-		    This map is available in <loc
-		      href="http://www.isotopicmaps.org/tmql/uc-reclassified-expanded.xtm">XTM</loc> and in <loc
-		      href="http://www.isotopicmaps.org/tmql/uc-reclassified-expanded.atm">AsTMa=</loc> format. The XTM
-		    version is derived automatically from the <loc href="http://astma.it.bond.edu.au/">AsTMa=</loc> version.
-		  </edtext>
-		</ednote>
-		
-	      </p>
-	    </item>
--->
-
-
-   </database>
-</use-cases>
 <!--
 
 FOR $a := %_
@@ -5083,3 +2747,4 @@ SOME $b := %_ // ccc SATISFY TRUE
 
    (%_)      [  (  $0  ,       ( $0 , %_)   [  (  $0  ,  $1)  classes:>:... =  (ccc)  ]  )   [  1  = 1  ]  = undef ]   (  $0  )
 -->
+

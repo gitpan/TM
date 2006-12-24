@@ -263,7 +263,7 @@ sub _closure { # computes transitive closure
 	    foreach my $a (@{$tests{$t}->{topics}}) {
 		foreach my $b (@{$tests{$t}->{topics}}) {
 		    next if $a eq $b;
-		    my ($ta, $tb) = $ms->midlet ($X{$a}, $X{$b});
+		    my ($ta, $tb) = $ms->midlet ($ms->mids ($X{$a}, $X{$b}));
 #warn Dumper $ta, $tb;
 		    ok ($ta != $tb, "$t: $a not same as $b");
 		}
@@ -275,7 +275,7 @@ sub _closure { # computes transitive closure
 	    foreach my $a (@{$tests{$t}->{topics}}) {
 		foreach my $b (@{$tests{$t}->{topics}}) {
 		    next if $a eq $b;                                  # well
-		    my ($ta, $tb) = $ms->midlet ($X{$a}, $X{$b});
+		    my ($ta, $tb) = $ms->midlet ($ms->mids ($X{$a}, $X{$b}));
 		    if ($res_closure->{$a} and $res_closure->{$a}->{$b} or
 			$res_closure->{$b} and $res_closure->{$b}->{$a}) {
 #warn Dumper $ta, $tb;

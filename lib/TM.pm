@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.23';
+our $VERSION  = '1.24';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -98,9 +98,47 @@ then any application, even a TMQL query processor can operate on non-materialize
 the same way as on materialized ones.
 
 The data manipulation interface is very low-level and B<directly> exposes internal data structures.
-As long as do not mess with the information you get and you follow the API rules, this can provide a
-convenient, fast, albeit not overly comfortable interface. If you prefer more a TMDM-like style of
-accessing a map then have a look at L<TM::DM>.
+As long as you do not mess with the information you get and you follow the API rules, this can
+provide a convenient, fast, albeit not overly comfortable interface. If you prefer more a TMDM-like
+style of accessing a map then have a look at L<TM::DM>.
+
+=head2 Midlets and Maplets
+
+To make the data structure as flat as possible, map content is stored in two hashes. One is holding
+I<midlets>, i.e. simplified forms of topics and the other contains only I<maplets>, a simplified
+form of association.
+
+=head3 Maplets
+
+Maplets contain the role/player combinations we are so used to. As such they are suitable to
+represent all associations in a map, including those C<isa> and C<is-subclass-of> ones. Each
+maplets includes its own type and the scope (which is always defined and defaults to the
+universal scope.
+
+Also names and occurrences follow a similar structure, whereby one player is the topic, the other is
+the literal value. But such maplets also have a type and a scope component.
+
+=head3 Midlets
+
+Midlets are only the part of a topic which deals with its subject identification, either via
+a subject locator or any number of subject indicating URIs. That's it.
+
+Not quite. As every maplet is also a subject, you will find an entry for each of them there.
+
+=head2 Identifiers
+
+Of course, L<TM> supports the subject locator and the subject indicator mechanism as mandated
+by the Topic Maps standards.
+
+Additionally, though, this package also uses I<internal> identifiers to address everything which
+looks and smells like a topic: associations, names and occurrences. For topics the application (or
+author) of the topic map will most likely provide these internal identifiers. For the others the
+identifiers are generated.
+
+In any case, all identifiers are I<absolute> using the C<baseuri> as an absolute URI to resolve
+against. So, a local identifier C<chinese-working-conditions> will become
+C<http://exploitation.is.sexy/chinese-working-conditions> if the base URI of the map were
+C<http://exploitation.is.sexy/>. The method C<mids> helps you in this process.
 
 =head2 Consistency
 
@@ -1188,11 +1226,33 @@ our %forall_handlers = ('' =>
 		       sub {
 			   my $self   = shift;
 			   my $topic  = $_[1];
-			   return undef unless $topic;
 			   return
-			       grep ($_->[PLAYERS]->[0] eq $topic &&                         # first role is always the 'thing'
-				        NAME <= $_->[KIND] && $_->[KIND] <= OCC,
+			       grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
+				     $_->[PLAYERS]->[0] eq $topic,                                   # first role is always the 'thing'
 					   values %{$self->{assertions}});
+		       },
+
+		       'char.value' =>
+		       sub {
+			   my $self   = shift;
+			   my $value  = $_[1];
+			   return
+			       grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
+				     $_->[PLAYERS]->[1]->[0] eq $value->[0] &&                       # second role is always the value
+				     $_->[PLAYERS]->[1]->[1] eq $value->[1],                         # test value AND type
+					   values %{$self->{assertions}});
+		       },
+
+		       'char.topic.type' =>
+		       sub {
+			   my $self   = shift;
+			   my $topic  = $_[1];
+			   my $type   = $_[2];
+			   return
+			       grep ($self->is_subclass ($_->[TYPE], $type),
+				     grep ($_->[PLAYERS]->[0] eq $topic &&                         # first role is always the 'thing'
+					   NAME <= $_->[KIND] && $_->[KIND] <= OCC,
+					   values %{$self->{assertions}}));
 		       },
 
 		       'lid' => # have unique ID?
@@ -1586,17 +1646,29 @@ I<@mids> = I<$tm>->mids (I<$some_id>, ...)
 This function tries to build absolute versions of the identifiers passed in. C<undef> will be
 returned if no such can be found. Can be used in scalar and list context.
 
+=over
+
+=item
+
 If the passed in identifier is a relative URI, so it is made absolute by prefixing it with the map
 C<baseuri> and then we look for a topic with that internal identifier.
+
+=item
 
 If the passed in identifier is an absolute URI, where the C<baseuri> is a prefix, then that URI will
 be used as internal identifier to look for a topic.
 
+=item
+
 If the passed in identifier is an absolute URI, where the C<baseuri> is B<NOT> a prefix, then that
 URI will be used as subject locator and such a topic will be looked for.
 
+=item
+
 If the passed in identifier is a reference to an absolute URI, then that URI will be used as subject
 identifier and such a topic will be looked for.
+
+=back
 
 =cut
 
@@ -1605,6 +1677,8 @@ sub mids {
     my $baseuri = $self->{baseuri};
     my @ks;
     my $mid2iid = $self->{mid2iid};
+
+#    warn "mids ".Dumper \@_;
   MID:
     foreach my $k (@_) {
 	if (! defined $k) {                                            # someone put in undef
@@ -1669,13 +1743,113 @@ sub externalize {
 
 I<@mids> = I<$tm>->midlets
 
-This function returns all the things (actually their ids) known in the map.
+I<@mids> = I<$tm>->midlets (I<@list-of-ids>)
+
+I<@mids> = I<$tm>->midlets (I<$selection-spec>)
+
+This function returns things, actually their absolutized ids - from the map.
+
+If no parameter is used, all I<things> are returned. This includes really everything also
+infrastructure topics and all associations, occurrences, etc.
+
+If an explicit list is used, the only exciting thing which will happen is that these
+IDs are absolutized.
+
+If a search specification is used, it has to be passed in as string reference. That string contains
+the selection specification using the following simple language:
+
+    specification -> { ( '+' | '-' ) group }
+
+whereby I<group> is one of the following:
+
+=over
+
+=item C<all>
+
+refers to B<all> topics in the map. This includes those supplied by the application, but also all
+associations, names and occurrences. The list also includes all infrastructure topics which the
+software maintains for completeness.
+
+=item C<associations>
+
+refers to all topics which are actually associations
+
+=item C<names>
+
+refers to all topics which are actually name characteristics
+
+=item C<occurrences>
+
+refers to all topics which are actually occurrences
+
+=item C<infrastructure>
+
+refers to all topics the infrastructure has provided. This implies that
+
+   all - infrastructure
+
+is everything the user (application) has supplied.
+
+=back
+
+Examples:
+
+     # all topics except those from TM::PSI
+     $tm->topics (\ '+all -infrastructure')
+
+     # like above, without assocs, so with names and occurrences
+     $tm->topics (\ '+all -assocs')
 
 =cut
 
 sub midlets {
     my $self = shift;
-    return keys %{$self->{mid2iid}};
+
+    if ($_[0]) {                                     # if there is some parameter
+	if (ref ($_[0]) ) {                          # whoohie, a search spec
+	    my $spec = ${$_[0]};
+	    my $l = []; # will be list
+	    while ($spec =~ s/([+-])(\w+)//) {
+#warn "working on $1   $2";
+		if ($2 eq 'all') {
+		    $l = _mod_list ($1 eq '+', $l, keys %{$self->{mid2iid}});
+		} elsif ($2 eq 'associations') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->ASSOC, values %{$self->{assertions}}));
+		} elsif ($2 eq 'names') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->NAME,  values %{$self->{assertions}}));
+		} elsif ($2 eq 'occurrences') {
+		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->OCC,   values %{$self->{assertions}}));
+		} elsif ($2 eq 'infrastructure') {
+		    $l = _mod_list ($1 eq '+', $l, $self->mids (keys %{$TM::PSI::topicmaps->{mid2iid}}));
+		} else {
+		    $main::log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+		}
+	    }
+	    $main::log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+	    return _mk_uniq (@$l);
+	} else {
+	    return $self->mids (@_);                    # make all these fu**ing identifiers map-absolute
+	}
+    } else {                                         # if the list was empty, we assume every thing in the map
+	return keys %{$self->{mid2iid}};
+    }
+sub _mod_list {
+    my $pm = shift; # non-zero for +
+    my $l  = shift;
+    if ($pm) {
+	return [ @$l, @_ ];
+    } else {
+	my %minus;
+	@minus{ @_ } = (1) x @_;
+        return [ grep (!$minus{$_}, @$l) ];
+    }
+}
+sub _mk_uniq {
+    my %uniq;
+    @uniq {@_} = (1) x @_;
+    return keys %uniq;
+}
+
 }
 
 =pod
@@ -1695,11 +1869,12 @@ Can be used in scalar and list context.
 
 sub midlet {
     my $self = shift;
+    my $mid2iid = $self->{mid2iid};
 
     if (wantarray) {
-	return @{$self->{mid2iid}}{$self->mids (@_)};
+	return (map { defined $_ ? $mid2iid->{$_} : $_ } @_);
     } else {
-	return $self->{mid2iid}->{$self->mids ($_[0])};
+	return $mid2iid->{$_[0]};
     }
 }
 
@@ -2143,7 +2318,7 @@ itself.
 
 =cut
 
-our $REVISION = '$Id: TM.pm,v 1.40 2006/12/01 08:01:00 rho Exp $';
+our $REVISION = '$Id: TM.pm,v 1.42 2006/12/23 10:37:07 rho Exp $';
 
 
 1;

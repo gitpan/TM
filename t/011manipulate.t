@@ -210,6 +210,22 @@ use TM;
 		     'tm://nirvana/rimsti', ]), 'add: found all rumstis');
 }
 
+{ # testing midlet functionality
+    use TM;
+    my $tm = new TM (baseuri => 'tm:');
+
+    my ($a1) = $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'superclass', 'subclass' ], players => [ 'rumsti', 'ramsti' ]));
+    my ($a2) = $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'superclass', 'subclass' ], players => [ 'rumsti', 'remsti' ]));
+
+    ok (eq_set ([$tm->instances  ('tm:thing')],   [$tm->midlets]),                              'midlets (everything)');
+    ok (eq_set ([$tm->mids ('rumsti', 'ramsti')], [$tm->midlets ('rumsti', 'ramsti')]),         'midlets (explicit)');
+    ok (eq_set ([$tm->instances  ('tm:thing')],   [$tm->midlets (\ '+all')]),                   'midlets (all)');
+
+    ok (eq_set ([$tm->mids ('rumsti', 'ramsti', 'remsti') ], 
+		[$tm->midlets (\ '+all -infrastructure -associations')]),                        'midlets (-infra)');
+
+}
+
 { # testing taxonometric functions
     use TM;
     my $tm = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps);

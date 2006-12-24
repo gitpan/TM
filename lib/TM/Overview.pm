@@ -88,7 +88,7 @@ maps (I<umount>).
 =head2 Indexing
 
 Using a naive in-memory representation can be quite slow if you map gets big and the retrieval more
-complex. To improve the performance an instance of L<TM::Index::Match> can be associated with the
+complex. To improve the performance instances of L<TM::Index::*> can be associated with the
 map.
 
 =head2 TMDM
@@ -115,6 +115,12 @@ will then be copied to STDOUT (which is default anyway).
 
 Tau expressions can also include TMQL queries and support any number of different formats (these are
 pluggable at compile and at run time).
+
+=head1 Workbench C<tm>
+
+The distribution contains one 'binary' C<tm>. It is a command-line oriented interface to manage
+topic map content. With it you can copy map, query them (soon) and transform them. The interface
+also introduces one global store, a I<mapsphere> into which you can save one or more maps.
 
 =head1 Tutorial: In-memory maps
 
@@ -150,6 +156,6 @@ itself.
 =cut
 
 our $VERSION  = 0.3;
-our $REVISION = '$Id: Overview.pm,v 1.4 2006/11/30 08:38:10 rho Exp $';
+our $REVISION = '$Id: Overview.pm,v 1.5 2006/12/13 10:46:58 rho Exp $';
 
 1;

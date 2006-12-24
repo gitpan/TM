@@ -18,53 +18,6 @@ sub topics {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
 
-    if ($_[0]) { # if there is some parameter
-	if (ref ($_[0]) ) {                          # whoohie, a search spec
-	    my $spec = ${$_[0]};
-	    my $l = []; # will be list
-	    while ($spec =~ s/([+-])(\w+)//) {
-#warn "working on $1   $2";
-		if ($2 eq 'all') {
-		    $l = _mod_list ($1 eq '+', $l, keys %{$map->{mid2iid}});
-		} elsif ($2 eq 'associations') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->ASSOC, values %{$map->{assertions}}));
-		} elsif ($2 eq 'names') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->NAME,  values %{$map->{assertions}}));
-		} elsif ($2 eq 'occurrences') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->OCC,   values %{$map->{assertions}}));
-		} elsif ($2 eq 'infrastructure') {
-		    $l = _mod_list ($1 eq '+', $l, $map->mids (keys %{$TM::PSI::topicmaps->{mid2iid}}));
-		} else {
-		    $main::log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
-		}
-	    }
-	    $main::log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-	    @_ = @$l;
-	} else {
-	    @_ = $map->mids (@_);                    # make all these fu**ing identifiers map-absolute
-	}
-    } else {                                         # if the list was empty, we assume every thing in the map
-	@_ = keys %{$map->{mid2iid}};
-    }
-sub _mod_list {
-    my $pm = shift; # non-zero for +
-    my $l  = shift;
-    if ($pm) {
-	return [ @$l, @_ ];
-    } else {
-	my %minus;
-	@minus{ @_ } = (1) x @_;
-        return [ grep (!$minus{$_}, @$l) ];
-    }
-}
-    @_ = _mk_uniq (@_);
-
-sub _mk_uniq {
-    my %uniq;
-    @uniq {@_} = (1) x @_;
-    return keys %uniq;
-}
-
     return map { 
 	         TM::DM::Topic->new (
 				     tmdm  => $self->{tmdm},
@@ -72,7 +25,7 @@ sub _mk_uniq {
 				     sids  => [ @{$map->midlet ($_)->[TM->INDICATORS]} ],          # TODO: can be optimized
 				     mid   => $_
 				     )
-		 } @_;
+		 } $map->midlets (@_);
 }
 
 sub associations {
@@ -430,7 +383,7 @@ TM::DM - Topic Maps, read-only TMDM layer
    # for all associations
    my @assocs = $topicmap->associations;
 
-   # get a particula topic
+   # get a particular topic
    my $adam = $topicmap->topic ('adam');
 
    # get some of its properties
@@ -625,7 +578,7 @@ I<@topics> = I<$topicmap>->topics (I<@list-of-ids>)
 
 I<@topics> = I<$topicmap>->topics
 
-I<@topics> = I<$topicmap>->topics (I<$selection-spec>
+I<@topics> = I<$topicmap>->topics (I<$selection-spec>)
 
 This method expects a list containing topic valid identifiers and returns for each of the topics a
 C<TM::DM::Topic> reference. If any of the input identifiers do not denote a valid topic in the map,
@@ -639,53 +592,7 @@ Examples:
 
     print "he again" if $topicmap->topics ('god');
 
-If a search specification is used, it has to be passed in as string reference. That string contains
-the selection specification using the following simple language:
-
-    specification -> { ( '+' | '-' ) group }
-
-whereby I<group> is one of the following:
-
-=over
-
-=item C<all>
-
-refers to B<all> topics in the map. This includes those supplied by the application, but also all
-associations, names and occurrences. The list also includes all infrastructure topics which the
-software maintains for completeness.
-
-=item C<associations>
-
-refers to all topics which are actually associations
-
-=item C<names>
-
-refers to all topics which are actually name characteristics
-
-=item C<occurrences>
-
-refers to all topics which are actually occurrences
-
-=item C<infrastructure>
-
-refers to all topics the infrastructure has provided. This implies that
-
-   all - infrastructure
-
-is everything the user (application) has supplied.
-
-=back
-
-Examples:
-
-     # all topics except those from TM::PSI
-     $tm->topics (\ '+all -infrastructure')
-
-     # everything from the user
-     $tm->topics (\ '+user')
-
-     # like above, without assocs but with names and occurrences
-     $tm->topics (\ '+user -assocs')
+If a selection is specified then the same language as in L<TM> (method C<midlets>) can be used.
 
 =item B<associations>
 
@@ -878,7 +785,7 @@ itself.
 =cut
 
 our $VERSION  = '0.02';
-our $REVISION = '$Id: DM.pm,v 1.4 2006/11/30 08:38:10 rho Exp $';
+our $REVISION = '$Id: DM.pm,v 1.5 2006/12/13 10:46:58 rho Exp $';
 
 1;
 

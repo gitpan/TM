@@ -9,7 +9,7 @@ WriteMakefile(
 	      ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
 	       (ABSTRACT_FROM  => 'lib/TM.pm',
 		AUTHOR         => 'Robert Barta <drrho@cpan.org>') : ()),
-#	      'EXE_FILES'     => [ 'bin/tm' ],
+	      'EXE_FILES'     => [ 'bin/tm' ],
 
               'NOECHO'        => '@',
               'PREREQ_PM'     => {

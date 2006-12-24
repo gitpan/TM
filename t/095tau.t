@@ -162,7 +162,7 @@ eval { # error
     { # test to override driver module
 	eval {
 	    my $tm = new TM::Tau ('> ramsti: { Rxxxumsti }');
-	}; like ($@, qr/cannot instantiate/, _chomp $@);
+	}; like ($@, qr/cannot load/, _chomp $@);
     }
 }
 
@@ -193,17 +193,6 @@ eval { # error
 }
 
 #-- synchronisation manual ----------------------------------
-
-{ # tests with files, explicit sync
-    my $tau = "< file:$tmp[0] <";
-    my $tm = new TM::Tau ($tau);
-
-    $tm->sync_in;
-    ok ($tm->mids ('aaa'), 'sync_in done');
-    eval {
-	$tm->sync_out; # AsTMa does not support this
-    }; like ($@, qr/not implement/, _chomp $@);
-}
 
 # avoid being bothered by STDOUT
 close STDOUT;

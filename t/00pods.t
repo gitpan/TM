@@ -22,6 +22,7 @@ plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 my @PODs = qw(
 	      lib/TM.pm
 	      lib/TM/Analysis.pm
+	      lib/TM/Literal.pm
 	      lib/TM/Overview.pm
 	      lib/TM/FAQ.pm
 	      lib/TM/DM.pm
@@ -45,6 +46,7 @@ my @PODs = qw(
 	      lib/TM/Index.pm
 	      lib/TM/Index/Characteristics.pm
 	      lib/TM/Index/Match.pm
+	      lib/TM/QL.pm
 	      );
 plan tests => scalar @PODs;
 

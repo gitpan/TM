@@ -1,32 +1,95 @@
 package TM::Literal;
 
+=pod
+
+=head1 NAME
+
+TM::Literal - Topic Maps, simple values (literals)
+
+=head2 SYNOPSIS
+
+    use TM::Literal;
+    my $l = new TM::Literal (42, 'xsd:integer');
+
+    print $l->[0]; # prints 42
+    print $l->[1]; # prints http://www.w3.org/2001/XMLSchema#integer
+
+    $l = new TM::Literal (42); # default is xsd:string
+
+=head1 DESCRIPTION
+
+This packages will eventually handle all literal handling, i.e. not only a way to create and
+retrieve information about simple values used inside topic maps, but also all necessary operations
+such as I<integer addition>, I<string manipulation>.
+
+This is quite a chore, especially since the data types adopted here are the XML Schema Data Types.
+
+=head2 Constants
+
+  XSD      http://www.w3.org/2001/XMLSchema#
+  INTEGER  http://www.w3.org/2001/XMLSchema#integer
+  DECIMAL  http://www.w3.org/2001/XMLSchema#decimal
+  FLOAT    http://www.w3.org/2001/XMLSchema#float
+  DOUBLE   http://www.w3.org/2001/XMLSchema#double
+  STRING   http://www.w3.org/2001/XMLSchema#string
+  URI      http://www.w3.org/2001/XMLSchema#anyURI
+
+=head2 Grammar
+
+TODO
+
+=head2 Operations
+
+TODO
+
+=cut
+
 use constant XSD => "http://www.w3.org/2001/XMLSchema#";
-
-
 
 use constant {
     INTEGER => XSD.'integer',
     DECIMAL => XSD.'decimal',
     FLOAT   => XSD.'float',
     DOUBLE  => XSD.'double',
-    STRING  => XSD.'string'
+    STRING  => XSD.'string',
+    URI     => XSD.'anyURI'
     };
+
+sub new {
+    my ($class, $val, $type) = @_;
+
+    $type ||= STRING;
+    $type   =~ s/^xsd:/XSD/e;
+    return bless [ $val, $type ],$class;
+}
+
+
 
 our $grammar = q{
 
-    literal                   : decimal
-                              | integer
-                              | luri
+    literal                   : decimal                               { $return = new TM::Literal  ($item[1], TM::Literal->DECIMAL); }
+                              | integer                               { $return = new TM::Literal  ($item[1], TM::Literal->INTEGER); }
+                              | uri                                   { $return = new TM::Literal  ($item[1], TM::Literal->URI); }
                               | string
+# TODO | date
+# TODO | boolean
 
-    integer                   : /\d+/                                 { $return = new TM::Literal  ($item[1], 'xsd:integer'); }
+    integer                   : /\d+/
+# TODO: sign
 
-    decimal                   : /\d+\.\d+/                            { $return = new TM::Literal  ($item[1], 'xsd:decimal'); }
+    decimal                   : /\d+\.\d+/
+# TODO: sign (optional .234?)
 
-    luri                      : uri                                   { $return = new TM::Literal  ($item[1], 'xsd:uri'); }
+    string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
+                              | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
 
-    string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
-                              | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
+# TODO boolean : 'true' | 'false'
+
+
+    uri                       : /(\w+:[^\s)\]]+)/
+# an option? the official pattern -> perldoc URI
+#                  uri : m|^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?|;
+
 
 };
 
@@ -115,14 +178,6 @@ our %OPS = (
 	    'tmql:add_int_int' => \&TM::Literal::op_numeric_add
 	    );
 
-sub new {
-    my ($class, $val, $type) = @_;
-
-    $type ||= 'xsd:string';
-    $type   =~ s/^xsd:/XSD/e;
-    return bless [ $val, $type ],$class;
-}
-
 sub _lub {
     my $a = shift;
     my $b = shift;
@@ -165,5 +220,26 @@ sub op_numeric_integer_divide { # (A, B)
 sub cmp_numeric_eq {
     return $_[0]->[0] == $_[1]->[0] && $_[0]->[1] eq $_[1]->[1];
 }
+
+
+
+
+=pod
+
+=head1 SEE ALSO
+
+L<TM>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 200[6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl
+itself.
+
+=cut
+
+our $VERSION = 0.1;
+our $REVISION = '$Id: Literal.pm,v 1.9 2006/12/23 10:37:08 rho Exp $';
 
 1;

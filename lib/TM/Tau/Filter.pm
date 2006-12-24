@@ -217,7 +217,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION = 0.4;
-our $REVISION = '$Id: Filter.pm,v 1.11 2006/11/26 22:01:32 rho Exp $';
+our $REVISION = '$Id: Filter.pm,v 1.13 2006/12/13 10:46:59 rho Exp $';
 
 1;
 

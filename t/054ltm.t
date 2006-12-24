@@ -116,7 +116,7 @@ ok (1, 'encoding: ignored');
 |);
 #    warn Dumper $ms;
 
-    ok (eq_set ($ms->midlet ('urn:aaa')->[TM->INDICATORS],
+    ok (eq_set ($ms->midlet ($ms->mids ('urn:aaa'))->[TM->INDICATORS],
 		[ 'urn:xxx', 'urn:yyy' ]),                          'indication: all found');
 }
 
@@ -369,9 +369,9 @@ ok (1, 'version supported');
 |);
 #    warn Dumper $ms;
 
-    ok ($ms->midlet ('aaa'), 'include: topic');
-    ok ($ms->midlet ('bbb'), 'include: topic');
-    ok ($ms->midlet ('ccc'), 'include: topic');
+    ok ($ms->midlet ('tm:aaa'), 'include: topic');
+    ok ($ms->midlet ('tm:bbb'), 'include: topic');
+    ok ($ms->midlet ('tm:ccc'), 'include: topic');
 }
 
 {

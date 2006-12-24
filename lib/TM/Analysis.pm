@@ -54,6 +54,8 @@ You can change this behaviour by passing in options like
 Obviously, with C<use_scope =E<gt> 1> you will let a lot of topics collapse into one cluster as most maplets usually are
 in the unconstrained scope.
 
+B<NOTE>: This is yet a somewhat expensive operation.
+
 =cut
 
 sub clusters {
@@ -132,22 +134,28 @@ Nr of clusters according to the C<cluster> function elsewhere in this document.
 
 sub statistics {
     my $tm    = shift;
+    my %s; # result
 
-    my $stats; # result
+    foreach my $a (@_ ? @_ : qw(nr_midlets nr_maplets nr_clusters)) {       # default is all
+	$s{$a} = scalar $tm->midlets      if $a eq 'nr_midlets';
+	$s{$a} = scalar $tm->match_forall if $a eq 'nr_maplets';
 
-    $stats->{nr_midlets} = scalar $tm->midlets;
-    $stats->{nr_maplets} = scalar $tm->match_forall;
-
-    { # clusters
-	my $clusters = TM::Analysis::clusters ($tm, use_roles => 1, use_type => 1);
-	$stats->{nr_clusters} = scalar @$clusters;
-    }
+	if ($a eq 'nr_clusters') { # clusters
+	    my $clusters = TM::Analysis::clusters ($tm, use_roles => 1, use_type => 1);
+	    $s{$a} = scalar @$clusters;
+	}
+    };
 
     # size of map
     # payload (basenames, occurrence data, variant
 
-    return $stats;
+    return \%s;
 }
+
+
+my %o;
+return \%o;
+
 
 =pod
 
@@ -234,8 +242,8 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.4;
-our $REVISION = '$Id: Analysis.pm,v 1.4 2006/11/30 08:38:10 rho Exp $';
+our $VERSION  = 0.5;
+our $REVISION = '$Id: Analysis.pm,v 1.6 2006/12/13 10:46:58 rho Exp $';
 
 
 1;

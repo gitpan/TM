@@ -200,6 +200,8 @@ eval {
 
     is ($ns[0]->parent->id, $to->id,                                  'name parent')
 }
+
+
 { # occurrence
     my $tmdm = new TM::DM (map => $atm);
     my $tm = $tmdm->topicmap;
@@ -213,13 +215,13 @@ eval {
 		[
 		 [
 		  'http://adam.akest.hewor.ldgorou.nd/',
-		  'http://www.w3.org/2001/XMLSchema#uri',
+		  'http://www.w3.org/2001/XMLSchema#anyURI',
 		  'tm:rumsti#occurrence',
 		  'tm:rumsti#us'
 		  ],
 		 [
 		  'http://oldtesta.ment/~adam/',
-		  'http://www.w3.org/2001/XMLSchema#uri',
+		  'http://www.w3.org/2001/XMLSchema#anyURI',
 		  'tm:rumsti#homepage',
 		  'tm:rumsti#us'
 		  ],
@@ -285,13 +287,13 @@ eval {
 
     is (scalar $tm->topics,            scalar $atm->midlets, 'spec: empty, all topics there');
     is (scalar $tm->topics (\ '+all'), scalar $atm->midlets, 'spec: expl, all topics there');
-
     ok (eq_set ([ grep (!/[0-9a-f]{32}/, $atm->midlets) ],
 		[ map { $_->id } $tm->topics (\ '+all -associations -names -occurrences') ]),
                                                               'spec: expl, all non assertion topics there');
     ok (eq_set ([ map { $_->id } $tm->topics (\ '+all +all') ],
 		[ map { $_->id } $tm->topics (\ '+all') ]),                  'spec: expl, no duplicates');
 
+#warn Dumper scalar map { $_->id } $tm->topics (\ '+all +all') ; exit;
 #    warn Dumper [ map { $_->id } $tm->topics (\ '+all -names +names') ]; exit;
 
     ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names +names') ],

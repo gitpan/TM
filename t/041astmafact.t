@@ -27,7 +27,7 @@ sub _parse {
   my $text = shift;
   my $ms = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps);
   my $p  = new TM::AsTMa::Fact (store => $ms);
-  my $i  = $p->parse ($text);
+  my $i  = $p->parse ("$text\n");
   return $ms;
 }
 
@@ -58,6 +58,22 @@ my $npt = $npa + keys %{$TM::PSI::topicmaps->{mid2iid}};
 
 { #-- structural
     my $ms = _parse ('aaa (bbb)
+
+
+ccc (bbb)
+');
+#warn Dumper $ms; exit;
+    is (scalar $ms->match_forall (type => 'tm:isa', irole => 'tm:class', iplayer => 'tm:bbb'), 2, 'two types for bbb');
+    ok (eq_array ([
+                   $ms->mids ('aaa', 'bbb', 'ccc')
+                   ],
+                  [
+                   'tm:aaa', 'tm:bbb', 'tm:ccc'
+                   ]), 'aaa, bbb, ccc internalized');
+}
+
+{ #-- structural
+    my $ms = _parse ('aaa (bbb)
 ');
 #warn Dumper $ms;
     is (scalar $ms->match (TM->FORALL, type => 'tm:isa', arole => 'tm:instance', aplayer => 'tm:aaa', 
@@ -69,6 +85,7 @@ my $npt = $npa + keys %{$TM::PSI::topicmaps->{mid2iid}};
 		   'tm:aaa', 'tm:bbb'
 		   ]), 'aaa, bbb internalized');
 }
+
 
 {
     my $ms = _parse ('aaa
@@ -83,7 +100,6 @@ aaa is-a bbb
 bn: AAA
 oc: http://BBB
 in: blabla bla
-
 |);
 #warn Dumper $ms;
   is (scalar $ms->match (TM->FORALL, type => 'tm:isa',        irole => 'tm:instance', iplayer => 'tm:aaa' ), 1, 'one type for aaa');
@@ -91,6 +107,7 @@ in: blabla bla
   is (scalar $ms->match (TM->FORALL, type => 'tm:name',       irole => 'tm:thing',    iplayer => 'tm:aaa' ), 1, 'basenames for aaa');
   is (scalar $ms->match (TM->FORALL, type => 'tm:occurrence', irole => 'tm:thing',    iplayer => 'tm:aaa' ), 2, 'occurrences for aaa 1');
 }
+
 
 #-- syntactic issues ----------------------------------------------------------------
 

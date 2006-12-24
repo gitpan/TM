@@ -291,7 +291,9 @@ our $tau_grammar = q{
 	       eval "use $module";                                                  # try to load it on the fly
 	       eval {                                                               # try to
 		   $node = $module->new (url => $uri, baseuri => $uri );            # instantiate an object
-	       }; die "cannot instantiate driver '$module' for URI '$uri' ($@)" if $@;
+	       }; 
+	       die "cannot load '$module' for URI '$uri' ($@)"    if $@;
+	       die "cannot instatiate object for '$module' ($@)"  unless $node;
 	   }
 	   return $node;
        }
@@ -544,6 +546,7 @@ sub new {
 #warn "---- cano3 '$_'";
 
     my $self = _parse ($_);                                                             # DIRTY, but then not
+#warn "============> ". ref ($self->left) . " <-- left -- " . ref ($self);
 
     $self->{sync_in}  = $opts{sync_in};                                                 # same here
     $self->{sync_out} = $opts{sync_out};
@@ -574,7 +577,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '1.13';
-our $REVISION = '$Id: Tau.pm,v 1.11 2006/11/29 10:31:15 rho Exp $';
+our $REVISION = '$Id: Tau.pm,v 1.13 2006/12/05 09:50:38 rho Exp $';
 
 1;
 

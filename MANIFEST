@@ -21,6 +21,7 @@ t/032serialize.t
 t/03resource.t
 t/041astmafact.t
 t/042merge.t
+t/043astma1serial.t
 t/045astma2fact.t
 t/050astma.t
 t/051mldbm.t
@@ -34,6 +35,7 @@ t/100mapsphere.t
 t/101mapsphere.t
 t/102mapsphere.t
 t/13tmdm.t
+t/16tmql.t
 lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
@@ -55,10 +57,14 @@ lib/TM.pm
 lib/TM/Overview.pm
 lib/TM/FAQ.pm
 lib/TM/PSI.pm
+lib/TM/QL.pm
+lib/TM/QL/PE.pm
+lib/TM/QL/TS.pm
 lib/TM/ResourceAble.pm
 lib/TM/Serializable/AsTMa.pm
 lib/TM/Serializable/Dumper.pm
 lib/TM/Serializable/LTM.pm
+lib/TM/Serializable/Summary.pm
 lib/TM/Serializable.pm
 lib/TM/Synchronizable/MapSphere.pm
 lib/TM/Synchronizable/MLDBM.pm
@@ -71,3 +77,4 @@ lib/TM/Tau.pm
 lib/TM/Tree.pm
 lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm
+bin/tm

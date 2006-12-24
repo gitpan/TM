@@ -1,5 +1,17 @@
 Revision history for Perl extension TM
 
+Note: Entries now marked with ! indicate a break of backwards compatibility.
+
+1.24  Sun Dec 24 17:52:02 EST 2006
+	- added: parameter control of things to ask in TM::Analysis
+	- added: workbench tm
+	- added: TM::Serializable::Summary: creates a short overview of the map content
+	- moved: selection mechanism of TMDM::topics is also available for TM::midlets
+	- ! changed: TM::midlet() expects that all IDs passed in are already absolute
+	- added: TM/QL/*
+	- aligned TMQL support with latest spec (not complete yet, though)
+	- added: rudimentary AsTMa 1.0 serialization support (az)
+
 1.23  Fri Dec  1 17:56:09 EST 2006
 	- modified: TM: match_forall hook char.irole -> char.topic, old deprecated
 	- created: TM::Index to hold all index-related functionality

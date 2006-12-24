@@ -747,11 +747,11 @@ sub
 #line 222 "yapp/astma-fact.yp"
 {                           # check whether we are dealing with URIs or strings
 				                                       if ($_[1] == TM->NAME) {  # names are always strings
-									   $_[5] = new TM::Literal  ($_[5], 'xsd:string');
+									   $_[5] = new TM::Literal  ($_[5], TM::Literal->STRING);
 								       } elsif ($_[5] =~ /^\w+:\S+$/) { # can only be OCC, but is it URI?
-									   $_[5] = new TM::Literal  ($_[5], 'xsd:uri');
+									   $_[5] = new TM::Literal  ($_[5], TM::Literal->URI);
 								       } else {                  # occurrence and not a URI -> string
-									   $_[5] = new TM::Literal  ($_[5], 'xsd:string');
+									   $_[5] = new TM::Literal  ($_[5], TM::Literal->STRING);
 								       }
 ## warn "char ".Dumper [ $_[1], $_[3], $_[4], $_[5] ];
 								      [ $_[1], $_[3], $_[4], $_[5] ]
