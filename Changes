@@ -2,6 +2,16 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.25  Fri Jan  5 18:51:12 EST 2007
+	- added: TODO list
+	- rearranged (and generalized): TS.pm atomification handling
+	- TMQL: added || shortcut, removed computed_content
+	- TMQL: rearranged grammar, generalized to content whereever possible
+	- TMQL: XML generation, content variable, attribute values variable
+	- 16tmql.t now responds to parameter (id of test case)
+	- fixed: TS ts_uo_eq treated one tuple sequence as set, the other as bag
+	- added dependencies: Term::ReadLine, XML::Simple (was missing in previous version)
+
 1.24  Sun Dec 24 17:52:02 EST 2006
 	- added: parameter control of things to ask in TM::Analysis
 	- added: workbench tm

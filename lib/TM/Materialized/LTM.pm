@@ -11,7 +11,7 @@ use Data::Dumper;
 
 =head1 NAME
 
-TM::Materialized::LTM - Topic Map Parsing of LTM instances.
+TM::Materialized::LTM - Topic Maps, Parsing of LTM instances.
 
 =head1 SYNOPSIS
 
@@ -56,7 +56,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.3';
-our $REVISION = '$Id: LTM.pm,v 1.6 2006/11/29 10:31:16 rho Exp $';
+our $REVISION = '$Id: LTM.pm,v 1.7 2006/12/29 09:33:42 rho Exp $';
 
 1;
 

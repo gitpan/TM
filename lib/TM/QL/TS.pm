@@ -15,7 +15,7 @@ use TM::Literal;
 
 =head1 NAME
 
-TM::QL::TS - TMQL Tuple Sequence handling
+TM::QL::TS - Topic Maps, TMQL Tuple Sequences
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ ATOMIFIED
 sub ts_concat {
     my $tss1 = shift;
     my $tss2 = shift;
-#warn "flattening ".Dumper $tss1, $tss2;
+#warn "flattening ".Dumper ($tss1, $tss2);
     return $tss2 unless $tss1;
 
     my $tss;
@@ -63,6 +63,15 @@ sub ts_concat {
     return $tss;
 }
 
+
+sub is_singleton {
+    my $ts = shift;
+    return undef unless @$ts        == 1;
+    return undef unless @{$ts->[0]} == 1;
+    return $ts->[0]->[0];
+}
+
+
 =pod
 
 =item I<ts_share>
@@ -70,7 +79,7 @@ sub ts_concat {
 =cut
 
 # very naive (=slow) implementation
-sub ts_share {
+sub ts_xxx_share {
     my $as = shift;
     my $bs = shift;
 
@@ -95,7 +104,7 @@ sub ts_share {
 		} elsif ($refb eq 'TM::Literal') {                          # one is literal, the other not => again not good
 		    next INNER;
 		} else {
-		    next INNER unless $va eq $vb;                           # both non-literal, lets compare them as (string) identifiers
+		    next INNER unless $$va eq $$vb;                         # both non-literal, lets compare them as (string) identifiers
 		}
 	    }
 #warn "yes, equal";
@@ -164,9 +173,10 @@ sub _tuple_md5 {
     my $t = shift; # gets tuple
 
     my $ctx = Digest::MD5->new;
-    foreach my $md5 (map { ref ($_)                           # first MD5'ing each value in the tuple
-			       ? md5 ($_->[0])
-			       : md5 ($_) } @$t) {
+    foreach my $md5 (map {  ref ($_) eq 'TM::Literal' and md5 ($_->[0])
+			 or ref ($_)                  and md5 ($$_) 
+                         or                               md5 ($_) } 
+                     @$t) {                                   # first MD5'ing each value in the tuple
 	$ctx->add($md5);                                      # with these, build overall MD5
     }
     return $ctx->hexdigest;
@@ -192,47 +202,32 @@ sub ts_intersect {
 
 =cut
 
-sub ts_literalify {
+sub _atomify {
+    my $tm = shift;
+    my $v  = shift;
+    my $VALUE = shift;
+    my $a  = $tm->retrieve ($$v) or return undef;
+    return   undef if $a->[TM->KIND] == TM->ASSOC;
+    ($v)= $tm->get_players ($a, $VALUE);
+    return  $v;
+    }
+
+sub ts_atomify {
     my $tss = shift;
     my $tm  = shift;
 
 #warn "serializer!! $tm";
-#warn Dumper $tm;
+#warn "xxxxxxxxxxxx ".Dumper $tss;
     my $VALUE = $tm->mids ('value');
     foreach my $t (@$tss) {
 	foreach my $i (0 .. $#$t) {
 	    my $v = $t->[$i];
-	    next if ! defined $v;                              # undef remains untouched
-	    next if ref ($v) eq 'TM::Literal';                 # literals remain untouched
-	    my $a = $tm->retrieve ($v) or next;                # try to find an assertion/characteristics in the context map
-	    next if $a->[TM->KIND] == TM->ASSOC;               # association ==> keep the identifier
-
-	    ($v) = $tm->get_players ($a, $VALUE);              # there should only be one!
-            $v = new TM::Literal ($$v, 'xsd:string') if ref ($v) eq 'SCALAR'; # convert old style string into literal
-	    $t->[$i] = $v;
+	    next unless ref ($v);
+	    next if ref ($v) eq 'TM::Literal';
+	    $t->[$i] = _atomify ($tm, $v, $VALUE);
 	}
     }
-    return bless $tss, 'ATOMIFIED';                            # mark it as such
-}
-
-# TODO @ REMOVE
-
-
-sub ts_atomify {
-    my $v  = shift;
-    my $tm = shift;
-
-    return $v if ! defined $v;                                 # undef remains untouched
-    return $v if ref ($v) eq 'TM::Literal';                    # literals remain untouched
-    my $a = $tm->retrieve ($v) or return $v;                   # try to find an assertion/characteristics in the context map
-    return $v if $a->[TM->KIND] == TM->ASSOC;                  # association ==> keep the identifier
-
-#warn "atomify ".Dumper $a;
-    my $VALUE = $tm->mids ('value');
-    my ($v2) = $tm->get_players ($a, $VALUE);              # there should only be one!
-    return new TM::Literal ($$v2, 'xsd:string')                # convert old style string into literal
-	if ref ($v2) eq 'SCALAR';                              # TODO: @@@@ when map has actually typed data
-    return $v2;                                                 # give up
+    return $tss;
 }
 
 =pod
@@ -336,24 +331,20 @@ sub tuple_eq { # old: __tuple_eq
     return 1;
 }
 
-sub ts_uo_eq {                                             # destructive test
+use Test::More;
+
+sub ts_uo_eq {
     my $r = shift;
     my $e = shift;
-#warn "compare set".Dumper ($r, $e);
-    
-#    return 0 unless @$e == @$r; # quick check whether same length
-#warn "before loop";
-    foreach my $te (@$e) { # go through expected tuples
-#warn ".... $te";
-#warn "te ".Dumper $te;
-#warn "r ".Dumper $r;
-	my @r2 = grep (!eq_array ($te, $_), @$r);
-#warn "r2 ".Dumper \@r2;
-	return 0 if @$r == @r2;                            # if the last step did not reduce the length, then the set cannot be the same
-        $r = \@r2;
-    }
-#warn "leftovers ".Dumper ($r);
-    ! @$r;                                                 # only equal if there is no element left
+#warn "compare bags".Dumper ($r, $e);
+
+    my %rMD5s;
+    map { $rMD5s{_tuple_md5 ($_)}++ } @$r;
+
+    my %eMD5s;
+    map { $eMD5s{_tuple_md5 ($_)}++ } @$e;
+
+    return eq_hash (\%rMD5s, \%eMD5s);
 }
 
 
@@ -365,8 +356,6 @@ This boolean function makes a deep comparison of the two TSs passed
 in. Only if they are exactly identical, the result will be non-zero.
 
 =cut
-
-use Test::More;
 
 sub ts_identical {
     my $r = shift;
@@ -386,22 +375,153 @@ move, move, move
 
 =cut
 
+my %SUBS = (
+	    'epsilon.1.'            	=> sub { return   $_[1] },
+	    'epsilon.1.SCALAR'      	=> sub { return   $_[1] },
+	    'epsilon.0.'            	=> sub { return   $_[1] },
+	    'epsilon.0.SCALAR'      	=> sub { return   $_[1] },
+
+	    'superclasses.1.'       	=> sub { return   $_[0]->superclassesT (  $_[1]); },
+	    'superclasses.1.SCALAR' 	=> sub { return   $_[0]->superclassesT (${$_[1]}); },
+	    'superclasses.0.'       	=> sub { return   $_[0]->subclassesT   (  $_[1]); },
+	    'superclasses.0.SCALAR' 	=> sub { return   $_[0]->subclassesT   (${$_[1]}); },
+
+	    'classes.1.'            	=> sub { return   $_[0]->typesT          ($_[1]); },
+	    'classes.1.SCALAR'      	=> sub { return   $_[0]->typesT        (${$_[1]}); },
+	    'classes.0.'            	=> sub { return   $_[0]->instancesT      ($_[1]); },
+	    'classes.0.SCALAR'      	=> sub { return   $_[0]->instancesT    (${$_[1]}); },
+
+	    'players.1.'            	=> sub { return   grep (defined $_, $_[0]->get_players ($_[0]->retrieve (  $_[1]),  $_[2])); },
+	    'players.1.SCALAR'      	=> sub { return   grep (defined $_, $_[0]->get_players ($_[0]->retrieve (${$_[1]}), $_[2])); },
+	    'players.0.'            	=> sub { return   map { $_->[TM->LID] }  $_[0]->match_forall (irole   => $_[2], iplayer =>   $_[1]); },
+	    'players.0.SCALAR'      	=> sub { return   map { $_->[TM->LID] }  $_[0]->match_forall (irole   => $_[2], iplayer => ${$_[1]}); },
+
+	    'roles.1.'              	=> sub { return   @{$_[0]->get_role_s ($_[0]->retrieve (  $_[1])) }; },
+	    'roles.1.SCALAR'        	=> sub { return   @{$_[0]->get_role_s ($_[0]->retrieve (${$_[1]}))}; },
+	    'roles.0.'              	=> sub { die      "roles reverse axis not yet implemented"; },
+	    'roles.0.SCALAR'        	=> sub { die      "roles reverse axis not yet implemented"; },
+
+	    'characteristics.1.'   	=> sub { return   map { $_->[TM->LID] }                      # in any case, we are only interested in the ID, not the whole thing
+					                  $_[0]->match_forall (          char  => 1,
+						   			       ($_[2] ? (type  => $_[2]) : ()),
+									                 topic => $_[1]); },
+	    'characteristics.1.SCALAR'  => sub { return   map { $_->[TM->LID] }                     # in any case, we are only interested in the ID, not the whole thing
+					                  $_[0]->match_forall (          char  => 1,
+								   	       ($_[2] ? (type  => $_[2]) : ()),
+									                 topic => ${$_[1]}); },
+	    'characteristics.0.'   	=> sub { return   $_[0]->get_x_players ($_[0]->retrieve (  $_[1]),  $_[4]); },
+	    'characteristics.0.SCALAR'  => sub { return   $_[0]->get_x_players ($_[0]->retrieve (${$_[1]}), $_[4]); },
+
+	    'scope.1.'                  => sub { return   $_[0]->retrieve (  $_[1]) ->[TM->SCOPE]; },
+	    'scope.1.SCALAR'            => sub { return   $_[0]->retrieve (${$_[1]})->[TM->SCOPE]; },
+	    'scope.0.'                  => sub { die      "scope reverse axis not yet implemented"; },
+	    'scope.0.SCALAR'            => sub { die      "scope reverse axis not yet implemented"; },
+
+	    'reifier.1.'                => sub { return   $_[0]->reified_by (  $_[1]);  },
+	    'reifier.1.SCALAR'          => sub { return   $_[0]->reified_by (${$_[1]}); },
+	    'reifier.0.'                => sub { return   $_[0]->reifies (     $_[1]);  },
+	    'reifier.0.SCALAR.'         => sub { return   $_[0]->reifies (   ${$_[1]}); },
+
+	    'indicators.1.'             => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (  $_[1]) ->[TM->INDICATORS] }; },
+	    'indicators.1.SCALAR'       => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (${$_[1]})->[TM->INDICATORS] }; },
+	    'indicators.0.TM::Literal'  => sub { return   $_[0]->mids ( \ $_[1]->[0] ) or (); },
+
+	    'indicators.0.SCALAR'       => sub { my $i    = _atomify ($_[0], $_[1], $_[3]);
+						 return   $_[0]->mids ( \ $i ) or (); },
+
+	    'locators.1.'               => sub { my $l    = $_[0]->midlet (  $_[1] )->[TM->ADDRESS]; 
+						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
+	    'locators.1.SCALAR'         => sub { my $l    = $_[0]->midlet (${$_[1]})->[TM->ADDRESS]; 
+						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
+	    'locators.0.TM::Literal'    => sub { return   $_[0]->mids ( $_[1]->[0] ) or (); },
+
+	    'locators.0.SCALAR'         => sub { my $l    = _atomify ($_[0], $_[1], $_[3]);
+						 return   $_[0]->mids ( $l ) or (); },
+
+	    'atomify.1.'                => sub { return   \ $_[1]; },
+	    'atomify.0.TM::Literal'     => sub { return   map { $_->[TM->LID] } $_[0]->match_forall (char  => 1, value => $_[1]); },
+	    'atomify.0.SCALAR'          => sub { my $v    = _atomify ($_[0], $_[1], $_[3]);
+						 return   map { $_->[TM->LID] } $_[0]->match_forall (char  => 1, value => $v); },
+	    );
+
 sub ts_navigation {
     my $tm  = shift;                                                                 # the context map
     my $tss = shift;                                                                 # incoming TS
     my $nav = shift;                                                                 # the navigation
 
-       $_   = $nav->axi . $nav->dir;                                                 # what is it what we have to do?
-    my ($TID, $THING) = $tm->mids ($nav->tid, 'thing');                              # for the case that we need it
+    my ($TID, $VALUE, $THING) = $tm->mids ($nav->tid, 'value', 'thing');             # for the case that we need it
 
-#warn "navi $_ for ".Dumper $tss;
+    my $navdir = $nav->axi . "." . ($nav->dir ? 1 : 0);                              # what is it what we have to do?
+#warn "navi $navdir for ".Dumper $tss;
+    my $tss2;                                                                        # we have to build a new tuple sequence
 
-    return bless $tss, 'ATOMIFY'                                                     # schedule for it (at the end of a prs sequence, that it)
-	if ($_ eq 'atomify1');                                                       #      if it is forward atomification
+    foreach my $t (@$tss) {                                     	             # forall tuples in the incoming sequence
+	my $tss3;                                                                    # one TS subsequence for one incoming tuple
+	foreach my $v (@$t) {                                                        # forall values in that tuple
+	    my $navsub = $SUBS{$navdir . "." . ref ($v) } or next;                   # if we have something to do, then it is defined, otherwise skipped
+	    my @v2 = &$navsub ($tm, $v, $TID, $VALUE, $THING);
+	    $tss3 = ts_concat ($tss3, [ map { [ $_ ] } @v2 ]);                       # make a TS from values and flatten
+	}
+	push @$tss2, @$tss3;                                                         # append TS subsequence to overall result
+    }
+#warn "returning ".Dumper $tss2;
+    return $tss2;
 
-    TM::QL::TS::ts_literalify ($tss, $tm)                                            # otherwise, we do in-replacement of $tss
-	if (ref ($tss) eq 'ATOMIFY' && $_ eq 'atomify');                             #      if it is reverse atomification
-                                                                                     # BUT, we continue here
+}
+
+=pod
+
+=back
+
+=head1 AUTHOR
+
+Robert Barta, E<lt>drrho@cpan.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 200[5-7] by Robert Barta
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.4 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut
+
+our $VERSION  = 0.05;
+our $REVISION = '$Id: TS.pm,v 1.15 2007/01/05 08:55:42 rho Exp $';
+
+1;
+
+__END__
+
+# TODO @ REMOVE
+
+
+sub ts_atomify {
+    my $v  = shift;
+    my $tm = shift;
+
+    return $v if ! defined $v;                                 # undef remains untouched
+    return $v if ref ($v) eq 'TM::Literal';                    # literals remain untouched
+    my $a = $tm->retrieve ($v) or return $v;                   # try to find an assertion/characteristics in the context map
+    return $v if $a->[TM->KIND] == TM->ASSOC;                  # association ==> keep the identifier
+
+#warn "atomify ".Dumper $a;
+    my $VALUE = $tm->mids ('value');
+    my ($v2) = $tm->get_players ($a, $VALUE);              # there should only be one!
+    return new TM::Literal ($$v2, 'xsd:string')                # convert old style string into literal
+	if ref ($v2) eq 'SCALAR';                              # TODO: @@@@ when map has actually typed data
+    return $v2;                                                 # give up
+}
+
+sub ts_old_navigation {
+    my $tm  = shift;                                                                 # the context map
+    my $tss = shift;                                                                 # incoming TS
+    my $nav = shift;                                                                 # the navigation
+
+
+warn "navi $_ for ".Dumper $tss;
+
     my $tss2;                                                                        # we have to build a new tuple sequence
 
     foreach my $t (@$tss) {                                     	             # forall tuples in the incoming sequence
@@ -414,73 +534,107 @@ sub ts_navigation {
 		
 
 	    } elsif (/superclasses1/) {
-		push @v2, $tm->superclassesT ($v);
+		push @v2, map {\ $_ } $tm->superclassesT ($$v);  # works with tid
 		
 	    } elsif (/superclasses/) {
-		push @v2, $tm->subclassesT ($v);
+		push @v2, map {\ $_ } $tm->subclassesT ($$v); # works with tid
 		
 
 	    } elsif (/classes1/) {
-		push @v2, $tm->typesT ($v);
+		push @v2, map {\ $_ } $tm->typesT ($$v); # works with tid
 		
 	    } elsif (/classes/) {
-		push @v2, $tm->instancesT ($v);
+		push @v2, map {\ $_ } $tm->instancesT ($$v); # works with tid
 		
 
 	    } elsif (/players1/) {
-		push @v2, grep (defined $_, $tm->get_players ($tm->retrieve ($v), $TID));
+		push @v2, map {\ $_ } grep (defined $_, $tm->get_players ($tm->retrieve ($$v), $TID)); # works with tid
 
 	    } elsif (/players/) {
-		push @v2, map { $_->[TM->LID] }                                           # we are only interested in the ID, not the whole thing
-                          $tm->match_forall (irole   => $TID, iplayer => $v);
+		push @v2, map { \ $_->[TM->LID] }                                         # we are only interested in the ID, not the whole thing
+                          $tm->match_forall (irole   => $TID, iplayer => $$v);  # works with tid
 
 	    } elsif (/roles1/) {
-		push @v2, @{$tm->get_role_s ($tm->retrieve ($v))};
+		push @v2, map {\ $_ } @{$tm->get_role_s ($tm->retrieve ($$v))};  # works with tid
 		
 	    } elsif (/roles/) {
-		die "NOT YET IMPLEMENTED"; # TODO @@@@@@@@@@@;
+		die "roles axis not yet implemented"; # TODO @@@@@@@@@@@;
 		
 
-	    } elsif (/characteristics1/) {
-		push @v2, map { $_->[TM->LID] }                                       # in any case, we are only interested in the ID, not the whole thing
+	    } elsif (/characteristics1/) { # works with tid
+		push @v2, map { \ $_->[TM->LID] }                                       # in any case, we are only interested in the ID, not the whole thing
 		          $tm->match_forall (char  => 1,
 			            ($TID ? (type  => $TID) : ()),
-					     topic => $v);
+					     topic => $$v);
+warn "char1 ".Dumper \@v2;
 
-	    } elsif (/characteristics/) {
-		push @v2, $tm->get_x_players ($tm->retrieve ($v), $THING);
+
+	    } elsif (/characteristics/) { # works with tid
+		push @v2, map { \ $_ } $tm->get_x_players ($tm->retrieve ($$v), $THING);
 		
 
-	    } elsif (/scope1/) {
-		push @v2, $tm->retrieve ($v)->[TM->SCOPE];
+	    } elsif (/scope1/) { # works with tid
+		push @v2, map {\ $_ } $tm->retrieve ($$v)->[TM->SCOPE];
 		
 	    } elsif (/scope/) {
-		die "inverse scoping not yet implemented";
+		die "inverse scoping not yet implemented"; # TODO
 		
 
-	    } elsif (/reifier1/) {
-		push @v2, $tm->reified_by ($v);
+	    } elsif (/reifier1/) { # works with tid
+		push @v2, map {\ $_ } $tm->reified_by ($$v);
 		
-	    } elsif (/reifier/) {
-		push @v2, $tm->reifies ($v);
+	    } elsif (/reifier/) { # works with tid
+		push @v2, map {\ $_ } $tm->reifies ($$v);
 		
-	    } elsif (/indicators1/) {
-		push @v2, map { new TM::Literal ($_, TM::Literal->URI) } @{ $tm->midlet ($v)->[TM->INDICATORS] };
+	    } elsif (/indicators1/) { # works with tid
+		push @v2, map { new TM::Literal ($_, TM::Literal->URI) } @{ $tm->midlet ($$v)->[TM->INDICATORS] };
 		
 	    } elsif (/indicators/) {
-		push @v2, $tm->mids (\ $v->[0] ) if ref ($v) eq 'TM::Literal' && $v->[1] eq TM::Literal->URI;
+		if (ref ($v) eq 'ATOMIFY') {
+		    push @v2, _atomify ($tm, $$v, $VALUE);
 
-	    } elsif (/locators1/) {
-		my $addr = $tm->midlet ($v)->[TM->ADDRESS];
+		    sub _atomify {
+			my $tm = shift;
+			my $v  = shift;
+			my $VALUE = shift;
+			my $a  = $tm->retrieve ($v)  or  die "cannot atomify non-association";     # should not happen
+			$a->[TM->KIND] == TM->ASSOC  and die "cannot atomify non-characteristics"; # should not happen
+			($v) = $tm->get_players ($a, $VALUE);
+			return $v;
+		    }
+		    
+		} elsif ($v->[1] eq TM::Literal->URI) {
+		    push @v2, \ $tm->mids (\ $v->[0] );
+		} else {
+		    push @v2, undef;
+		}
+
+	    } elsif (/locators1/) {  # works with tid
+		my $addr = $tm->midlet ($$v)->[TM->ADDRESS];
 		push @v2, new TM::Literal ($addr, TM::Literal->URI) if $addr;
 		
 	    } elsif (/locators/) {
-		push @v2, $tm->mids ( $v->[0] ) if ref ($v) eq 'TM::Literal' && $v->[1] eq TM::Literal->URI;
+		if (ref ($v) eq 'ATOMIFY') {
+		    push @v2, _atomify ($tm, $$v, $VALUE);
+		} elsif ($v->[1] eq TM::Literal->URI) {
+		    push @v2, \ $tm->mids ( $v->[0] );
+		}
 
-	    } elsif (/atomify/) {                                                    # this MUST be reverse atomify
-#warn "atomify <". Dumper $v;
-		push @v2, map { $_->[TM->LID] } $tm->match_forall (char  => 1,
-								   value => $v);
+	    } elsif (/atomify1/) {
+warn "atomify >". Dumper $v;
+                bless $v, 'ATOMIFY';  # mark atomification, but delay it
+		push @v2, $v;
+#warn "atomify v2 ".Dumper \@v2;
+
+warn "after atomify ".Dumper $tm;
+
+	    } elsif (/atomify/) {                      # de-atomification can/must be done immediately
+warn "atomify <". Dumper $v;
+		if (ref ($v) eq 'ATOMIFY') {
+		    push @v2, _atomify ($tm, $$v, $VALUE);
+		}
+		push @v2, map { \ $_->[TM->LID] } $tm->match_forall (char  => 1,
+								     value => $$v);
 #warn "atomify v2 ".Dumper \@v2;
 	    } else {
 		die "unhandled axis: ".$nav->axi. ($nav->dir ? ':>:' : ':<:');
@@ -492,30 +646,28 @@ sub ts_navigation {
 #warn "adding tss3 $tss3 to tss2";
 	push @$tss2, @$tss3;                                     # append TS subsequence to overall result
     }
-#warn "returning ".Dumper $tss2;
+warn "returning ".Dumper $tss2;
     return $tss2;
 }
 
 
-=pod
+sub old_ts_uo_eq {                                             # destructive test
+    my $r = shift;
+    my $e = shift;
+warn "compare bags".Dumper ($r, $e);
+    
+#    return 0 unless @$e == @$r; # quick check whether same length
+#warn "before loop";
+    foreach my $te (@$e) { # go through expected tuples
+warn ".... $te";
+warn "te ".Dumper $te;
+warn "r ".Dumper $r;
+	my @r2 = grep (!eq_array ($te, $_), @$r);
+warn "r2 ".Dumper \@r2;
+	return 0 if @$r == @r2;                            # if the last step did not reduce the length, then the set cannot be the same
+        $r = \@r2;
+    }
+warn "leftovers ".Dumper ($r);
+    ! @$r;                                                 # only equal if there is no element left
+}
 
-=back
-
-=head1 AUTHOR
-
-Robert Barta, E<lt>drrho@cpan.orgE<gt>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 200[56] by Robert Barta
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.4 or,
-at your option, any later version of Perl 5 you may have available.
-
-=cut
-
-our $VERSION  = 0.03;
-our $REVISION = '$Id: TS.pm,v 1.10 2006/12/23 10:37:08 rho Exp $';
-
-1;

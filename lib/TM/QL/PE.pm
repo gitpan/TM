@@ -19,7 +19,16 @@ struct PEvar  => [ nam => '$' ];                                          # a va
 struct PEpi   => [ idx => '$' ];                                          # projection variable, $0, $1, ...
 struct PEti   => [ tid => '$' ];                                          # an association/topic identifier
 struct PEall  => [];                                                      # the universe, read: the whole map
-struct PEvoid => [];                                                      # the undefined value
+struct PEvoid => [];                                                      # the undefined value (SCHEDULED for removal)
+
+struct PExml  => [
+		   sta => '$', # start tag
+		   end => '$', # end tag
+		   ats => '@', # attributes
+		   con => '@', # content
+		  ];
+
+struct PEtm   => [];                                                      # TM content
 
 our %FUNS =                                                               # this will contain all functions (uri => sub {})
     %TM::Literal::OPS;
@@ -50,11 +59,11 @@ our $grammar = q{
                   | /__pr1sc_(\d+)__/
                   | pr2
 
-	pr2       : <leftop: pr3 /(---)/    pr3>
+	pr2       : <leftop: pr3 /(--)/    pr3>
 
-	pr3       : <leftop: pr4 /(\|\|\|)/ pr4>
+	pr3       : <leftop: pr4 /(\+\+)/  pr4>
 
-	pr4       : <leftop: pr5 /(===)/    pr5>
+	pr4       : <leftop: pr5 /(==)/    pr5>
 
         pr5       : uri '(' pr5(s? /,/) ')'                     { $return = new PEfun (fun  => ($FUNS->{$item[1]} || die "unregistered function '$item[1]'"),
 										       args => $item[3],
@@ -75,15 +84,17 @@ our $grammar = q{
         mo        : ax /:[<>]:/ id                              { $return = new PEna (axi => $item[1],
 										      dir => $item[2] eq ':>:',
 										      tid => $item[3]);}
-        ax    	  : 'epsilon'
-              	  | 'classes'
-              	  | 'superclasses'
-              	  | 'players'
-              	  | 'roles'
-              	  | 'characteristics'
-              	  | 'scope'
-              	  | 'reifier'
+        ax        : 'epsilon'
+                  | 'classes'
+                  | 'superclasses'
+                  | 'players'
+                  | 'roles'
+                  | 'characteristics'
+                  | 'scope'
+                  | 'reifier'
                   | 'atomify'
+                  | 'locators'
+                  | 'indicators'
 
         li        : /__lit_(\d+)__/
                   | /__tid_(\d+)__/
@@ -91,6 +102,7 @@ our $grammar = q{
                   | /\-?\d+/                                    { $return = new TM::Literal  ($item[1], 'xsd:integer'); }
                   | /"([^\"]*)"/ ('^^' uri)(?)                  { $return = new TM::Literal  ($1,       $item[2]->[0] || 'xsd:string'); }
                   | (/[sil]\`/)(?)  id                          { $return = new PEti (tid => $item[2]); }
+# TODO: import Literal grammar here?
 
         id        : uri | /([\w\#\_][\w\-\.]*)/
 
@@ -138,9 +150,11 @@ sub mk_prs { # put in one value, this make a whole prs
 	return PEprs->new (arr => [ $v ]);
     } elsif (ref ($v) eq 'ARRAY') { # some operator crap
 	return PEprs->new (arr => [ PEpr->new (arr => [ $v ]) ]);
-    } elsif (! defined $v) {
+    } elsif (ref ($v) eq 'PExml') {
+	return PEprs->new (arr => [ PEpr->new (arr => [ [[[ $v ]]] ]) ] );
+    } elsif (! defined $v) { # undefined? => empty prs
 	return PEprs->new (arr => [ PEpr->new (arr => [ ]) ]);
-    } else {
+    } else { # everything else will just be wrapped
 	return PEprs->new (arr => [ PEpr->new (arr => [ [[[ PEpe->new (val => $v, mos => []) ]]]  ]) ]);
     }
 }
@@ -153,7 +167,7 @@ sub prs2str {
 #warn "dumping ".Dumper $prs;
     return $prs unless ref ($prs);                                        # we also allow to pass in META strings, they should be bounced back as-is
 ##    return ($prs->neg ? '~~' : '') . join " . ", map { _dump_pr ($_) } @{$prs->arr} ;
-    return join " . ", map { _dump_pr ($_) } @{$prs->arr} ;
+    return "{ " . join (" . ", map { _dump_pr ($_) } @{$prs->arr}) . " }" ;
 
     sub _dump_ve {
 	my $n = shift;
@@ -177,14 +191,16 @@ sub prs2str {
 	} elsif ($rn eq 'PEti') {
 	    return $n->tid;
 	} elsif ($rn eq 'PEpe') {
-	    return _dump_ve ($n->val) . ( @{$n->mos} ? " :::" . join (" ", map { $_->axi.($_->dir? '>' : '<').($_->tid ? $_->tid : '??') } @{$n->mos}) : '' );
+	    return _dump_ve ($n->val) . ( @{$n->mos} ? " :::" . join (" ", map { ($_->dir? '>>' : '<<').$_->axi.($_->tid ? $_->tid : '??') } @{$n->mos}) : '' );
 	} elsif ($rn eq 'PEfun') {
 	    return $n->uri . "(" . join (", ", prs2str ($n->args)) . ")";
 	} elsif ($rn eq 'PEvar') {
 	    return $n->nam;
+	} elsif ($rn eq 'PExml') {
+	    return "<xml...>" . (join "...", map { _dump_ve ($_) } @{$n->con}  ) . "</xml>";
 	} elsif ($rn eq 'TM::Literal') {
 	    return $n->[0];
-	} elsif (grep ($n eq $_, ('===', '|||', '---'))) {
+	} elsif (grep ($n eq $_, ('==', '++', '--'))) {
 	    return $n;
 	} else {
 	    return $n;
@@ -231,10 +247,10 @@ sub unshift_vars {
 
 #warn "in unshift";
     foreach my $as (reverse @$fors) {
-	my ($v, $q) = each %$as;
+	my ($v, $q) = @$as;                                                  # there is ALWAYS only one $var => $pe pair!
 
 #warn " before unshift of $v: ".prs2str ($p) . " \n       with ".prs2str($q);
-	_unshift_dollar_0 ($v, 1, $p);                                    # unshift/replace
+	_unshift_dollar_0 ($v, 1, $p);                                       # unshift/replace
 #warn " after  unshift of $v: ".prs2str ($p);
 
 	my $last = $q->arr->[ $#{$q->arr} ];                                 # find last
@@ -261,10 +277,10 @@ sub unshift_vars {
 	my $rn = ref ($n);                                            # shorthand
 #warn "unshifting var $v (shift: $s) in $rn".Dumper $n;
 
-	if ($rn eq 'ARRAY' || $rn eq 'AND' || $rn eq 'OR') {          # here we simply propagate the process downwards
+	if ($rn eq 'ARRAY' || $rn eq 'AND' || $rn eq 'OR') {          # here we simply propagate the process downwards, TODO: remove AND, OR
 	    map { _unshift_dollar_0 ($v, $s, $_) } @$n;
 
-	} elsif (grep ($n eq $_, ('===', '|||', '---'))) {            # null
+	} elsif (grep ($n eq $_, ('==', '++', '--'))) {               # null
 
 	} elsif ($rn eq 'PEpr') {                                     # projection
 	    _unshift_dollar_0 ($v, 0, $n->arr);                       # handled by ARRAY, might be empty, but that is ok
@@ -302,6 +318,13 @@ sub unshift_vars {
 	} elsif ($rn eq 'PEpi') {                                     # all $0 becomes $1, $1 -> $2, ....
 	    $n->idx ($n->idx + 1) unless $v eq '@_';                  # ....unless we unshift @_
 
+	} elsif ($rn eq 'PExml') {
+	    map { _unshift_dollar_0 ($v, undef, $_) } @{$n->con};     # check out the content and do unshift there
+
+	    map { _unshift_dollar_0 ($v, undef, $_) }                 # do the walk
+                map { @{ $_->[1] } }                                  # look at the value component, it is also a list
+                @{$n->ats};                                           # take all attributes
+
 	} elsif (grep ($rn eq $_, qw(PEti PEall PEvoid))) {           # null;
 
 	} elsif ($rn eq 'TM::Literal') {                              # null;
@@ -331,11 +354,13 @@ sub find_free_vars {                                                  # finds al
 	return (find_free_vars ($n->val));
     } elsif ($rn eq 'ARRAY') {
 	return map { find_free_vars ($_) } @$n;
-    } elsif (grep ($n eq $_, ('===', '|||', '---'))) {
+    } elsif (grep ($n eq $_, ('==', '++', '--'))) {
 	return ();
     } elsif ($rn eq 'PEvar') {                                        # this is probably the only relevant place
 	return () if $n->nam =~ /(%|\@|\$)_/;                         # unless that name is something special
 	return ($n->nam);                                             # take the money and run
+    } elsif ($rn eq 'PExml') {
+	return ();                                                    # TODO: not sure. Maybe it is cool?
     } elsif ($rn eq 'TM::Literal') {
 	return ();
     } elsif (grep ($rn eq $_, qw(PEti PEall PEvoid PEpi PEna))) {
@@ -365,7 +390,7 @@ sub find_pis {                                                        # checks w
 	return (find_pis ($n->val));
     } elsif ($rn eq 'ARRAY') {
 	return map { find_pis ($_) } @$n;
-    } elsif (grep ($n eq $_, ('===', '|||', '---'))) {
+    } elsif (grep ($n eq $_, ('==', '++', '--'))) {
 	return ();
     } elsif ($rn eq 'PEpi') {                                         # this is probably the only relevant place
 	return ($n);                                                  # take the money and run
@@ -373,6 +398,8 @@ sub find_pis {                                                        # checks w
 	return $n->nam eq '$#' ? ($n) : ();
     } elsif ($rn eq 'TM::Literal') {
 	return ();
+    } elsif ($rn eq 'PExml') {
+	return find_pis ($n->con),
     } elsif (grep ($rn eq $_, qw(PEti PEall PEvoid PEvar PEna))) {
 	return ();
     } else {
@@ -389,9 +416,9 @@ our %rules;
 sub _init_rules {
     foreach my $r (sort 
 			 '002NEST     : ( ( __pe_1__ ) )                                              ===>   ( __pe_1__ )',
-			 '003NEST     : ( ( __pe_1__ ) === ( __pe_2__) )                              ===>   ( __pe_1__ === __pe_2__ )',
+			 '003NEST     : ( ( __pe_1__ ) == ( __pe_2__) )                               ===>   ( __pe_1__ == __pe_2__ )',
 			 '004NEST     : (__pr1s_1__, ( __pr1s_2__ ), __pr1s_3__)                      ===>   (__pr1s_1__, __pr1s_2__ , __pr1s_3__)',
-			 '005NEST     : ( (%_) ||| __pr_1__ )                                         ===>   ( %_ ||| __pr_1__ )',
+			 '005NEST     : ( (%_) ++ __pr_1__ )                                          ===>   ( %_ ++ __pr_1__ )',
 
 #'006NEST : ( @_ ) ===> (...)',
 #'007NEST : ((...)) ===> (...)',
@@ -400,11 +427,11 @@ sub _init_rules {
 			 '010EMPTY    : __pr_1__ . ()                                                 ===>   ()',
 			 '011EMPTY    : () . __pr_1__                                                 ===>   ()',
 
-			 '012EMPTYO    : ( () ||| __pr_1__ )                                          ===> ( __pr_1__ )',
-			 '013EMPTYO    : ( () ||| __prs_1__ ||| () )                                  ===> ( __prs_1__ )',
-			 '014EMPTYO    : ( __pr_1__ ||| () )                                          ===> ( __pr_1__ )',
+			 '012EMPTYO    : ( () ++ __pr_1__ )                                           ===> ( __pr_1__ )',
+			 '013EMPTYO    : ( () ++ __prs_1__ ++ () )                                    ===> ( __prs_1__ )',
+			 '014EMPTYO    : ( __pr_1__ ++ () )                                           ===> ( __pr_1__ )',
 
-                         '0015EQ0      : ( __pe_1__ === __pe_1__ )                                    ===> ( __pe_1__ )',
+                         '0015EQ0      : ( __pe_1__ == __pe_1__ )                                     ===> ( __pe_1__ )',
 
 
 			 '020IFvoi    : if () then __prs_1__ else __prs_2__ fi                        ===>   __prs_2__',
@@ -422,7 +449,7 @@ sub _init_rules {
                                            then __prs_1__ else __prs_2__ fi                           ===>   __prs_1__ ',
 
 
-			 '034IFunior : if (%_ ||| __pr0s_1__) then __prs_1__ else __prs_2__ fi        ===>   if (%_) then __prs_1__ else __prs_2__ fi',
+			 '034IFunior : if (%_ ++ __pr0s_1__) then __prs_1__ else __prs_2__ fi         ===>   if (%_) then __prs_1__ else __prs_2__ fi',
 
 			 '035IFXX     : if __prs_1__  then  ()  else  ()  fi                          ===>   ()',
 
@@ -444,12 +471,12 @@ sub _init_rules {
                                            then __prs_1__ else __prs_2__ fi                           ===>   (__pe_1__, __pr1s_1__) .
                                                                                                              if (__pr1s_2__)
                                                                                                                 then __prs_1__ else __prs_2__ fi',
-                         '047IFD0     : (__pe_1__ === __pe_2__, __pr1s_1__) .
-                                        if ($0)    then __pr0s_1__ else __prs_2__ fi                  ===>   (__pe_1__ === __pe_2__, __pr1s_1__) . __pr0s_1__',
+                         '047IFD0     : (__pe_1__ == __pe_2__, __pr1s_1__) .
+                                        if ($0)    then __pr0s_1__ else __prs_2__ fi                  ===>   (__pe_1__ == __pe_2__, __pr1s_1__) . __pr0s_1__',
 
-                         '048IFD0     : (__pe_1__ === __pe_2__, __pr1s_1__) .
+                         '048IFD0     : (__pe_1__ == __pe_2__, __pr1s_1__) .
                                         if ($0, __pr1s_2__) 
-                                           then __prs_1__ else __prs_2__ fi                           ===>   (__pe_1__ === __pe_2__, __pr1s_1__) .
+                                           then __prs_1__ else __prs_2__ fi                           ===>   (__pe_1__ == __pe_2__, __pr1s_1__) .
                                                                                                              if (__pr1s_2__)
                                                                                                                 then __prs_1__ else __prs_2__ fi',
                          '047IFD1     : (__pe_1__, __pe_2__, __pr1s_1__) .
@@ -487,29 +514,29 @@ sub _init_rules {
 #                         '053PRD01    : (__pe_1__, __pe_2__, __pr1s_1__) . ($1...)                    ===>   (__pe_2__, __pr1s_1__)',
 
 
-			 '070CLASS    : if (__pr1s_1__, $n classes :>: thing === __tid_1__, __pr1s_2__) 
-                                           then __prs_1__ else __prs_2__ fi                           ===>   if ($n === __tid_1__ classes :<: thing,
+			 '070CLASS    : if (__pr1s_1__, $n classes :>: thing == __tid_1__, __pr1s_2__) 
+                                           then __prs_1__ else __prs_2__ fi                           ===>   if ($n == __tid_1__ classes :<: thing,
                                                                                                                  __pr1s_1__, 
                                                                                                                  __pr1s_2__)
                                                                                                                 then __prs_1__ else __prs_2__ fi',
 
-			 '070CLASS1   : (%_)  .  ($0 === __pe_1__)                                    ===>   (%_ === __pe_1__ )',
-			 '070CLASS2   : (%_ === thing classes :<: thing)                              ===>   (%_)',
+			 '070CLASS1   : (%_)  .  ($0 == __pe_1__)                                     ===>   (%_ == __pe_1__ )',
+			 '070CLASS2   : (%_ == thing classes :<: thing)                               ===>   (%_)',
 
 
                          '071IFIF     : if ( if __prs_1__ then (@_) else () fi ) 
                                            then __prs_2__
                                            else __prs_3__ fi                                          ===>   if __prs_1__ then __prs_2__ else __prs_3__ fi',
 
- 			 '080IFSIn    : if ($n === __pe_1__, __pr1s_1__)
+ 			 '080IFSIn    : if ($n == __pe_1__, __pr1s_1__)
                                            then (__pr1s_2__, $n, __pr1s_3__) else ()     fi           ===>   if ($n, __pr1s_1__)
-                                                                                                                then (__pr1s_2__, $n === __pe_1__, __pr1s_3__) 
+                                                                                                                then (__pr1s_2__, $n == __pe_1__, __pr1s_3__) 
                                                                                                                 else () fi',
  			 '081IFSIn    : ( __pr1_1__, __pr1_2__ ) . 
-                                        if ($1 === __pe_1__, __pr1s_1__)
+                                        if ($1 == __pe_1__, __pr1s_1__)
                                            then __pr_1__ else ()     fi                               ===>   ( __pr1_1__, __pr1_2__ ) .
                                                                                                              if ($1, __pr1s_1__)
-                                                                                                                then ($0, $1 === __pe_1__) . __pr_1__
+                                                                                                                then ($0, $1 == __pe_1__) . __pr_1__
                                                                                                                 else () fi',
 
 #			 '090IFPRfol : if __prs_1__ then __pr_2__ else __pr_3__ fi . ($0)              ===>   if __prs_1__ 
@@ -523,17 +550,17 @@ sub _init_rules {
 
 
 			 '10PREQ0     : ( __pe_1__, __pr1s_1__) . 
-                                        (__pr1s_2__, $0 === __lit_1__, __pr1s_3__)                     ===>   ( __pe_1__ === __lit_1__, __pr1s_1__) .
+                                        (__pr1s_2__, $0 == __lit_1__, __pr1s_3__)                     ===>   ( __pe_1__ == __lit_1__, __pr1s_1__) .
                                                                                                              (__pr1s_2__, $0, __pr1s_3__)',
 
 			 '10PREQ1     : ( __pe_1__, __pe_2__, __pr1s_1__) . 
-                                        (__pr1s_2__, $1 === __lit_1__, __pr1s_3__)                    ===>   ( __pe_1__, __pe_2__ === __lit_1__, __pr1s_1__) .
+                                        (__pr1s_2__, $1 == __lit_1__, __pr1s_3__)                    ===>   ( __pe_1__, __pe_2__ == __lit_1__, __pr1s_1__) .
                                                                                                              (__pr1s_2__, $1, __pr1s_3__)',
 
 			 '100PRREP0    : ( __pe_1__ ) . (__pr1sc_1__, $0, __pr1sc_2__ )                ===>  (__pr1sc_1__, __pe_1__,  __pr1sc_2__ )',
 
 
-			 '120PRINT     : (__pe_1__, __pe_2__)  .  ($0 === $1)                          ===> ( __pe_1__ === __pe_2__ )'
+			 '120PRINT     : (__pe_1__, __pe_2__)  .  ($0 == $1)                          ===> ( __pe_1__ == __pe_2__ )'
 
 
 		       ) {
@@ -564,7 +591,7 @@ sub _match_n_replace {                                                # recursiv
     return $p if $p =~ /^~~~.*~~~$/;                                  # we cannot do unification yet, only matching, anything with ~~~ is a meta_production
     my $pref = ref ($p);                                              # shorthand
 #warn "matchn replace $pref";
-    if (grep ($pref eq $_, qw(PEall PEvoid PEpi PEti PEpe))) {        # nothing important to be done
+    if (grep ($pref eq $_, qw(PEall PEvoid PEpi PEti PEpe PExml))) {  # nothing important to be done, TODO: PExml!!
 	return $p;                                                    # climb up back again
 
     } elsif ($pref eq 'PEif') {                                       # climb down
@@ -576,7 +603,7 @@ sub _match_n_replace {                                                # recursiv
     } elsif ($pref eq 'ARRAY') {
 	return [ map { _match_n_replace ($rs, $_) } @$p ];            # follow lists down
 
-    } elsif (grep ($p eq $_, ('===', '|||', '---'))) {                # any operators ? climb up
+    } elsif (grep ($p eq $_, ('==', '++', '--'))) {                   # any operators ? climb up
 	return $p;
 
     } elsif ($pref eq 'PEpr') {                                       # a projection
@@ -638,8 +665,7 @@ sub _match_prs {
 	if (my $b = _match (\@fslice, $p->arr, {})) {
 #warn "FOUND MATCH ".Dumper $b;
 	    my $qclone = clone ($q);
-##	    eval Data::Dumper->Dump([$q], ['qclone']);                     # clone the right-hand side
-	    my $qexp = _interpolate ($qclone, $b);                         # expand b into clone
+	    my $qexp   = _interpolate ($qclone, $b);                       # expand b into clone
 ##warn "expanded version is ".Dumper $qexp;
 	    splice (@{$f->arr}, $i, scalar @{$p->arr}, @{$qexp->arr});     # remove from i what we had matched, and inject the expanded list
 #warn "final version is      ".prs2str($f);
@@ -743,9 +769,9 @@ sub _match {
 #warn "finall binding is now ".Dumper $b2;
 	return $b2;
 
-    } elsif ($fref eq 'ARRAY') {                                           # operator (|||, -, ., ===) list
+    } elsif ($fref eq 'ARRAY') {                                           # operator (++, -, ., ===) list
 
-	if (@$f != @$p) {                                             # if they have not the same length, give up
+	if (@$f != @$p) {                                                  # if they have not the same length, give up
 	    return undef;
 	} else {
 	    my $b2 = { %$b };                                              # clone existing binding
@@ -757,7 +783,7 @@ sub _match {
 	    return $b2;                                                    # we survived up to here: return what we found
 	}
 
-    } elsif (grep ($f eq $_, ('===', '|||', '---'))) {
+    } elsif (grep ($f eq $_, ('==', '++', '--'))) {
 #warn "match ===.. $f, $p";
 	return $f eq $p ? $b : undef;
 
@@ -815,6 +841,9 @@ sub _match {
 
     } elsif ($fref eq 'PEvar') {                                              # not overly useful
 	return _associate ($b, $p, $f) if ref ($p) eq 'PEvar' && $f->nam eq $p->nam;
+	return undef;
+
+    } elsif ($fref eq 'PExml') {                                   # no idea whether this will be ever used
 	return undef;
 
     } elsif ($fref eq 'TM::Literal') {
@@ -923,10 +952,13 @@ sub _interpolate {
     } elsif ($pref eq 'PEpi') {
 	return $p;
 
+    } elsif ($pref eq 'PExml') {
+	return $p;
+
     } elsif ($pref eq 'ARRAY') {
 	return [ map { _interpolate ($_, $b) } @$p ];
 
-    } elsif (grep ($p eq $_, ('===', '|||', '---'))) {
+    } elsif (grep ($p eq $_, ('==', '++', '--'))) {
 	return $p;
 
     } elsif ($p =~ /\$\w+/) {
@@ -977,7 +1009,7 @@ sub _eval_prs {
 	    unless ($tss) {                                                 # kick off, in case this is the very first tuple (= base)
 		$tss = _eval_pr ($cs2, $pr->arr);
 	    } else {                                                        # we already have created a base
-		my $tss2 = bless [], ref ($tss) if ref ($tss);              # atomification need inherits downstream
+		my $tss2;
 		my $ctr = 0;
 		foreach my $t (@$tss) {                                     # for all tuples in the incoming TS
 		    my $cs3 = [ { '@_' => $t,                               # we push the tuple into the context 
@@ -995,7 +1027,7 @@ sub _eval_prs {
 			: _eval_prs ($cs2, $pr->else);
 
 	    } else {
-		my $tss2 = bless [], ref ($tss) if ref ($tss);              # atomification need inherits downstream
+		my $tss2;
 		my $ctr = 0;
 		foreach my $t (@$tss) {                                     # for all tuples in the incoming TS
 		    my $cs3 = [ { '@_' => $t,                               # we push the tuple into the context
@@ -1013,13 +1045,12 @@ sub _eval_prs {
 	} else {
 	    die "this is all sooo wrong";
 	}
-#warn "======= TSS (before literal) =================".Dumper $tss;
     }
     $tss ||= [];                                                      # if we have still undef, then return the empty TS
-
-    if (ref ($tss) eq 'ATOMIFY') {                                    # should we convert whole TS to literal values (if possible)?
+#warn "======= TSS (before literal) =================".Dumper $tss;
+   {                                                                  # should we convert whole TS to literal values (if possible)?
 	my $tm  = _eval_var     ($cs, '%_');                          # get the context map
-	TM::QL::TS::ts_literalify ($tss, $tm);                        # otherwise, we do in-replacement of $tss;
+	TM::QL::TS::ts_atomify ($tss, $tm);                           # otherwise, we do in-replacement of $tss;
     }
 #warn "======= done prs TSS (after literal) =================".Dumper $tss;
     return $tss;
@@ -1029,16 +1060,10 @@ sub _eval_pr {
     my $cs = shift;
     my $ss = shift;
 
-#warn "_eval_pr with ".Dumper $ss;
     my $tss;                                                          # build a complete TS
     foreach my $c (@{$ss}) {                                          # we walk through the val component
-#warn "old tss is ".Dumper $tss;
-#warn "looking at c ".Dumper $c;
-
 	$tss = TM::QL::TS::ts_concat ($tss, _eval_arr ($cs, $c));
-#warn "built new tss is ".Dumper $tss;
     }
-#warn "eval_pr: whole TS is now ".Dumper $tss;
     return $tss || [];                                                # flatten out this tuple of lists into a list ref of simple tuples
 }
 
@@ -1049,15 +1074,15 @@ sub _eval_arr {
 #warn "eval_arr with $va";
 
     if (ref ($va) eq 'ARRAY') {
-	my $tss = _eval_arr ($cs, $va->[0]);                  # compute first operand value -> TS
+	my $tss = _eval_arr ($cs, $va->[0]);                               # compute first operand value -> TS
 	my $i = 1;
-	while (my $op = $va->[$i]) {                          # collect the operator
-	    my $tss2 = _eval_arr ($cs, $va->[$i+1]);          # compute second operand -> TS
-	    if ($op eq '===') {
+	while (my $op = $va->[$i]) {                                       # collect the operator
+	    my $tss2 = _eval_arr ($cs, $va->[$i+1]);                       # compute second operand -> TS
+	    if ($op eq '==') {
 		$tss = TM::QL::TS::ts_intersect  ($tss, $tss2);
-	    } elsif ($op eq '|||') {
+	    } elsif ($op eq '++') {
 		$tss = TM::QL::TS::ts_interleave ($tss, $tss2);
-	    } elsif ($op eq '---') {
+	    } elsif ($op eq '--') {
 		$tss = TM::QL::TS::ts_subtract   ($tss, $tss2);
 	    } else {
 		die "unknown op $op";
@@ -1067,11 +1092,15 @@ sub _eval_arr {
 	return $tss;
 
     } elsif (ref ($va) eq 'PEfun') {
-	my $tss;                                                      # build a complete TS
-	foreach my $vaa (@{$va->args}) {                             # we walk through the args component
+	my $tss;                                                           # build a complete TS
+	foreach my $vaa (@{$va->args}) {                                   # we walk through the args component
 #warn "old tss is ".Dumper $tss;
 	    $tss = TM::QL::TS::ts_concat ($tss, _eval_arr ($cs, $vaa));
 #warn "built new tss is ".Dumper $tss;
+	}
+	{                                                                  # should we convert whole TS to literal values (if possible)?
+	    my $tm  = _eval_var     ($cs, '%_');                           # get the context map
+	    TM::QL::TS::ts_atomify ($tss, $tm);                            # otherwise, we do in-replacement of $tss;
 	}
 #warn "eval_arr: function args, whole TS is now ".Dumper $tss;
 	return TM::QL::TS::ts_fun ($va->fun, $tss);
@@ -1090,11 +1119,72 @@ sub _eval_arr {
 #warn "got back ".Dumper $tss;
 	    }
 	}
-
 	return $tss;
+
+    } elsif (ref ($va) eq 'PExml') {
+	return [ [ new TM::Literal (_eval_xml ($cs, $va), 'xsd:anyXML') ] ];
 
     } else {
 	die "unrecognized node $va";
+    }
+}
+
+sub _eval_xml {
+    my $cs = shift;
+    my $xn = shift;
+
+    if (ref ($xn) eq 'PExml') {
+	if ($xn->sta) {
+	    my $elm = XML::LibXML::Element->new ( $xn->sta );
+	    
+	    foreach my $at (@{$xn->ats}) {
+		my $frg = XML::LibXML::DocumentFragment->new;
+		foreach my $fr (@{$at->[1]}) {                        # collect the textified fragments
+		    $frg->appendChild (_eval_xml ($cs, $fr));
+		}
+		$elm->setAttribute( $at->[0], $frg->toString(0) );    # add attribute
+	    }
+	    foreach my $ch (@{$xn->con}) {                            # go through all fragments
+		$elm->appendChild (_eval_xml ($cs, $ch));
+	    }
+	    return $elm;
+	} else {
+	    my $frg = XML::LibXML::DocumentFragment->new;
+	    foreach my $fr (@{$xn->con}) {                            # go through all fragments
+		$frg->appendChild (_eval_xml ($cs, $fr));
+	    }
+	    return $frg;
+	}
+    } elsif (ref ($xn) eq 'PEprs') { # embedded query
+	my $frg = XML::LibXML::DocumentFragment->new;
+	my $res = _eval_prs ($cs, $xn);
+
+	map {
+	    $frg->appendChild ($_)                               # append it to the XML fragment
+	}
+	map {
+        # assertion: any ATOMIFICATION is already done, so no \ references there
+            ref ($_) eq 'TM::Literal' 
+                ? (                                              # a literal
+                   ref ($_->[0]) =~ /XML::LibXML/                # check whether this is already XML
+		        ? $_->[0]                                # as-is
+		        : XML::LibXML::Text->new ( $_->[0] )     # convert the value into a XML text node
+		   )
+		: XML::LibXML::Text->new ( $_ )                  # an item identifier
+	    } 
+	map { 
+	    @$_                                                  # look at one tuple
+	    } @$res;                                             # take the tuple sequence
+
+	$frg->appendChild ( XML::LibXML::Text->new ( '' ) )      # XML::Lib fragments cannot be empty? bug or feature?
+	    unless @$res;
+	return $frg;
+
+    } elsif (ref ($xn) eq 'TM::Literal') { # string
+	return XML::LibXML::Text->new ( $xn->[0] );
+
+    } else {
+	die "unknown XML node '".ref ($xn)."'";
     }
 }
 

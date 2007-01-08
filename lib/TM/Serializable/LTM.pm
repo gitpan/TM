@@ -10,7 +10,7 @@ use Data::Dumper;
 
 =head1 NAME
 
-TM::Serializable::LTM - Topic Map trait for parsing of LTM instances.
+TM::Serializable::LTM - Topic Maps, trait for parsing of LTM instances.
 
 =head1 SYNOPSIS
 
@@ -184,7 +184,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 =cut
 
 our $VERSION  = '0.3';
-our $REVISION = '$Id: LTM.pm,v 1.2 2006/11/23 10:02:55 rho Exp $';
+our $REVISION = '$Id: LTM.pm,v 1.3 2006/12/29 09:33:43 rho Exp $';
 
 1;
 

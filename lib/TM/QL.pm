@@ -72,7 +72,7 @@ our $grammar = q{
 			     else => TM::QL::PE::mk_prs (undef));                             # pass nothing
 	}
 
-	sub _invert {                                                                         # inverts an if node...
+	sub _invert_if {                                                                         # inverts an if node...
 	    my $if = shift;
 	    my ($then, $else) = ($if->then, $if->else);
 	    $if->then ($else); $if->else ($then);                                             # by swapping 'then' with 'else'
@@ -81,62 +81,152 @@ our $grammar = q{
 
 	my @metamaps;                                                                         # this will contain a list of ontologies
     }
-    
+
     startrule                 : query_expression
 
-    query_expression          : environment_clause(?)                                         # TODO: #{ # merge this with the context map }
+#-- top-level ------------------------------------------------------------------------------------------------------
+
+    content                   : content_l0(s /(--)/)                  { $return = TM::QL::PE::mk_prs ($item[1]); }
+
+    content_l0                : content_l1(s /(\+\+)/)
+
+    content_l1                : content_l2(s /(==)/)
+
+    content_l2                : '{' query_expression '}'              { $return = $item[2]; } # unconditional
+                              | 'if'     path_expression                                      # conditional
+                                  'then' content
+                                ( 'else' content )(?)                 { $return = TM::QL::PE::mk_prs (new PEif (con  => $item[2],
+														then => $item[4],
+														else => $item[5]->[0] ? $item[5]->[0]
+														                      : TM::QL::PE::mk_prs ())); }
+                              | tm_content
+                              | xml_content
+
+    query_expression          : environment_clause(?)
                                 ( select_expression
                                 | flwr_expression
                                 | path_expression )
 
-    environment_clause        : tm_content
+    environment_clause        : tm_content                                                    # TODO: #{ # merge this with the context map }
 
-#-- tuple expressions and values -----------------------------------------------------------------------------------------------
+#-- SELECT ---------------------------------------------------------------------------------------------------------
 
-    content                   : tuple_sequence 
-                              | '{' query_expression '}'              { $return = new PEpr (arr => [ [[[ $item[2] ]]] ]); }
-                              | 'if'     path_expression                                                                     # conditional
-                                  'then' path_expression
-                                ( 'else' path_expression )(?)         { $return = new PEif (con  => $item[2],
-											    then => $item[4],
-											    else => $item[5]->[0] ? $item[5]->[0]
-                                                                                                                  : TM::QL::PE::mk_prs ()); }
-#                             | tm_content
-#                             | xml_content
-                              | simple_content                        { $return = new PEpr (arr => [ [[[ $item[1] ]]] ]);}
-
-    tuple_sequence            : '(' value_expression(s? /,/) ')'      { $return = new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]); }  ## TODO: will change when -|= is there
-#  | tuple_sequence '==' tuple_sequence  was ist mit == unten?
-#  | tuple_sequence '++' tuple_sequence
-#  | tuple_sequence '--' tuple_sequence
-
-    value_expression          : value_l0_expression
-# TODO: [ order_direction ]
-#   order_direction           : 'asc' | 'desc'
-
-    value_l0_expression       : value_l1_expression(s /(<|<=|=>|>)/)  { $return = _mk_fun_tree (@item); }
-
-    value_l1_expression       : value_l2_expression(s /([+-])/)       { $return = _mk_fun_tree (@item); }
-# TODO: infix and prefix ops, are there more?
-                              | /-/ value_l2_expression               {
-                                                                        $return = new PEfun (fun  => 'tmql:unary-minus',
-											     args => [ $item[2] ],
-											     uri  => undef);
-                                                                       }
-
-    value_l2_expression       : value_l3_expression(s /(\*|div|mod)/)  { $return = _mk_fun_tree (@item); }
-
-    value_l3_expression       : path_expression
-# TODO: | function_invocation
-
-    simple_content            : ( constant | variable ) navigation(?)  { $return = new PEpe (val => $item[1], mos => $item[2]->[0] || []); }
-
-    navigation                : step navigation(?)                     { $return = [ $item[1], $item[2]->[0] ? @{$item[2]->[0]} : () ];}   # and append the tail
-
-    step                      : ( '<<' | '>>' ) axis item_reference(?) { $return = new PEna (axi => $item[2],                              # build the navigation
-											     dir => $item[1] eq '>>',
-											     tid => $item[3]->[0] ? $item[3]->[0] : undef);
+    select_expression         : select_clause
+                                from_clause(?)
+                                where_clause(?)                       {
+				                                        $return = $item[1];
+									my $where = $item[3]->[0] || TM::QL::PE::mk_prs ( _mk_if() );  # get an 'if', default is 'true'
+									my @frees = TM::QL::PE::find_free_vars ($where);               # find _free_ vars in where
+									$return = TM::QL::PE::unshift_vars ([['@_' => $where]], $return);
+									$return = TM::QL::PE::unshift_vars ([
+                                                                                   map {                                               # and keep these assignments
+									                [ $_ => TM::QL::PE::mk_prs (new PEall) ]     # create pairs var => %_ all of them
+										        } @frees ], $return);                          # and push them
 								       }
+#  order_by_clause(?)
+#  unique_clause(?)
+#  offset_clause(?)
+#  limit_clause(?)
+
+    select_clause             : 'select' value_expression(s? /,/)     { $return = TM::QL::PE::mk_prs (new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]) ); }
+
+    from_clause               : 'from' '%_'  # TODO
+#   from_clause               : 'from' value_expression # TODO
+
+#   order_by_clause           : 'order' 'by' value_expression(s? /,/) # TODO
+
+#   unique_clause             : 'unique'
+
+#   offset_clause             : 'offset' value_expression
+
+#   limit_clause              : 'limit' value_expression
+
+#-- FLWR expressions -----------------------------------------------------------------------------------------------
+
+    flwr_expression           : for_clause(s?)
+                                where_clause(?)
+ # TODO                         order_by_clause(?) # TODO
+                                return_clause                         {
+                                                                        $return = $item[3];                                        # first collect the return clause
+									$return = TM::QL::PE::unshift_vars ([['@_' => $item[2]->[0]]],
+													    $return)               # merge it in
+									    if $item[2]->[0];                                      # if there is a where clause,
+									my %vars;                                                  # registers seen variables
+									my @fors = reverse                                         # outest variable first
+									    map {    ($_->[0] = $vars{ $_->[0] } ? '$_' : $_->[0]) # if variable is seen inside => $_
+										 and ++$vars{ $_->[0] }                            # mark variable as seen
+									         and $_ }                                          # and forward the whole pair
+									    reverse                                                # start from the end
+									    map { @$_ }                                            # unwrap double nested list
+									@{$item[1]};                                 # take the var-assocs [[ $a => ...],[ $b => ..] ]
+									$return = TM::QL::PE::unshift_vars (\@fors, $return);      # and push them
+								       }
+
+    for_clause                : 'for' variable_association(s /,/)     { $return = $item[2]; }
+
+##  variable_association      : variable 'in' path_expression         { $return = [ $item[1]->nam => $item[3] ]; }
+    variable_association      : variable 'in' content                 { $return = [ $item[1]->nam => $item[3] ]; }
+
+    return_clause             : 'return' content
+
+#-- WHERE, EXISTS, FORALL, ... -------------------------------------------------------------------------------------
+
+    where_clause              : 'where' boolean_expression            { $return = TM::QL::PE::mk_prs ($item[2]); }         # wrap PEif into a PEprs
+
+    boolean_expression        : boolean_expression_or(s /\|/)         { 
+                                                                        my @ors = map { [ $_ ] } @{$item[1]};              # every list element is a PEprs
+									@ors = ( $ors[0],                                  # wrap it with [] for ===
+										 map { ('++', $_) }  @ors[1..$#ors] );     # and squeeze in ++ before every element
+									$return = _mk_if (TM::QL::PE::mk_prs ([ \@ors ]));
+								       }
+    boolean_expression_or     : boolean_primitive(s     /\&/)         { $return = PEprs->new (arr => $item[1]); }
+    boolean_primitive         : 'not' boolean_primitive               { $return = _invert_if ($item[2]); }
+                              | 'false'                               { $return = _mk_if (TM::QL::PE::mk_prs ()); }
+                              | '(' boolean_expression ')'            { $return = $item[2]; }
+                              | forall_clause                         { $return = _invert_if (_mk_if ($item[1])); }           # make NOT here
+                              | exists_clause                         { $return = _mk_if ($item[1]); }
+
+    exists_clause             : 'some'      variable_association(s)
+                                'satisfies' boolean_expression        { 
+									$return = TM::QL::PE::mk_prs ($item[4]);           # build prototype
+									$return = TM::QL::PE::unshift_vars ($item[2], $return);
+								       }
+    forall_clause             : 'every'     variable_association(s)
+                                'satisfies' boolean_expression        {                                                    # forall A satisfies B = !some A satisfy not B
+									$return = TM::QL::PE::mk_prs (_invert_if ($item[4])); # negate boolean expression
+									$return = TM::QL::PE::unshift_vars ($item[2], $return);
+									
+							               }
+
+#-- path expressions -------------------------------------------------------------------------------------------------------------
+
+    path_expression           : association_predicate
+                              | path_l0_expression
+
+    path_l0_expression        : ( tuple_sequence | simple_content )
+                                postfix(s?)                           { 
+	                                                                my @PRs = map { TM::QL::PE::mk_prs ($_) } ($item[1], @{ $item[2] });
+									$return = pop @PRs;
+									while (my $q = pop @PRs) { # start from the and and
+									    $return = TM::QL::PE::unshift_vars ([['@_' => $q]], $return); # unshift 
+									}
+									$return;
+								        }
+    postfix                   : predicate_postfix
+                              | projection_postfix
+
+    predicate_postfix         : '[' boolean_primitive ']'             { $return = $item[2]; }                # one PEif with the boolean as PEprs condition
+
+    projection_postfix        : tuple_sequence
+
+    simple_content            : anchor navigation(?)                  { $return = new PEpr (arr => [ [[[ new PEpe (val => $item[1], mos => $item[2]->[0] || []) ]]]]); }
+
+    navigation                : step navigation(?)                    { $return = [ $item[1], $item[2]->[0] ? @{$item[2]->[0]} : () ];}   # and append the tail
+
+    step                      : ( '<<' | '>>' ) axis item_reference(?){ $return = new PEna (axi => $item[2],                              # build the navigation
+											    dir => $item[1] eq '>>',
+											    tid => $item[3]->[0] ? $item[3]->[0] : undef);
+								        }
     axis                      : 'epsilon'
                               | 'classes'
                               | 'superclasses'
@@ -149,32 +239,11 @@ our $grammar = q{
                               | 'locators'
                               | 'indicators'
 
-
-#-- path expressions -------------------------------------------------------------------------------------------------------------
-
-    path_expression           : content postfix_chain(?)    { 
-	                                                                $return = TM::QL::PE::mk_prs ($item[1]);
-									$return = TM::QL::PE::unshift_vars ([{'@_' => $return}], $item[2]->[0]) if $item[2]->[0];
-                                                                        $return;
-								        }
-# TODO                        | association_predicate
-
-    postfix_chain             : postfix postfix_chain(?)              {
-	                                                                $return = TM::QL::PE::mk_prs ($item[1]);
-									$return = TM::QL::PE::unshift_vars ([{'@_' => $return}], $item[2]->[0]) if $item[2]->[0];
-                                                                        $return;
-								        } 
-    postfix                   : predicate_postfix
-                              | projection_postfix
-
-    predicate_postfix         : '[' boolean_primitive ']'             { $return = $item[2]; }                # one PEif with the boolean as PEprs condition
-# TODO: boolean_expression     ( maybe)
-
-    projection_postfix        : tuple_sequence
-
 #-- association predicate --------------------------------------------------------------------------------------------------------
 
-    association_predicate     : item_reference '(' roles ellipsis(?) ')'
+    association_predicate     : { undef; } item_reference '(' roles ellipsis(?) ')' # TODO: not yet implemented
+
+#path_l0_expression 'is-a' path_l0_expression
 
     roles                     : role(s? /,/) 
 
@@ -186,17 +255,51 @@ our $grammar = q{
 
     ellipsis                  : ',' '...'
 
+#-- tuple expressions and values -----------------------------------------------------------------------------------------------
+
+    tuple_sequence            : '(' value_expression(s? /,/) ')'      { $return = new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]); }
+
+    value_expression          : value_l0_expression
+# TODO: [ order_direction ]
+#   order_direction           : 'asc' | 'desc'
+
+    value_l0_expression       : value_l1_expression(s /(<|<=|=>|>)/)  { $return = _mk_fun_tree (@item); }
+
+    value_l1_expression       : value_l2_expression(s /([+-])/)       { $return = _mk_fun_tree (@item); }
+# TODO: infix and prefix ops, are there more?
+# TODO - and no blanks and then number is literal!
+                              | /-/ value_l2_expression               {
+                                                                        $return = new PEfun (fun  => 'tmql:unary-minus',
+											     args => [ $item[2] ],
+											     uri  => undef);
+                                                                       }
+
+    value_l2_expression       : value_l3_expression(s /(\*|div|mod)/) { $return = _mk_fun_tree (@item); }
+
+    value_l3_expression       : content
+
+# TODO: | function_invocation (first)
+
 #-- function invocation ---------------------------------------------------------------------------------------------------------
 
     function_invocation       : item_reference ( tuple_sequence | roles )
 
-#-- constant content -------------------------------------------------------------------------------------------------------------
+#-- variables ------------------------------------------------------------------------------------------------------
 
-    constant                  : 'null'                                { $return = new PEvoid; }
-                              | literal
-                              | item_reference                        { $return = new PEti (tid => $item[1]); }  ## TODO sil prefix
+    variable                  : '%_'                                  { $return = new PEall; }
+                              | '@_'                                  { $return = new PEvar (nam => $item[1]); }
+                              | '$_'                                  { $return = new PEvar (nam => $item[1]); }
+                              | /(\$\d+)/                             { $return = new PEvar (nam => $1); }
+                              | /[%@\$][\w\#\_][\w\-\.]*/             { $return = new PEvar (nam => $item[1]); }
+#                                      ^^^^^^^^^^^^^^^^^ identifier pattern
 
-#-- URI stuff --------------------------------------------------------------------------------------------------------------------
+#-- simple content -------------------------------------------------------------------------------------------------------------
+
+    anchor                    : constant 
+                              | variable
+
+    constant                  : literal
+                              | item_reference                        { $return = new PEti (tid => $item[1]); }
 
     item_reference            : identifier
 
@@ -227,98 +330,6 @@ our $grammar = q{
 									1;                           # parsing is ok otherwise
 								      }
 
-#-- variables ------------------------------------------------------------------------------------------------------
-
-    variable                  : '%_'                                  { $return = new PEall; }
-                              | '@_'                                  { $return = new PEvar (nam => $item[1]); }
-                              | '$_'                                  { $return = new PEvar (nam => $item[1]); }
-                              | /(\$\d+)/                             { $return = new PEvar (nam => $1); }
-                              | /[%@\$][\w\#\_][\w\-\.]*/             { $return = new PEvar (nam => $item[1]); }
-#                                      ^^^^^^^^^^^^^^^^^ identifier pattern
-
-#-- FLWR expressions -----------------------------------------------------------------------------------------------
-
-    flwr_expression           : for_clause(s?)
-                                where_clause(?)
- # TODO                         order_by_clause(?) # TODO
-                                return_clause                         {
-                                                                        $return = TM::QL::PE::mk_prs ($item[3]);                   # first collect the return clause
-									$return = TM::QL::PE::unshift_vars ([{'@_' => $item[2]->[0]}],
-													    $return)               # merge it in
-									    if $item[2]->[0];                                      # if there is a where clause,
-									$return = TM::QL::PE::unshift_vars ($item[1], $return);    # and push them
-								       }
-
-    for_clause                : 'for' variable_association(s)         { $return = $item[2]->[0]; }
-
-    variable_association      : variable 'in' path_expression         { $return = { $item[1]->nam => $item[3] }; }
-
-    return_clause             : 'return' content
-
-#-- SELECT ---------------------------------------------------------------------------------------------------------
-
-    select_expression         : select_clause
-                                from_clause(?)
-                                where_clause(?)                       {
-				                                        $return = $item[1];
-									my $where = $item[3]->[0] || TM::QL::PE::mk_prs ( _mk_if() );  # get an 'if', default is 'true'
-									my @frees = TM::QL::PE::find_free_vars ($where);               # find _free_ vars in where
-									$return = TM::QL::PE::unshift_vars ([{'@_' => $where}], $return);
-									$return = TM::QL::PE::unshift_vars ([
-                                                                                   map {                                               # and keep these assignments
-									                { $_ => TM::QL::PE::mk_prs (new PEall) }     # create pairs var => %_ all of them
-										        } @frees ], $return);                          # and push them
-								       }
-#  order_by_clause(?)
-#  unique_clause(?)
-#  offset_clause(?)
-#  limit_clause(?)
-
-    select_clause             : 'select' value_expression(s? /,/)     { $return = TM::QL::PE::mk_prs (new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]) ); }
-
-    from_clause               : 'from' '%_'  # TODO
-#   from_clause               : 'from' value_expression # TODO
-
-#   order_by_clause           : 'order' 'by' value_expression(s? /,/) # TODO
-
-#   unique_clause             : 'unique'
-
-#   offset_clause             : 'offset' value_expression
-
-#   limit_clause              : 'limit' value_expression
-
-#-- WHERE, EXISTS, FORALL, ... -------------------------------------------------------------------------------------
-
-    where_clause              : 'where' boolean_expression            { $return = TM::QL::PE::mk_prs ($item[2]); }
-
-    boolean_expression        : boolean_expression_or(s /\|/)         { 
-                                                                        my @ors = map { [ $_ ] } @{$item[1]}; # every list element is a PEprs, wrap it with [] for ===
-									@ors = ( $ors[0],
-										 map { ('|||', $_) }  @ors[1..$#ors] );    # and squeeze in ||| before every element
-									$return = _mk_if (TM::QL::PE::mk_prs ([ \@ors ]));
-								       }
-    boolean_expression_or     : boolean_primitive(s     /\&/)         { $return = PEprs->new (arr => $item[1]); }
-    boolean_primitive         : 'true'                                { $return = _mk_if (TM::QL::PE::mk_prs (new PEall)); }
-                              | 'false'                               { $return = _mk_if (TM::QL::PE::mk_prs ()); }
-                              | 'not' boolean_primitive               { $return = _invert ($item[2]); }
-                              | '(' boolean_expression ')'            { $return = $item[2]; }
-                              | path_expression_cmp                   { $return = _mk_if ($item[1]); }
-                              | forall_clause                         { $return = _invert (_mk_if ($item[1])); }
-                              | exists_clause                         { $return = _mk_if ($item[1]); }
-
-
-    path_expression_cmp       : path_expression '==' path_expression  { $return = TM::QL::PE::mk_prs ( [[[ $item[1], '===', $item[3] ]]] ); }
-
-    exists_clause             : 'some'      variable_association(s)
-                                'satisfies' boolean_expression        { 
-									$return = TM::QL::PE::mk_prs ($item[4]);      # build prototype
-									$return = TM::QL::PE::unshift_vars ($item[2], $return);
-								       }
-    forall_clause             : 'every'     variable_association(s)
-                                'satisfies' boolean_expression        { # not forall A satisfies B = some A satisfy not B
-									$return = TM::QL::PE::mk_prs (_invert ($item[4])); # negate boolean expression
-									$return = TM::QL::PE::unshift_vars ($item[2], $return);
-							               }
 #-- tm content  --------------------------------------------------------------------------------------
 
     tm_content                : '"""' ctm_instance '"""'              { $return = $item[2]; }  # TODO: reinstate original SKIP, reinstate orig meta map
@@ -327,24 +338,62 @@ our $grammar = q{
 
     astma_instance            : 'xxx'                                 # TODO !!!!
 
-#-- XML content --------------------------------------------
+#-- XML content -------------------------------------------------------------------------------------
 
-    xml_content               : '<xml/>' # TODO
+    xml_content               : <skip:""> /\s*/ xml_element(s) /\s*/  {
+                                                                        $return = TM::QL::PE::mk_prs (
+												      new PExml (con => [ new TM::Literal ($item[2]),
+															  @{$item[3]},
+															  new TM::Literal ($item[4])
+															  ])
+												      );
+#warn "xml: ".Dumper $return; $return;
+								      }
 
-#         xml                   : <skip:""> xml_content(s)
+    xml_element               : '<' xml_id xml_attribute(s?) xml_rest
+                                                                      {
+                                                                        if ($item[4] eq '/>') {                  # no end tag
+									    $return = new PExml (sta => $item[2],
+												 ats => $item[3]);
+									} else {
+									    $return = new PExml (sta => $item[2],
+												 ats => $item[3],
+												 end => $item[4]->[1],
+												 con => $item[4]->[0]);
+									}
+								      }
+    xml_id                    : /[:\w]+/
+
+    xml_attribute             : <skip:'\s*'> xml_id '=' '"' <skip:""> xml_fragment['[^\"\{]+'](s) '"'
+                                                                      { $return = [ $item[2], $item[6] ]; }
+
+    xml_rest                  : '/>'
+                              | '>' <skip:""> xml_segment(s) '</' xml_id '>'
+                                                                      { $return = [ $item[3], $item[5] ]; }
+
+    xml_segment               : xml_element | xml_fragment['[^<\{]+']
+
+
+    xml_fragment              : xml_text[$arg[0]]
+                              | '{' <skip:'\s*'> query_expression '}' { $return = $item[3]; }
+
+    xml_text                  : /$arg[0]/                             { $return = new TM::Literal ($item[1]); }
+
+#    xml_text                  : /[^<\{]+/                             { $return = new TM::Literal ($item[1]); }
 
 #         xml_content           : /\s+/ | ...!/sort/ /[^\s<\{\}]+/ | <skip:'\s*'> code_block | xml_element
 
-#         xml_element           : '<' xml_tag xml_attribute(s?) xml_rest
 
-#         xml_rest              : '/>' |
-#                                 '>' xml '</' xml_tag '>'
-#         xml_tag               : xml_segment(s)
 
-#         xml_attribute         : <skip:'\s*'> xml_segment(s) '=' <skip:""> '"' xml_segment(s) '"'
 
-#         xml_segment           : code_block | /[a-z]+/
+#      xml_element           : xml_segment['[a-z]+'](s)
 
+#         xml_attribute         : <skip:'\s*'> xml_segment['[a-z]+'](s) '=' '"' xml_segment['[a-z]+'](s) '"'
+#     {
+# 	$return = new TM::XMLAttribute (name => $item[2], value => $item[5]);
+#     }
+
+#         xml_segment           : code_block | /$arg[0]/
 
 
 
@@ -356,8 +405,10 @@ our $grammar = q{
      variable                  : '~~~variable_1~~~'
      constant                  : '~~~constant_1~~~'
      integer                   : '~~~integer_1~~~'
-##     content                   : '~~~content_1~~~'
-     path_expression           : '~~~path_expression_1~~~'
+     content                   : '~~~content_1~~~'
+     anchor                    : '~~~anchor_1~~~'
+     path_expression           : '~~~path_expression_1~~~' | '~~~path_expression_2~~~'
+     path_l0_expression        : '~~~path_l0_expression_1~~~'
      navigation                : '~~~navigation_op_1~~~'   { $return = [ '~~~navigation_op_1~~~' ]; }
 };
 
@@ -365,17 +416,36 @@ my $macros = {
 
     q{_00_variable            : '.' }                                          => '$0',
 
+    q{_00_tuple_sequence      : 'null' }                                       => '()',
+
 # item_reference : '*' => 'tmdm:subject'
 
     q{_02_navigation          : '<-' ~~~item_reference_1~~~ ~~~navigation_op_1~~~ }  => ' << players ~~~item_reference_1~~~ ~~~navigation_op_1~~~',
     
     q{_02_navigation          : '->' ~~~item_reference_1~~~ ~~~navigation_op_1~~~ }  => ' >> players ~~~item_reference_1~~~ ~~~navigation_op_1~~~',
+
+
+    q{_03_content_l2          : ~~~path_expression_1~~~ '||' ~~~path_expression_2~~~}
+                                                                               => 'if ~~~path_expression_1~~~ then { ~~~path_expression_1~~~ } else { ~~~path_expression_2~~~ }',
+
+    q{_04_content_l2          : ~~~path_expression_1~~~ }                      => '{ ~~~path_expression_1~~~ }',
+
+
     
-    q{_04_predicate_postfix   : '[' ~~~integer_1~~~ ']' }                      => ' [ $# == ~~~integer_1~~~ ] ',
+    q{_04_exists_clause       : 'exists' ~~~content_1~~~ }                     => ' some $_ in { return ~~~content_1~~~ } satisfies not false',
+
+    q{_05_exists_clause       : ~~~path_l0_expression_1~~~ 'is-a' ~~~anchor_1~~~ }
+                                                                               => ' exists ~~~path_l0_expression_1~~~  ==  ~~~anchor_1~~~ << classes * ',
+    q{_05_exists_clause       : ~~~path_l0_expression_1~~~ 'iko'  ~~~anchor_1~~~ }
+                                                                               => ' exists ~~~path_l0_expression_1~~~  ==  ~~~anchor_1~~~ << superclasses * ',
+
+    q{_06_exists_clause       : ~~~content_1~~~ }                              => ' exists ~~~content_1~~~ ',
+
+    q{_07_predicate_postfix   : '[' ~~~integer_1~~~ ']' }                      => ' [ $# == ~~~integer_1~~~ ] ',
 
 ## TODO  [ ~~~integer_1~~~ .. ~~~integer_2~~~ ] => [ $# < ~~~integer_2~~~ ] [ ~~~integer_1~~~ <= $# ]
     
-    q{_05_predicate_postfix   : '[' ~~~path_expression_1~~~ ']' }              => ' [ ~~~path_expression_1~~~ == ~~~path_expression_1~~~ ]',
+## remove?    q{_05_predicate_postfix   : '[' ~~~path_expression_1~~~ ']' }              => ' [ ~~~path_expression_1~~~ == ~~~path_expression_1~~~ ]',
     
     q{_06_navigation          : '>>' 'instances' ~~~navigation_op_1~~~ }       => ' << classes      ~~~navigation_op_1~~~ ',
     
@@ -388,38 +458,22 @@ my $macros = {
     q{_06_navigation          : '^' ~~~navigation_op_1~~~ }                    => ' >> classes      ~~~navigation_op_1~~~',
 
 # TODO: navigation: '????' => '<<< >>> reifier'
-    
+
     q{_07_boolean_primitive   : '^' ~~~item_reference_1~~~ }                   => ' . >> classes == ~~~item_reference_1~~~ ',
     
     q{_07_boolean_primitive   : '@' ~~~item_reference_1~~~ }                   => ' . >> scope   == ~~~item_reference_1~~~ ',
     
     q{_08_predicate_postfix   : '//' ~~~item_reference_1~~~ }                  => ' [ ^ ~~~item_reference_1~~~ ] ',
     
-    q{_08_path_expression_cmp : ~~~path_expression_1~~~ 'is-a' ~~~constant_1~~~ }
-                                                                               => ' ~~~path_expression_1~~~  ==  ~~~constant_1~~~ << classes ',
-    q{_08_path_expression_cmp : ~~~path_expression_1~~~ 'is-a' ~~~variable_1~~~ }
-                                                                               => ' ~~~path_expression_1~~~  ==  ~~~variable_1~~~ << classes ',
-
 # TODO : is this necessary?
-    q{_08_navigation          : '/'  '*' ~~~navigation_op_1~~~ }               => ' >> characteristics >> atomify ~~~navigation_op_1~~~',
+# remove?    q{_08_navigation          : '/'  '*' ~~~navigation_op_1~~~ }               => ' >> characteristics >> atomify ~~~navigation_op_1~~~',
 
     q{_08_navigation          : '/'  ~~~item_reference_1~~~ ~~~navigation_op_1~~~}
                                                                                => ' >> characteristics ~~~item_reference_1~~~ >> atomify ~~~navigation_op_1~~~',
 
-# TODO: '\\' ~~~item_reference_1~~~ ~~~navigation_op_1~~~ => '<< atomify << characteristics ~~~item_reference_1~~~ ~~~navigation_op_1~~~
+    q{_08_navigation          : '\\\\'  ~~~item_reference_1~~~ ~~~navigation_op_1~~~} 
+                                                                               => ' << atomify << characteristics ~~~item_reference_1~~~ ~~~navigation_op_1~~~',
 
-    q{_09_exists_clause       : 'exists' ~~~path_expression_1~~~ }             => ' some $_ in ( ~~~path_expression_1~~~ ) satisfies true',
-
-    q{_10_exists_clause       : ~~~path_expression_1~~~ }                      => ' exists ~~~path_expression_1~~~ ',
-
-# TODO:  content : ~~~path_expression_1~~~ || ~~~path_expression_2~~~ => if ~~~path_expression_1~~~ then ~~~path_expression_1~~~ else ~~~path_expression_2~~~
-
-
-## association_predicate : ~~~path_expression_1~~~ 'isa' ~~~path_expression_2~~~ =>
-##      tmdm:type-instance ( tmdm:instance: ~~~path_expression_1~~~ , tmdm:type : ~~~path_expression_2~~~ )
-
-## association_predicate : ~~~path_expression_1~~~ 'iko' ~~~path_expression_2~~~ =>
-##      tmdm:supertype-subtype ( tmdm:subtype: ~~~path_expression_1~~~ , tmdm:supertype : ~~~path_expression_2~~~ )
 
 # @@@, unfortunately this below will not work, because the current algorithm would try to swap then/else inside the constants
 #    q{_12_boolean_primitive   : 'forall' ~~~variable_associations_1~~~
@@ -460,7 +514,6 @@ sub _extend_parser {                                                  #-- takes 
 	# now find all ==....~~~ in the abbreviated form and count on which position it is
 	# this will the be used as $item[1], $item[2] later in the code
 	my $pos = 0;          
-##	my %replaces = map { ++$pos and $_ =~ /^(~~~.+?~~~)/ ? ($1 => "\$item[$pos]") : () } split (/\s+/, $abbr);
 	my %replaces = map { ++$pos and
                              $_ =~ /^(~~~.+?_op_.+?~~~)/              # for optional items we collect them with $item[3]->[0] ? @{...} : ()
                                 ? ($1 => "\$item[$pos]->[0] ? \@{\$item[$pos]->[0]} : ()") 
@@ -477,7 +530,7 @@ sub _extend_parser {                                                  #-- takes 
 	$abbr =~ s/~~~(.+?)_\d~~~/$1/g;                               # the actual rule only needs the non-terminal, not that ~~~ ~~~ junk
 #warn "abbr >>>$abbr<<<";
 
-#warn "suggested: $nt : $abbr for $exp before parse";
+#warn "suggested: $nt : '$abbr' for '$exp' before parse";
 #	$::RD_TRACE = 1;
 	# parse the whole thing into a TMQL data structure
 	my $data = $parser->$nt (\$exp) or $main::log->logdie (__PACKAGE__ . ": Problem generating grammar generator");
@@ -489,7 +542,17 @@ sub _extend_parser {                                                  #-- takes 
 #warn "non final code is >>$code<<";
 	$code =~ s/\[\s*'(~~~.+?_es_\d+~~~)'\s*\]/$replaces{$1}/sg;   # for non-terms which return lists (s?), find all bogus identifiers and...
 	$code =~ s/\[\s*'(~~~.+?_op_\d+~~~)'\s*\]/$replaces{$1}/sg;   # for non-terms which return lists (s?), find all bogus identifiers and...
-	$code =~ s/'(~~~.+?~~~)'/$replaces{$1}/sg;                    # replace it with $item[1], $item[2], ..., here for normal nonterminals (tricky, I know)
+
+#	$code =~ s/'(~~~.+?~~~)'/$replaces{$1}/sg;                    # replace it with $item[1], $item[2], ..., here for normal nonterminals (tricky, I know)
+
+	my %seen;
+	while ($code =~ /'(~~~.+?~~~)'/ and ++$seen{$1}) {
+	    if ($seen{$1} == 1) { # first time
+		$code =~ s/'(~~~.+?~~~)'/$replaces{$1}/;              # first one as-is
+	    } else {                                                  # the rest have to be cloned (otherwise we would have the same structure twice)
+		$code =~ s/'(~~~.+?~~~)'/TM::QL::PE::clone ( $replaces{$1} )/s;
+	    }
+	}
 #warn "final code is >>$code<<";
 
 #warn "adding '$nt : $abbr { $code }'";
@@ -523,6 +586,7 @@ sub new {
     } else {                                                                   # otherwise we build from scratch
 	$self = bless { src  => $q }, $class;
 	$parser    or _init_parser;                                            # make sure that we have a parser
+#warn "--------------new $q";
 	eval {
 #	    $::RD_TRACE = 1;                                                   # turn on parser debugging
 	    $self->{cq} = $parser->startrule (\$q);
@@ -533,8 +597,8 @@ sub new {
 	    $main::log->logdie (__PACKAGE__ . ": $@");
 	}
 # TODO move this into the grammar
-#warn "   ".Dumper $self->{cq};
 #warn "in grammar before optimize ".$self->{src}." = ".TM::QL::PE::prs2str ($self->{cq});
+#warn "   ".Dumper $self->{cq};
 	TM::QL::PE::optimize ($self->{cq});
 #warn "in grammar after optimize".TM::QL::PE::prs2str ($self->{cq});
 #warn "   ".Dumper $self->{cq};
@@ -584,9 +648,10 @@ available.
 
 =cut
 
-our $VERSION  = 0.03;
-our $REVISION = '$Id: QL.pm,v 1.60 2006/12/23 10:37:08 rho Exp $';
+our $VERSION  = 0.05;
+our $REVISION = '$Id: QL.pm,v 1.66 2007/01/05 08:55:42 rho Exp $';
 
 1;
 
 __END__
+

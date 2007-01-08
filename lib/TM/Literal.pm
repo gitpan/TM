@@ -51,6 +51,7 @@ use constant {
     DECIMAL => XSD.'decimal',
     FLOAT   => XSD.'float',
     DOUBLE  => XSD.'double',
+    BOOLEAN => XSD.'boolean',
     STRING  => XSD.'string',
     URI     => XSD.'anyURI'
     };
@@ -69,10 +70,10 @@ our $grammar = q{
 
     literal                   : decimal                               { $return = new TM::Literal  ($item[1], TM::Literal->DECIMAL); }
                               | integer                               { $return = new TM::Literal  ($item[1], TM::Literal->INTEGER); }
+                              | boolean                               { $return = new TM::Literal  ($item[1], TM::Literal->BOOLEAN); }
                               | uri                                   { $return = new TM::Literal  ($item[1], TM::Literal->URI); }
                               | string
 # TODO | date
-# TODO | boolean
 
     integer                   : /\d+/
 # TODO: sign
@@ -83,8 +84,7 @@ our $grammar = q{
     string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
                               | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
 
-# TODO boolean : 'true' | 'false'
-
+    boolean                   : 'true' | 'false'
 
     uri                       : /(\w+:[^\s)\]]+)/
 # an option? the official pattern -> perldoc URI
@@ -240,6 +240,6 @@ itself.
 =cut
 
 our $VERSION = 0.1;
-our $REVISION = '$Id: Literal.pm,v 1.9 2006/12/23 10:37:08 rho Exp $';
+our $REVISION = '$Id: Literal.pm,v 1.10 2006/12/29 09:33:42 rho Exp $';
 
 1;

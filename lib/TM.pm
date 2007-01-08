@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.24';
+our $VERSION  = '1.25';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -2318,7 +2318,7 @@ itself.
 
 =cut
 
-our $REVISION = '$Id: TM.pm,v 1.42 2006/12/23 10:37:07 rho Exp $';
+our $REVISION = '$Id: TM.pm,v 1.43 2006/12/29 09:33:42 rho Exp $';
 
 
 1;
