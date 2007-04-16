@@ -24,9 +24,9 @@ TM::QL - Topic Maps, Query Language Expressions
    use TM;
    my $tm = new TM (....);                         # get a map from somewhere
 
-   my $o  = $tm->mids ('vagabond-university');     # find internal id
+   my $or  = $tm->mids ('vagabond-university');    # find internal id
    my $ts = $q->eval ('%_' => $tm,                 # explicitly pass in a default map
-                      '$o' => $org);               # and any number of other variable bindings
+                      '$o' => $or);                # and any number of other variable bindings
 
    foreach my $tuple (@$ts) {                      # iterate through the tuple sequence
       foreach my $value (@$tuple) {                # do something with the tuple
@@ -101,6 +101,7 @@ our $grammar = q{
 														                      : TM::QL::PE::mk_prs ())); }
                               | tm_content
                               | xml_content
+# geht nicht                  | simple_content                        { $return = TM::QL::PE::mk_prs ($item[1]); } 
 
     query_expression          : environment_clause(?)
                                 ( select_expression
@@ -191,7 +192,7 @@ our $grammar = q{
 									$return = TM::QL::PE::mk_prs ($item[4]);           # build prototype
 									$return = TM::QL::PE::unshift_vars ($item[2], $return);
 								       }
-    forall_clause             : 'every'     variable_association(s)
+    forall_clause             : 'every'     variable_association(s /,/)
                                 'satisfies' boolean_expression        {                                                    # forall A satisfies B = !some A satisfy not B
 									$return = TM::QL::PE::mk_prs (_invert_if ($item[4])); # negate boolean expression
 									$return = TM::QL::PE::unshift_vars ($item[2], $return);
@@ -203,7 +204,7 @@ our $grammar = q{
     path_expression           : association_predicate
                               | path_l0_expression
 
-    path_l0_expression        : ( tuple_sequence | simple_content )
+    path_l0_expression        : ( tuple_expression | simple_content )
                                 postfix(s?)                           { 
 	                                                                my @PRs = map { TM::QL::PE::mk_prs ($_) } ($item[1], @{ $item[2] });
 									$return = pop @PRs;
@@ -217,7 +218,7 @@ our $grammar = q{
 
     predicate_postfix         : '[' boolean_primitive ']'             { $return = $item[2]; }                # one PEif with the boolean as PEprs condition
 
-    projection_postfix        : tuple_sequence
+    projection_postfix        : tuple_expression
 
     simple_content            : anchor navigation(?)                  { $return = new PEpr (arr => [ [[[ new PEpe (val => $item[1], mos => $item[2]->[0] || []) ]]]]); }
 
@@ -257,7 +258,7 @@ our $grammar = q{
 
 #-- tuple expressions and values -----------------------------------------------------------------------------------------------
 
-    tuple_sequence            : '(' value_expression(s? /,/) ')'      { $return = new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]); }
+    tuple_expression          : '(' value_expression(s? /,/) ')'      { $return = new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]); }
 
     value_expression          : value_l0_expression
 # TODO: [ order_direction ]
@@ -282,7 +283,8 @@ our $grammar = q{
 
 #-- function invocation ---------------------------------------------------------------------------------------------------------
 
-    function_invocation       : item_reference ( tuple_sequence | roles )
+    function_invocation       : item_reference ( tuple_expression | roles )
+#TODO
 
 #-- variables ------------------------------------------------------------------------------------------------------
 
@@ -347,7 +349,6 @@ our $grammar = q{
 															  new TM::Literal ($item[4])
 															  ])
 												      );
-#warn "xml: ".Dumper $return; $return;
 								      }
 
     xml_element               : '<' xml_id xml_attribute(s?) xml_rest
@@ -379,23 +380,6 @@ our $grammar = q{
 
     xml_text                  : /$arg[0]/                             { $return = new TM::Literal ($item[1]); }
 
-#    xml_text                  : /[^<\{]+/                             { $return = new TM::Literal ($item[1]); }
-
-#         xml_content           : /\s+/ | ...!/sort/ /[^\s<\{\}]+/ | <skip:'\s*'> code_block | xml_element
-
-
-
-
-#      xml_element           : xml_segment['[a-z]+'](s)
-
-#         xml_attribute         : <skip:'\s*'> xml_segment['[a-z]+'](s) '=' '"' xml_segment['[a-z]+'](s) '"'
-#     {
-# 	$return = new TM::XMLAttribute (name => $item[2], value => $item[5]);
-#     }
-
-#         xml_segment           : code_block | /$arg[0]/
-
-
 
 #-- auxiliary non terminals to allow for macros to be parsed -----------------------------------------------------
 # NOTE: this could be automated further
@@ -410,13 +394,15 @@ our $grammar = q{
      path_expression           : '~~~path_expression_1~~~' | '~~~path_expression_2~~~'
      path_l0_expression        : '~~~path_l0_expression_1~~~'
      navigation                : '~~~navigation_op_1~~~'   { $return = [ '~~~navigation_op_1~~~' ]; }
+
+##   postfix                   : '~~~postfix_op_1~~~'      { $return = [ '~~~postfix_op_1~~~' ]; }
 };
 
 my $macros = {
 
     q{_00_variable            : '.' }                                          => '$0',
 
-    q{_00_tuple_sequence      : 'null' }                                       => '()',
+    q{_00_tuple_expression    : 'null' }                                       => '()',
 
 # item_reference : '*' => 'tmdm:subject'
 
@@ -465,15 +451,14 @@ my $macros = {
     
     q{_08_predicate_postfix   : '//' ~~~item_reference_1~~~ }                  => ' [ ^ ~~~item_reference_1~~~ ] ',
     
-# TODO : is this necessary?
-# remove?    q{_08_navigation          : '/'  '*' ~~~navigation_op_1~~~ }               => ' >> characteristics >> atomify ~~~navigation_op_1~~~',
-
     q{_08_navigation          : '/'  ~~~item_reference_1~~~ ~~~navigation_op_1~~~}
                                                                                => ' >> characteristics ~~~item_reference_1~~~ >> atomify ~~~navigation_op_1~~~',
 
     q{_08_navigation          : '\\\\'  ~~~item_reference_1~~~ ~~~navigation_op_1~~~} 
                                                                                => ' << atomify << characteristics ~~~item_reference_1~~~ ~~~navigation_op_1~~~',
 
+## TODO
+##  q{_09_path_l0_expression  : '//' ~~~item_reference_1~~~ ~~~postfix_op_1~~~} => ' %_ // ~~~item_reference_1~~~ ~~~postfix_op_1~~~ ',
 
 # @@@, unfortunately this below will not work, because the current algorithm would try to swap then/else inside the constants
 #    q{_12_boolean_primitive   : 'forall' ~~~variable_associations_1~~~
@@ -649,7 +634,7 @@ available.
 =cut
 
 our $VERSION  = 0.05;
-our $REVISION = '$Id: QL.pm,v 1.66 2007/01/05 08:55:42 rho Exp $';
+our $REVISION = '$Id: QL.pm,v 1.67 2007/01/08 05:36:05 rho Exp $';
 
 1;
 

@@ -1,6 +1,6 @@
 <use-cases>
 
-   <version>$Id: tmql-use-cases.xml,v 1.54 2007/01/05 08:55:42 rho Exp $</version>
+   <version>$Id: tmql-use-cases.xml,v 1.55 2007/01/08 05:36:06 rho Exp $</version>
 
    <database visible="no" title="TMQL Database">
      <description>TMQL Test database.</description>
@@ -124,6 +124,28 @@ null
 ]]></code>
 	 </solution>
        </query>
+       <query title="signed integer constant">
+	 <interface>
+	   <output type="list">
+[-42]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( -42 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( "-42"^^http://www.w3.org/2001/XMLSchema#integer )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"-42"^^http://www.w3.org/2001/XMLSchema#integer
+]]></code>
+	 </solution>
+       </query>
      </use-case>
 
      <use-case qid="s0003" title="literal boolean">
@@ -158,6 +180,53 @@ true
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
 false
+]]></code>
+	 </solution>
+       </query>
+     </use-case>
+
+     <use-case qid="s0004" title="literal decimal">
+       <query title="decimal constant">
+	 <interface>
+	   <output type="list">
+[3.14]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( 3.14 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( "3.14"^^http://www.w3.org/2001/XMLSchema#decimal )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"3.14"^^http://www.w3.org/2001/XMLSchema#decimal
+]]></code>
+	 </solution>
+       </query>
+       <query title="signed decimal constant">
+	 <interface>
+	   <output type="list">
+[-3.14]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( -3.14 )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( "-3.14"^^http://www.w3.org/2001/XMLSchema#decimal )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+"-3.14"^^http://www.w3.org/2001/XMLSchema#decimal
 ]]></code>
 	 </solution>
        </query>
@@ -308,9 +377,14 @@ false
 ( %_ ) 
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="TODO">
+	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( %_, %_ ) [ ($0) === ($1) ] ($0) 
+( %_, %_ ) [ $0 == $1 ] ($0) 
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( %_, %_ ) [ ( $0 == $1 ) ] ($0) 
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -639,6 +713,11 @@ bbb  [ 0 ]
 %_ // ccc
 ]]></code>
 	 </solution>
+	 <solution language="tmql" style="pe" operational="TODO">
+	   <code><![CDATA[
+// ccc
+]]></code>
+	 </solution>
        </query>
 
        <axiom language="tmql" operational="yes">
@@ -909,9 +988,9 @@ bbb >> characteristics homepage >> atomify << atomify
 "BBBS" << atomify >> atomify
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="TODO">
+	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-"BBBS" << atomify [ @ sss ] >> atomify
+"BBBS" << atomify [ @ sss ] ( . >> atomify )
 ]]></code>
 	 </solution>
        </query>
@@ -983,6 +1062,25 @@ http://something2 \ homepage
 ]]></code>
 	 </solution>
        </query>
+       <query title="indicator navigation, noexistent">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://does.not.exist/ << indicators )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://does.not.exist/ ~ )
+]]></code>
+	 </solution>
+       </query>
      </use-case>
 
      <use-case qid="s0067" title="locator navigation">
@@ -1018,6 +1116,25 @@ http://something2 \ homepage
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
 ( http://rumsti.org/ramsti = )
+]]></code>
+	 </solution>
+       </query>
+       <query title="locator navigation, noexistent">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://does.not.exist/ << locators )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://does.not.exist/ = )
 ]]></code>
 	 </solution>
        </query>
@@ -1575,6 +1692,52 @@ return
 ]]></code>
 	 </solution>
        </query>
+       <query title="exists true">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+[...]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_
+where
+   exists true
+return
+   $a
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_
+where
+   exists false
+return
+   $a
+]]></code>
+	 </solution>
+       </query>
+       <query title="exists false">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="list">
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="flwr" operational="yes">
+	 <code><![CDATA[
+for $a in %_
+where
+   exists null
+return
+   $a
+]]></code>
+	 </solution>
+       </query>
        <query title="isa predicated">
 	 <interface>
 	   <input>
@@ -2086,6 +2249,101 @@ return {
 ]]></code>
 	 </solution>
        </query>
+
+       <query title="outside --">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+["YYY"]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+return {
+  for $a in %_ // xxx
+  return
+     { select $a / name }
+}
+--
+{ select "ZZZ" }
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+return {
+  for $a in %_ // xxx
+  return
+     { select $a / name }
+}
+--
+{ select "ZZZ" }
+--
+return
+  ("ZZZ")
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+return {
+  for $a in %_ // xxx
+  return
+     { select $a / name }
+}
+--
+{ select "ZZZ" }
+--
+return
+  ("AAA")
+]]></code>
+	 </solution>
+       </query>
+       <query title="outside --">
+	 <interface>
+	   <input>
+	     <param name="%_" type="map"    mutable="no"></param>
+	   </input>
+	   <output type="set">
+["YYY"]
+["ZZZ"]
+	   </output>
+	 </interface>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+return {
+  for $a in %_ // xxx
+  return
+     { select $a / name }
+}
+--
+{ select "AAA" }
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="TODO">
+	   <code><![CDATA[
+return {
+  for $a in %_ // xxx
+  return
+     { select $a / name }
+}
+++
+{ select "ZZZ" }
+++
+{ select "YYY" }
+--
+{ select "ZZZ" }
+--
+{ select "YYY" }
+]]></code>
+	 </solution>
+       </query>
+<!-- 
+
+TODO: more tests
+
+-->
+
      </use-case>
 
 
@@ -2474,39 +2732,39 @@ return (remsti, 42)
 
 
 
-     <use-case qid="**s002" title="???TODO: integer operation">
+     <use-case qid="s002" title="integer operation">
        <query title="integer constant">
 	 <interface>
            <output type="list">
 [42]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 ( 42 + 0)
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 ( 42 - 21 + 21)
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 ( 80 div 4 + 22 )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 ( 42 * 2 - 42 )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 42
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 42 [0]
 ]]></code>
@@ -2518,12 +2776,12 @@ return (remsti, 42)
 [1]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="TODO">
            <code><![CDATA[
 ( 42 == 42 )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="y???es">
+	 <solution language="tmql" style="pe" operational="TODO">
            <code><![CDATA[
 ( 0 + 42 == 43 - 1 )
 ]]></code>
@@ -2539,7 +2797,7 @@ return (remsti, 42)
 1,2,3
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="y**********************es">
+	 <solution language="tmql" style="pe" operational="TODO">
 	   <code><![CDATA[
 ( 2-1, 1*2, 6 div 3+1 )
 ]]></code>

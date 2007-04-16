@@ -2,6 +2,9 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.26  Mon Apr 16 14:13:57 EST 2007
+	- added: diff for maps (EXPERIMENTAL, test cases missing, az)
+
 1.25  Fri Jan  5 18:51:12 EST 2007
 	- added: TODO list
 	- rearranged (and generalized): TS.pm atomification handling

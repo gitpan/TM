@@ -14,7 +14,7 @@ consolidated and documented):
 
   - read/write XTM files (TODO)
   - read LTM resources
-  - query topic maps via TMQL (query language)
+  - query topic maps via TMQL (query language, in the working)
   - create virtual topic maps
   - use a topic map backend store
   - a command line driven workbench (tm) (TODO).

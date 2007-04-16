@@ -90,3 +90,10 @@ UML: autodia.pl -F -H -d ~/projects/tm_base/TM-1.22/lib/ -r -Z
 
 MAKE
 }
+
+sub upload {
+    return <<MAKE
+
+upload: cpan-upload-http TM-1.25.tar.gz
+MAKE
+}

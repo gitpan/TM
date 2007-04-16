@@ -75,11 +75,10 @@ our $grammar = q{
                               | string
 # TODO | date
 
-    integer                   : /\d+/
-# TODO: sign
+    integer                   : /-?\d+/
 
-    decimal                   : /\d+\.\d+/
-# TODO: sign (optional .234?)
+    decimal                   : /-?\d+\.\d+/
+# TODO: optional .234?)
 
     string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
                               | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }

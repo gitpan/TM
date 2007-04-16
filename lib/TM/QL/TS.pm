@@ -424,19 +424,19 @@ my %SUBS = (
 
 	    'indicators.1.'             => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (  $_[1]) ->[TM->INDICATORS] }; },
 	    'indicators.1.SCALAR'       => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (${$_[1]})->[TM->INDICATORS] }; },
-	    'indicators.0.TM::Literal'  => sub { return   $_[0]->mids ( \ $_[1]->[0] ) or (); },
+	    'indicators.0.TM::Literal'  => sub { return   $_[0]->mids ( \ $_[1]->[0] ) || (); },
 
 	    'indicators.0.SCALAR'       => sub { my $i    = _atomify ($_[0], $_[1], $_[3]);
-						 return   $_[0]->mids ( \ $i ) or (); },
+						 return   $_[0]->mids ( \ $i ) || (); },
 
 	    'locators.1.'               => sub { my $l    = $_[0]->midlet (  $_[1] )->[TM->ADDRESS]; 
 						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
 	    'locators.1.SCALAR'         => sub { my $l    = $_[0]->midlet (${$_[1]})->[TM->ADDRESS]; 
 						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
-	    'locators.0.TM::Literal'    => sub { return   $_[0]->mids ( $_[1]->[0] ) or (); },
+	    'locators.0.TM::Literal'    => sub { return   $_[0]->mids ( $_[1]->[0] ) || (); },
 
 	    'locators.0.SCALAR'         => sub { my $l    = _atomify ($_[0], $_[1], $_[3]);
-						 return   $_[0]->mids ( $l ) or (); },
+						 return   $_[0]->mids ( $l ) || (); },
 
 	    'atomify.1.'                => sub { return   \ $_[1]; },
 	    'atomify.0.TM::Literal'     => sub { return   map { $_->[TM->LID] } $_[0]->match_forall (char  => 1, value => $_[1]); },

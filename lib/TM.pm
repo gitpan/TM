@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.25';
+our $VERSION  = '1.26';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -15,7 +15,7 @@ $Data::Dumper::VERSION = '2.12108';
 
 use Class::Struct;
 use Time::HiRes;
-
+use Test::Deep::NoTest;		# for eq_deeply
 use TM::PSI;
 
 =pod
@@ -664,7 +664,7 @@ A list reference which holds a list of topic IDs for the players.
 
 =item C<CANON>:
 
-Either C<1> or undef to signal whether this assertion has been (already) canonicalized (see L</Canonicalization>).
+Either C<1> or undef to signal whether this assertion has been (already) canonicalized (see L</canonicalize>).
 
 =back
 
@@ -2301,6 +2301,332 @@ sub variants {
     return $var ? $self->{variants}->{$id} = $var : $self->{variants}->{$id};
 }
 
+
+=pod 
+
+=back
+
+=head2 Map Comparison
+
+NOTE: THIS IS EXPERIMENTAL.
+
+=over
+
+=item B<diff>
+
+I<$diff> = $tm->diff($oldmap)
+
+I<$diff> = TM::diff($newmap, $oldmap)
+
+I<$diff> = TM::diff($newmap, $oldmap, {consistency=>[TM->Subject_based_Merging], include_changes=>1})
+
+diff compares two topicmaps and returns their differences as a hash reference.
+If diff is used in OO-style, the current map is interpreted as the new map and the map in the 
+arguments as the old one.
+The function honours the options I<consistency> and I<include_changes>.
+
+For any changes, the midlet and assertion identifiers are returned by default; 
+the option include_changes causes the return of the actual midlets and assertions
+themselves. The option makes diff's output more self-contained: with the option 
+enabled, one can fully (re)create the new map from the old one plus the diff (and vice versa).
+
+The consistency parameter uses the same format as the TM constructor (see L</Constructor>)
+and describes how corresponding topics in the two maps are to be identified.
+Topics with the same topic ids are always considered equal. If Subject based consistency is
+active, topics with the same Subject Locator are considered equal (overriding the topic identities).
+If Indicator based consistency is active, topics with a matching Subject Indicator are considered
+equal (overriding the previous identities). 
+
+Note that this overriding of previous conditions for identity is necessary to keep the 
+equality relationship unique and one-to-one.
+As an example, consider the following scenario: a topic I<a> in the old map
+is split into multiple new topics I<a> and I<b> in the new map. If I<a> had a locator or identifier
+that is moved to I<b> (and if consistency options are active), then the identity detector 
+will consider I<b> to be equal to I<a>, and B<not> I<a> in the new map to correspond to I<a> in the old map.
+However, this will never lead to loss of information: I<a> in the new map is flagged as completely
+new topic.
+
+The differences between old and new map are returned beneath the keys I<plus>, I<minus>, I<identities> and
+I<modified>. If include_changes is on, the extra keys I<plus_midlets>, I<minus_mildlets> and 
+I<assertions> are defined. The values of all these keys are hashes themselves.
+
+=over
+
+=item I<plus>, I<minus>
+
+The plus and minus hashes list new or removed topics, respectively (with their midlet identifiers as keys). 
+For each topic, the value if the hash is an array of associated assertion ids. The array is empty but defined
+if there are no associated assertions.
+
+For 'normal' topics the attached assertions 
+are the usual ones (names, occurrences) and class-instance relationships (attached to the instance topic).
+For associations, the assertions are attached to the type topic.
+
+=item I<identities>
+
+This hash consists of the non-trivial topic identities that were found. If neither Subject- nor
+Indicator-based merging is active, then this hash is empty. Otherwise, the keys are topic identifiers
+in the old map, with the corresponding topic identifier in the new map as value.
+
+=item I<modified>
+
+The modified hash contains the changes for matched topics. The key is the topic identifier in 
+the old map (which is potentially different from the one in the new map; see identities above).
+The value is a hash with three keys: I<plus>, I<minus> and I<identities>. 
+The value for the identities key is defined if and only if the midlet associated with this topic has
+changed (i.e. Subject Locator or Indicators have changed). 
+The values for the plus and minus keys are arrays with the new or removed assertions that are attached
+to this topic. These arrays are defined but empty where no applicable information is present.
+
+=item I<plus_midlets>, I<minus_mildlets>
+
+These hashes hold the actual new or removed midlets if the option include_changes is active.
+Keys are the midlet ids, values are references to the actual midlet datastructures.
+
+=item I<assertions>
+
+This hash holds the actual assertions where the maps differ; it exists only if the option 
+include_changes is active. Keys are the assertion identifiers, values the references to the
+actual assertion datastructures. Note that assertion ids uniquely identify the assertion contents,
+therefore this hash can hold assertions from both new and old map.
+
+=back
+
+=cut 
+
+sub diff
+{
+    my ($newmap,$oldmap,$options)=@_;
+    return undef if (!$oldmap || !$newmap);
+
+    my (%plus,%minus,%modified);
+    # a lot of comparison/translation can be skipped if tids are the only identity
+    my $xlatneeded= grep($_==TM->Subject_based_Merging || 
+			 $_==TM->Indicator_based_Merging,@{$options->{consistency}});
+
+    my ($base)=$oldmap->baseuri;
+    die "comparison of maps with different bases not supported yet!\n"
+	if ($newmap->baseuri ne $base);
+
+    # first walk the maps to match old and new items
+    my (%seen,%locators,%indicators);
+    for my $map ($oldmap,$newmap)
+    {
+	my $key=($map eq $oldmap?"old":"new");
+	my $value=($map eq $oldmap?1:2);
+
+	for my $m ($map->midlets(\ '+all'))
+	{
+	    # get the topic-aspects (tid, locators and identifiers)
+	    # for finding unchanged/new/old topics
+	    my $midlet=$map->midlet($m);
+	    $locators{$key}->{$midlet->[TM->ADDRESS]}=$m
+		if ($midlet->[TM->ADDRESS]);
+	    map { $indicators{$key}->{$_}=$m } (@{$midlet->[TM->INDICATORS]});
+	    $seen{$m}|=$value; 
+	}
+    }
+
+    # identify same topics
+    # first identity: same topic ids 
+    my %old2new = map { ($_,$_) } (grep($seen{$_}==3,keys %seen));
+    my $foundxlat;
+    if (grep($_==TM->Subject_based_Merging,@{$options->{consistency}}))
+    {
+	# second: same locators
+	# note that this overwrites topic identitites!
+	# scenario: old has topica/loc x; new has topica/no loc and topicb/loc x
+	map { $foundxlat||=($locators{old}->{$_} ne $locators{new}->{$_});
+	      $old2new{$locators{old}->{$_}}=$locators{new}->{$_}; } 
+	(grep(exists $locators{new}->{$_}, keys %{$locators{old}}));
+    }
+    if (grep($_==TM->Indicator_based_Merging,@{$options->{consistency}}))
+    {
+	# final: matching indicators
+	# note that this overwrites topic and locator identitites, similar scenario as above
+	map { $foundxlat||=($indicators{old}->{$_} ne $indicators{new}->{$_});
+	      $old2new{$indicators{old}->{$_}}=$indicators{new}->{$_}; } 
+	(grep(exists $indicators{new}->{$_}, keys %{$indicators{old}}));
+    }
+    # no need to bother with translating assertions if there are no changed-tid identities
+    $xlatneeded=0 if ($xlatneeded && !$foundxlat); 
+
+    # produce list of missing/new topics
+    my %new2old=($xlatneeded?(reverse %old2new):%old2new);
+    my (%checkmidlet,%plusass,%minusass);
+    for my $t (keys %seen)
+    {
+	if ($seen{$t}==2 && !$new2old{$t})
+	{
+	    $newmap->retrieve($t)?$plusass{$t}=1:$plus{$t}=[];
+	}
+	elsif ($seen{$t}==1 && !$old2new{$t})
+	{
+	    $oldmap->retrieve($t)?$minusass{$t}=1:$minus{$t}=[];
+	}
+	else
+	{
+	    # we work along the old tids (when not the same)
+	    $checkmidlet{$seen{$t}==2?$new2old{$t}:$t}=1;
+	}
+    }
+    undef %seen; undef %locators; undef %indicators;
+
+    # weed out the topics/midlets that are unchanged
+    # and all the identical assertions
+    my @checkassertion;
+    for my $t (keys %checkmidlet)
+    {
+	if (!eq_deeply($oldmap->midlet($t),
+		       $newmap->midlet($old2new{$t})))
+	{
+	    $modified{$t}->{identities}=1;
+	}
+	
+	my $oa=$oldmap->retrieve($t);
+	my $on=$newmap->retrieve($old2new{$t});
+	
+	if ($oa && $on && !eq_deeply($oa,$on))
+	{
+	    push @checkassertion,$t;
+	}
+    }
+
+    my %old2newid;    
+    if ($xlatneeded)
+    {
+	# now do the translation for assertions: rebuild old assertions
+	# into new namespace and compute the id
+	# don't waste time: do this only on the assertions that may be required
+	for my $t (@checkassertion,keys %minusass)
+	{
+	    my $m=$oldmap->retrieve($t);
+	    my ($lid,$scope,$kind,$type,$roles,$players)=
+		@{$m}[TM->LID,TM->SCOPE,TM->KIND,TM->TYPE,TM->ROLES,TM->PLAYERS];
+
+	    # if any of the topics is untranslatable, then skip the remaining work
+	    # as it can't successfully compare anyway...
+	    $scope=$old2new{$scope} || next;
+	    $type=$old2new{$type} || next;
+	    my @newroles = map { ref($_)?$_:$old2new{$_} || next; } (@{$roles});
+	    my @newplayers = map { ref($_)?$_:$old2new{$_} || next; } (@{$players});
+
+	    my $n=Assertion->new(scope=>$scope,
+				 kind=>$kind,
+				 type=>$type,
+				 roles=>\@newroles,players=>\@newplayers);
+	    $newmap->canonicalize($n);
+	    my $newid=$base.TM::hash($n);
+	    $old2newid{$t}=$newid;
+
+	    if ($plusass{$newid})
+	    {
+		delete $plusass{$newid};
+		delete $minusass{$t};
+	    }
+	}
+    }
+
+    # finally, find and attach the modified assertions to their topics
+    # attributes: to the topic
+    # associations: to the type-topic
+
+    for my $key ("plus","minus")
+    {
+	my ($unmodified,$map,$candidates);
+	if ($key eq "plus")
+	{
+	    $unmodified=\%plus; $map=$newmap; $candidates=\%plusass;
+	}
+	else
+	{
+	    $unmodified=\%minus; $map=$oldmap; $candidates=\%minusass;
+	}
+	
+	for my $t (keys %{$candidates})
+	{
+	    my $m=$map->retrieve($t);
+	    my ($oldwho,$who,$what);
+	    if ($m->[TM->KIND] ne TM->ASSOC)
+	    {
+		# bn or oc: attach to referenced topic
+		$who=($map->get_x_players($m,$base."thing"))[0];
+		$what=$t;
+	    }
+	    elsif ($m->[TM->TYPE] eq $base."isa")
+	    {
+		# isa associations get attached to the instance topic
+		$who=($map->get_x_players($m,$base."instance"))[0];
+		$what=$t;
+	    }
+	    else 
+	    {			
+		# general assoc: gets attached to type topic
+		$who=$m->[TM->TYPE];
+		$what=$t;
+	    }
+
+	    # if this assertion belongs to a topic that is marked gone/new, we save it with that topic
+	    if ($unmodified->{$who})
+	    {
+		push @{$unmodified->{$who}},$what;
+	    }
+	    else # if this belongs to a modified topic: more details please (new/old ass)
+	    {
+		# we access things along the old id axis...
+		if ($key eq "plus")
+		{
+		    $who=$new2old{$who};
+		}
+		$modified{$who}->{$key}||=[];
+		push @{$modified{$who}->{$key}},$what;
+	    }
+	}
+    }
+
+    my %identities; map { $identities{$_}=$old2new{$_} if ($_ ne $old2new{$_}); } (keys %old2new);
+
+    my $returnvalue={
+	    'identities'=>\%identities,
+	    'plus'=>\%plus,
+	    'minus'=>\%minus,
+	    'modified'=>\%modified,
+	};
+
+    # pull in the midlets and assertions that have been affected,
+    # so that the resulting datastructure can be frozen and used together with oldmap
+    # to (re)create newmap
+    if ($options->{include_changes})
+    {
+	# one problem, though is naming: midlets can have changed but their name doesn't
+	# reflect that: we need two midlet datastructures here.
+	# (assertions are fine, their names always reflect their content uniquely)
+
+	my (%plusm,%minusm,%ass,$a);
+	map { $plusm{$_}=$newmap->midlet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
+	map { $minusm{$_}=$oldmap->midlet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (keys %minus);
+
+	for my $k (keys %modified)
+	{
+	    # these are corresponding topics with differing midlet (contents)
+	    if ($modified{$k}->{identities})
+	    {
+		$plusm{$k}=$newmap->midlet($old2new{$k});
+		$minusm{$k}=$oldmap->midlet($k);
+	    }
+	    map { $plusm{$_}=$newmap->midlet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{plus}}); 
+	    map { $minusm{$_}=$oldmap->midlet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{minus}}); 
+	}
+
+	$returnvalue->{plus_midlets}=\%plusm;
+	$returnvalue->{minus_midlets}=\%minusm;
+	$returnvalue->{assertions}=\%ass;
+
+    }
+
+    return $returnvalue;
+}
+
 =pod
 
 =back
@@ -2318,7 +2644,7 @@ itself.
 
 =cut
 
-our $REVISION = '$Id: TM.pm,v 1.43 2006/12/29 09:33:42 rho Exp $';
+our $REVISION = '$Id$';
 
 
 1;
