@@ -41,11 +41,6 @@ found for a query, the empty result will be assumed.
 
 =back
 
-=head2 Hash Technology
-
-The default implementation uses an in-memory hash, no further fancy. Optionally, you can provide
-your own hash object. Also one which is I<tied> to an DBM file, etc.
-
 =head2 Map Attachment
 
 To activate an index, you have to attach it to a map. This is done at constructor time.

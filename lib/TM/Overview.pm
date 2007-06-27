@@ -83,6 +83,12 @@ various things, among them child maps. And each of these children can link to fu
 sense this is a complete TM repository into which you can add maps (I<mount>) and remove complete
 maps (I<umount>).
 
+=item L<TM::Bulk>
+
+Especially when building web frontends for TM servers, the communication events have to be
+minimized.  With L<TM::Bulk> it is possible to learn a lot from a topic, instead of querying
+numerous times. There is also a first lookup function for names.
+
 =back
 
 =head2 Indexing

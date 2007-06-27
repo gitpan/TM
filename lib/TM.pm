@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.26';
+our $VERSION  = '1.27';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -185,11 +185,11 @@ others are a choice the application can make. See method C<consistency>.
 This consistency is not automatically provided when a map is modified by the application. It is the
 applications responsibility to trigger the process to consolidate the map.
 
-When an IO driver is consuming a map from a resource (say load an XTM file), then that driver will
-ensure that the map is consolidated according to the current settings before it is handed to the
-application. The application is then in full control of the map as it can change, add and delete
-topics and associations. This implies that that can become unconsolidated in this process. The
-method C<consolidate> reinstates consistency again.
+When an IO driver is consuming a map from a resource (say loading from an XTM file), then that
+driver will ensure that the map is consolidated according to the current settings before it is
+handed to the application. The application is then in full control of the map as it can change, add
+and delete topics and associations. This implies that that can become unconsolidated in this
+process. The method C<consolidate> reinstates consistency again.
 
 You can change these defaults by (a) providing an additional option to the constructor
 
@@ -223,7 +223,6 @@ controls how an absolute URI is built from this identifier.
 
 If you need to roll your own taxonomy to bootstrap with, you can pass in a structure which has
 exactly the same structure as that in L<TM::PSI>.
-
 
 =cut
 
@@ -325,7 +324,7 @@ perform merging based on subject indicators (see TMDM section 5.3.2)
 
 =item * 
 
-remove all superfluous toplets (those which do not take part in any association)
+remove all superfluous midlets (those which do not take part in any association)
 
 B<NOTE>: Not implemented yet!
 
@@ -626,7 +625,7 @@ Assertions consist of the following components:
 
 =item C<LID>:
 
-Every assertion is also a thing in the map, so it has an identifier. For toplet-related information
+Every assertion is also a thing in the map, so it has an identifier. For midlet-related information
 this is the absolute topic ID, for maplets this is a unique identifier generated from a canonicalized
 form of the assertion itself.
 
@@ -1467,6 +1466,7 @@ sub _dispatch_forall {
 }
 
 }
+
 sub match_exists {
     my $self   = shift;
     my %query  = @_;
@@ -1747,7 +1747,7 @@ I<@mids> = I<$tm>->midlets (I<@list-of-ids>)
 
 I<@mids> = I<$tm>->midlets (I<$selection-spec>)
 
-This function returns things, actually their absolutized ids - from the map.
+This function returns things - actually their absolutized ids - from the map.
 
 If no parameter is used, all I<things> are returned. This includes really everything also
 infrastructure topics and all associations, occurrences, etc.
@@ -1794,11 +1794,11 @@ is everything the user (application) has supplied.
 
 Examples:
 
-     # all topics except those from TM::PSI
-     $tm->topics (\ '+all -infrastructure')
+     # all midlets except those from TM::PSI
+     $tm->midlets (\ '+all -infrastructure')
 
      # like above, without assocs, so with names and occurrences
-     $tm->topics (\ '+all -assocs')
+     $tm->midlets (\ '+all -assocs')
 
 =cut
 
@@ -1860,7 +1860,7 @@ I<$t>  = I<$tm>->midlet (I<$mid>)
 
 I<@ts> = I<$tm>->midlet (I<$mid>, ....)
 
-This function returns a reference to a topic structure. That includes a subject address, if
+This function returns a reference to a midlet structure. That includes a subject address, if
 available and a list (reference) for the optional subject indicators.
 
 Can be used in scalar and list context.

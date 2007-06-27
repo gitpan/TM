@@ -28,6 +28,7 @@ t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
 t/054ltm.t
+t/072bulk.t
 t/091taufilter.t
 t/092taufederate.t
 t/095tau.t
@@ -40,6 +41,7 @@ t/16tmql.t
 lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
+lib/TM/Bulk.pm
 lib/TM/DM.pm
 lib/TM/Index.pm
 lib/TM/Index/Characteristics.pm

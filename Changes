@@ -2,6 +2,9 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.27  ???
+	- added TM::Bulk trait (for mass retrieval)
+
 1.26  Mon Apr 16 14:13:57 EST 2007
 	- added: diff for maps (EXPERIMENTAL, test cases missing, az)
 
