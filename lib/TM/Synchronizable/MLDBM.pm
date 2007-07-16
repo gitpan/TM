@@ -34,11 +34,11 @@ representation of the map.
 sub source_in {
     my $self = shift;
     my $url  = $self->url;
-    $main::log->logdie (scalar __PACKAGE__ . ": url '$url' is not pointing to a file") unless $url =~ /^file:/;
+    $TM::log->logdie (scalar __PACKAGE__ . ": url '$url' is not pointing to a file") unless $url =~ /^file:/;
     (my $filename = $self->url) =~ s/^file://;                                     # get rid of this
 #warn "source in  '$filename'";
     my %map;
-    my $sync_dbm = tie %map, 'MLDBM::Sync', $filename, O_RDWR|O_CREAT, 0600 or $main::log->logdie (scalar __PACKAGE__ .": $!");
+    my $sync_dbm = tie %map, 'MLDBM::Sync', $filename, O_RDWR|O_CREAT, 0600 or $TM::log->logdie (scalar __PACKAGE__ .": $!");
     $sync_dbm->Lock;
     %{$self} = %{$map{data}};
     $sync_dbm->UnLock;
@@ -47,11 +47,11 @@ sub source_in {
 sub source_out {
     my $self = shift;
     my $url  = $self->url;
-    $main::log->logdie (scalar __PACKAGE__ . ": url '$url' is not pointing to a file") unless $url =~ /^file:/;
+    $TM::log->logdie (scalar __PACKAGE__ . ": url '$url' is not pointing to a file") unless $url =~ /^file:/;
     (my $filename = $self->url) =~ s/^file://;                                     # get rid of this
 #warn "source out  '$filename'";
     my %map;
-    my $sync_dbm = tie %map, 'MLDBM::Sync', $filename, O_CREAT|O_RDWR, 0600 or $main::log->logdie (scalar __PACKAGE__ .": $!");
+    my $sync_dbm = tie %map, 'MLDBM::Sync', $filename, O_CREAT|O_RDWR, 0600 or $TM::log->logdie (scalar __PACKAGE__ .": $!");
     $sync_dbm->Lock;
     $map{data} = $self;
     $sync_dbm->UnLock;

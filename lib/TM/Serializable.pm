@@ -86,7 +86,7 @@ sub source_in {
 our $STDIN; # here we store the STDIN content to be able to reuse it later
 
 sub _get_content {
-    my $url = shift or $main::log->logdie (scalar __PACKAGE__ . ": url is empty");
+    my $url = shift or $TM::log->logdie (scalar __PACKAGE__ . ": url is empty");
 
     if ($url =~ /^inline:(.*)/s) {
 	return $1;

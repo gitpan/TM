@@ -61,7 +61,7 @@ sub new {
     my $class = shift;
     my %options = @_;
 
-    my $file = delete $options{file} or die $main::log->logdie ("no file specified");
+    my $file = delete $options{file} or die $TM::log->logdie ("no file specified");
     my $whatever = $class->SUPER::new (%options, url => 'file:'.$file);             # this ensures that we have a proper url component
 
     my %self;                                                                       # forget about the object itself, make a new one
@@ -69,13 +69,13 @@ sub new {
     if (-e $file) {                                                                 # file does exist already
 #warn "file exists $file!";
 	tie %self, 'MLDBM', -Filename => $file
-	    or main::log->logdie ( "Cannot create DBM file '$file: $!");
+	    or TM::log->logdie ( "Cannot create DBM file '$file: $!");
                                                                                     # oh, we are done now
     } else {                                                                        # no file yet
 #warn "file not exists $file!";
 	tie %self, 'MLDBM', -Filename => $file,                                     # bind to one
                             -Flags    => DB_CREATE                                  # which we create here
-	    or main::log->logdie ( "Cannot create DBM file '$file: $!");
+	    or TM::log->logdie ( "Cannot create DBM file '$file: $!");
 
 	foreach (keys %$whatever) {                                                 # clone all components
 	    $self{$_} = $whatever->{$_};                                            # this makes sure that Berkeley'ed tie picks it up

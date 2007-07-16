@@ -2,7 +2,15 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
-1.27  ???
+1.29  Mo 16. Jul 21:14:31 CEST 2007
+	- made Log4Perl log object native into TM.pm (should now work stand-alone)
+	- TM: internalize always took (undef, \ 'http://some.uri') parameters, documented now
+	- bugfix: TM::Synchronizable::MapSphere did not find child map implementation
+
+1.28  Do 28. Jun 19:33:06 CEST 2007
+	- TM::MapSphere: mounted map topics get additional meta information as occurrences
+
+1.27  Mi 27. Jun 19:00:04 CEST 2007
 	- added TM::Bulk trait (for mass retrieval)
 
 1.26  Mon Apr 16 14:13:57 EST 2007

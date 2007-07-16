@@ -533,7 +533,7 @@ I<$tmdm> = new TM::DM (map => I<$tm>)
 sub new {
     my $class   = shift;
     my %options = @_;
-    $main::log->logdie (scalar __PACKAGE__ .": map parameter is not really a TM instance")     unless ref ($options{map}) && $options{map}->isa ('TM');
+    $TM::log->logdie (scalar __PACKAGE__ .": map parameter is not really a TM instance")     unless ref ($options{map}) && $options{map}->isa ('TM');
     
     return bless { %options }, $class;
 }

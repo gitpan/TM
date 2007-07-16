@@ -134,7 +134,30 @@ the C<force> parameter is set:
 
 A topic of type C<topicmap> (see L<TM::PSI>) is created in the map above the mount point. The base
 URI of the map is used as subject address. If the mounted map has a resource URL that is used as
-subject indicator.
+subject indicator (identifier in TMDM-speak). Additionally, the topic gets asserted characteristics:
+
+=cut
+
+use constant {
+    IMPLEMENTATION => 'http://tm.devc.at/mapsphere/implementation',
+    MIME           => 'http://tm.devc.at/mapsphere/mime',
+    CREATED        => 'http://tm.devc.at/mapsphere/created'
+};
+
+=pod
+
+=over
+
+=item mime (default: C<unknown>)
+
+A MIME type occurrence of type C<http://tm.devc.at/mapsphere/mime> which is a string value.
+
+=item created
+
+An occurrence of type C<http://tm.devc.at/mapsphere/created> carrying the UNIX time at mounting
+time.
+
+=back
 
 Maps can only be mounted into other maps if these already are also mounted. The following code will
 not work:
@@ -164,9 +187,9 @@ sub mount {
 
     delete $self->{mounttab}->{$path} if $force;                                             # but if so, get rid of it first
 
-    $main::log->logdie (scalar __PACKAGE__ .": cannot mount over root")             if     $path eq '/';
-    $main::log->logdie (scalar __PACKAGE__ .": can only mount map objects")         unless (ref ($obj) && $obj->isa ('TM'));
-    $main::log->logdie (scalar __PACKAGE__ .": mount point '$path' already taken")  if     exists $self->{mounttab}->{$path};
+    $TM::log->logdie (scalar __PACKAGE__ .": cannot mount over root")             if     $path eq '/';
+    $TM::log->logdie (scalar __PACKAGE__ .": can only mount map objects")         unless (ref ($obj) && $obj->isa ('TM'));
+    $TM::log->logdie (scalar __PACKAGE__ .": mount point '$path' already taken")  if     exists $self->{mounttab}->{$path};
 
 #warn "trying to mount $path";
 
@@ -175,19 +198,27 @@ sub mount {
     my $p = _find_longest_match ($path, keys %{$mounttab});
 #warn "found max path $p for new path $path";
     (my $id = $path) =~ s/^$p([\w\.\-\_]+)\/$/$1/
-	                          or $main::log->logdie (scalar __PACKAGE__ .": mount point for '$path' does not yet exist ($p)");
+	                          or $TM::log->logdie (scalar __PACKAGE__ .": mount point for '$path' does not yet exist ($p)");
 #warn "id now $id";
     { 
 #warn "finding map for $p";
 	my $map = $self->is_mounted ($p)                                                    # find map above the mount point
-                                  or $main::log->logdie (scalar __PACKAGE__ .": no map above this mount point");
+                                  or $TM::log->logdie (scalar __PACKAGE__ .": no map above this mount point");
         my $mid = $map->internalize ($id);
 #warn "adding baseuri as address ".$obj->baseuri;
 	$map->internalize ($mid =>   $obj->baseuri);
 	$map->internalize ($mid => \ $obj->url)     if $obj->can ('url');
-	$map->assert (Assertion->new (type => 'isa',            roles => [ 'class', 'instance' ], players => [ 'topicmap',                   $mid ]));
-	$map->assert (Assertion->new (type => 'implementation', roles => [ 'value', 'thing' ],    players => [ new TM::Literal (ref ($obj)), $mid ]));
+	$map->assert (Assertion->new (type => 'isa',   roles => [ 'class', 'instance' ], players => [ 'topicmap',                     $mid ]));
+
+	$map->assert (Assertion->new (kind  => TM->OCC, type => $map->internalize (undef, \ MIME),
+				      roles => [ 'value', 'thing' ],    players => [ $obj->{mime} || new TM::Literal ('unknown'), $mid ]));
+	$map->assert (Assertion->new (kind  => TM->OCC, type => $map->internalize (undef, \ CREATED),
+				      roles => [ 'value', 'thing' ],    players => [ new TM::Literal (time),         $mid ]));
+	$map->assert (Assertion->new (kind  => TM->OCC, type => $map->internalize (undef, \ IMPLEMENTATION),
+				      roles => [ 'value', 'thing' ],    players => [ new TM::Literal (ref ($obj)),   $mid ]));
+#warn Dumper $map;
     }
+
 #warn "adding $path to mounttab with ob $obj";
     $mounttab->{$path} = $obj;                                                              # link it into our mounttab
     $self->{mounttab} = $mounttab;
@@ -212,7 +243,7 @@ sub umount {
        $self->{mounttab} ||= { %{TM::MapSphere->EMPTY} };                                   # just to make sure there is something
     my $path = shift;
 
-    $main::log->logdie (scalar __PACKAGE__ .": cannot unmount root") if $path eq '/';
+    $TM::log->logdie (scalar __PACKAGE__ .": cannot unmount root") if $path eq '/';
 
     my $mounttab = $self->{mounttab};
 
@@ -223,10 +254,10 @@ sub umount {
     my $p = _find_longest_match ($path, keys %$mounttab);
 #warn "found max path $p for new path $path";
     (my $id = $path) =~ s/^$p([\w\.\-\_]+)\/$/$1/
-	                          or $main::log->logdie (scalar __PACKAGE__ .": mount point for '$path' does not exist");
+	                          or $TM::log->logdie (scalar __PACKAGE__ .": mount point for '$path' does not exist");
 #warn "id now $id";
     my $map = $self->is_mounted ($p)                                                        # find map above the mount point
-	                          or $main::log->logdie (scalar __PACKAGE__ .": no map above this mount point");
+	                          or $TM::log->logdie (scalar __PACKAGE__ .": no map above this mount point");
     $map->retract (map { $_->[TM->LID] } $map->match (TM->FORALL, 
 						      iplayer => $map->mids ($id)));        # remove all involvements
     $map->externalize ($map->mids ($id));                                                   # remove the midlet and return it
@@ -393,7 +424,7 @@ sub xxsync_in {
     my $path = shift;
 
     my $map = $self->{mounttab}->{$path} or
-                        $main::log->logdie (scalar __PACKAGE__ .": mount point '$path' does not exist");
+                        $TM::log->logdie (scalar __PACKAGE__ .": mount point '$path' does not exist");
     _do_sync_recursive ($self, $path, $map);
 
 sub _do_sync_recursive {
@@ -418,7 +449,7 @@ sub _do_sync_recursive {
 #warn "implementation $implementation";
 	eval {
 	    $child = $implementation->new (url => $url, baseuri => $baseuri );
-	}; $main::log->logdie (scalar __PACKAGE__ .": cannot instantiate '$implementation' (maybe 'use' it?) for URL '$url' ($@)") if $@;
+	}; $TM::log->logdie (scalar __PACKAGE__ .": cannot instantiate '$implementation' (maybe 'use' it?) for URL '$url' ($@)") if $@;
 
 	$ms->mount ($path . "$id/" => $child)                                            # finally mount this thing into the current
 	    unless $ms->is_mounted ($path . "$id/");                                     # unless there is already something there

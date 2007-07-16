@@ -9,6 +9,7 @@ use Data::Dumper;
 
 use Class::Trait 'base';
 use Class::Trait 'TM::ResourceAble';
+use TM::MapSphere;
 
 #our @REQUIRES = qw(source_in source_out);
 
@@ -22,12 +23,18 @@ TM::Synchronizable::MapSphere - Topic Maps, trait for a syncing a hierarchical T
 
 =head1 SYNOPSIS
 
-@@@@@@@@@@@@@@@@@@@
-
+   use TM;
+   use base qw(TM);
+   use Class::Trait ('TM::MapSphere',
+                     'TM::Synchronizable::MLDBM' => {
+   		         exclude => [ "sync_in", "sync_out" ]
+   		     },
+                     'TM::Synchronizable::MapSphere');
 
 =head1 DESCRIPTION
 
-@@@@@@@@@@
+This trait adds C<sync_in> and C<sync_out> functionality to a map sphere. The
+point here is that embedded child maps are also synced out or in.
 
 =head2 Map Meta Data
 
@@ -62,8 +69,7 @@ notation):
    = http://whatever/
    implementation: TM::Materialized::XTM
 
-@@@ no path @@@@?   
-
+@@@ TODO: no path @@@@?   
 
 =cut
 
@@ -104,16 +110,16 @@ sub _sync_in_children {
 #warn Dumper $mid;
 	    my ($url)            = @{$mid->[TM->INDICATORS]}                        or next; # if there is no subject indicator, we could not load it anyway
 	    my ($baseuri)        =   $mid->[TM->ADDRESS]                            or next; # if there is no subject address, we could not load it anyway
+
 	    my ($implementation) = map { $_->[ TM->PLAYERS ]->[1]->[0] }
-	    $map->match (TM->FORALL, type    => $map->mids ('implementation'),
-			             iplayer => $m )
+	                           $map->match (TM->FORALL, char => 1, topic => $m, type => $map->mids (\ TM::MapSphere->IMPLEMENTATION))
 		or next;
 	    
 	    my $child;
 #warn "-- implementation $implementation";
 	    eval {
 		$child = $implementation->new (url => $url, baseuri => $baseuri );
-	    }; $main::log->logdie (scalar __PACKAGE__ .": cannot instantiate '$implementation' (maybe 'use' it?) for URL '$url' ($@)") if $@;
+	    }; $TM::log->logdie (scalar __PACKAGE__ .": cannot instantiate '$implementation' (maybe 'use' it?) for URL '$url' ($@)") if $@;
 	    
 	    $child->sync_in;
 #warn "---- synced in";
@@ -131,11 +137,16 @@ sub _sync_in_children {
 
 =item B<sync_out>
 
-@@@@@
+I<$ms>->sync_out ([ I<$path> ], [ I<$depth> ])
 
-I<$ms>->sync_out (I<$path>)
+This method syncs out not only the root map sphere object (at least if the resource C<mtime> is
+earlier that any change on the map sphere). The method also consults the mount tab to find child
+maps and will sync them out as well.
 
-@@@ TBW @@@
+The optional C<path> parameter controls which subtree should be synced out. It defaults to C</>.
+
+The optional C<$depth> controls how deep the subtree should be followed downwards. Default is
+C<MAX_DEPTH> (see the source).
 
 =cut
 
@@ -178,7 +189,7 @@ Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 200[6] by Robert Barta
+Copyright (C) 200[67] by Robert Barta
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself, either Perl version 5.8.4 or, at your option, any later version of Perl 5 you may have

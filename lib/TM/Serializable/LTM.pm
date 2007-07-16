@@ -163,7 +163,7 @@ This is not implemented.
 =cut
 
 sub serialize {
-  $main::log->logdie ( scalar __PACKAGE__ .": not implemented" );
+  $TM::log->logdie ( scalar __PACKAGE__ .": not implemented" );
 }
 
 =pod

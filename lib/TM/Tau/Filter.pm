@@ -105,7 +105,7 @@ sub new {
     $options{url} ||= 'null:'; # a filter may have nothing to which it is attached outgoingly
     if ($options{left}) {
 	ref ($options{left}) and $options{left}->isa ('TM')
-	    or $main::log->logdie ( scalar __PACKAGE__ .": left operand must be an instance of TM" );
+	    or $TM::log->logdie ( scalar __PACKAGE__ .": left operand must be an instance of TM" );
     }
 
     $options{sync_in}  ||= 0;                                                          # defaults

@@ -131,7 +131,7 @@ sub serialize  {
     my ($self,%opts)=@_;
     $opts{version}||=1;
     
-    $main::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} )
+    $TM::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} )
 	if ($opts{version} ne 1);
 
     my $base=$self->{baseuri};

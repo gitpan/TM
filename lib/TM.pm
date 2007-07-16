@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.27';
+our $VERSION  = '1.29';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -17,6 +17,19 @@ use Class::Struct;
 use Time::HiRes;
 use Test::Deep::NoTest;		# for eq_deeply
 use TM::PSI;
+
+use Log::Log4perl;
+Log::Log4perl::init( \ q(
+log4perl.rootLogger=DEBUG, LOGFILE
+
+log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
+log4perl.appender.LOGFILE.filename=tm.log
+log4perl.appender.LOGFILE.mode=append
+
+log4perl.appender.LOGFILE.layout=PatternLayout
+log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n
+		       ) );
+our $log = Log::Log4perl->get_logger("TM");
 
 =pod
 
@@ -1565,6 +1578,11 @@ Like above, only that the URI is used as another subject identifier.
 
 Like above, only that the internal identifier has to be (maybe) created.
 
+=item C<undef =E<gt> \ URI>
+
+Like above, only that the internal identifier has to be (maybe) created and the URI us used as
+subject identifier.
+
 =item C<undef =E<gt> undef>
 
 A topic with a generated ID will be inserted. Not sure what this is good for.
@@ -1612,9 +1630,9 @@ sub internalize {
 	    $k = $baseuri.sprintf ("uuid-%010d", $toplet_ctr++);   # generate a new one
 	}
 
-	push @mids, $k;
+#warn "really internalizing '$k' '$v'";
 
-#warn "internalizing '$k' '$v'";
+	push @mids, $k;
 
 	# now see that we have an entry in the mid2iid table
 	$mid2iid->{$k} ||= [ undef, [] ];
@@ -1822,10 +1840,10 @@ sub midlets {
 		} elsif ($2 eq 'infrastructure') {
 		    $l = _mod_list ($1 eq '+', $l, $self->mids (keys %{$TM::PSI::topicmaps->{mid2iid}}));
 		} else {
-		    $main::log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+		    $TM::log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
 		}
 	    }
-	    $main::log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+	    $TM::log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
 	    return _mk_uniq (@$l);
 	} else {
 	    return $self->mids (@_);                    # make all these fu**ing identifiers map-absolute
@@ -2481,6 +2499,8 @@ sub diff
 		       $newmap->midlet($old2new{$t})))
 	{
 	    $modified{$t}->{identities}=1;
+	    $modified{$t}->{plus}||=[];
+	    $modified{$t}->{minus}||=[];
 	}
 	
 	my $oa=$oldmap->retrieve($t);
@@ -2631,13 +2651,18 @@ sub diff
 
 =back
 
+=head1 LOGGING
+
+The L<TM> module hosts (since 1.29) the Log4Perl object C<$TM::log>. It is initialized with some
+reasonable defaults, but an using application can access it, tweak it, or overwrite it completely.
+
 =head1 SEE ALSO
 
 L<TM::PSI>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[1-6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[1-7] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.

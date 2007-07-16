@@ -475,13 +475,13 @@ sub _init_parser {                                                    #-- initia
 	require TM::QL::CParser;
 	$parser = TM::QL::CParser->new();
     }; if ($@) {                                                      # if not, generate one on the fly
-	$main::log->warn ("could not find precompiled CParser, compiling");
+	$TM::log->warn ("could not find precompiled CParser, compiling");
 	use Parse::RecDescent;
 #	$::RD_TRACE = 1;
 	$::RD_HINT = 1;
 	$::RD_WARN = 1;
 	$parser = new Parse::RecDescent ($grammar . $TM::Literal::grammar)    # TODO add $astma later
-	    or $main::log->logdie (__PACKAGE__ . "Problem in grammar");
+	    or $TM::log->logdie (__PACKAGE__ . "Problem in grammar");
     }
     _extend_parser ($parser);                                         # add all the macros/shortcuts
 }
@@ -518,8 +518,8 @@ sub _extend_parser {                                                  #-- takes 
 #warn "suggested: $nt : '$abbr' for '$exp' before parse";
 #	$::RD_TRACE = 1;
 	# parse the whole thing into a TMQL data structure
-	my $data = $parser->$nt (\$exp) or $main::log->logdie (__PACKAGE__ . ": Problem generating grammar generator");
-	                                   $main::log->logdie (__PACKAGE__ . ": Found unparseable '$exp'")    unless $exp =~ /^\s*$/s;
+	my $data = $parser->$nt (\$exp) or $TM::log->logdie (__PACKAGE__ . ": Problem generating grammar generator");
+	                                   $TM::log->logdie (__PACKAGE__ . ": Found unparseable '$exp'")    unless $exp =~ /^\s*$/s;
 #warn "converted for $nt  to ".Dumper $data;
 
 	my $code = Data::Dumper->Dump ([$data], ['return']);          # Dump it as $return = ....
@@ -576,10 +576,10 @@ sub new {
 #	    $::RD_TRACE = 1;                                                   # turn on parser debugging
 	    $self->{cq} = $parser->startrule (\$q);
 #	    $::RD_TRACE = 0;                                                   # turn off parser debugging
-	    $main::log->logdie (__PACKAGE__ . ": Found unparseable '$q'")    unless $q =~ /^\s*$/s;
-	    $main::log->logdie (__PACKAGE__ . ": Incomplete input")          unless $self->{cq};
+	    $TM::log->logdie (__PACKAGE__ . ": Found unparseable '$q'")    unless $q =~ /^\s*$/s;
+	    $TM::log->logdie (__PACKAGE__ . ": Incomplete input")          unless $self->{cq};
 	}; if ($@) {
-	    $main::log->logdie (__PACKAGE__ . ": $@");
+	    $TM::log->logdie (__PACKAGE__ . ": $@");
 	}
 # TODO move this into the grammar
 #warn "in grammar before optimize ".$self->{src}." = ".TM::QL::PE::prs2str ($self->{cq});

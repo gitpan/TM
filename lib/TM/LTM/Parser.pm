@@ -246,7 +246,7 @@ sub new {
   }; if ($@) {
     warn "could not find CParser ($@)";
     use Parse::RecDescent;
-    $self->{parser} = new Parse::RecDescent ($ltm_grammar) or $main::log->logdie (scalar __PACKAGE__ .": problem in grammar ($@)");
+    $self->{parser} = new Parse::RecDescent ($ltm_grammar) or $TM::log->logdie (scalar __PACKAGE__ .": problem in grammar ($@)");
   };
   return $self;
 }
@@ -287,8 +287,8 @@ sub parse {
     $text =~ s|/\*.*?\*/||sg; # global multiline
 
 
-    $self->{parser}->startrule (\$text, 1, $self->{store}, $main::log, $implicits);
-    $main::log->logdie ( scalar __PACKAGE__ . ": Found unparseable '".substr($text,0,40)."....'" ) unless $text =~ /^\s*$/s;
+    $self->{parser}->startrule (\$text, 1, $self->{store}, $TM::log, $implicits);
+    $TM::log->logdie ( scalar __PACKAGE__ . ": Found unparseable '".substr($text,0,40)."....'" ) unless $text =~ /^\s*$/s;
 
     { # resolving implicit stuff
 	my $store     = $self->{store};

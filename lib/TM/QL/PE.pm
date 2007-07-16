@@ -116,7 +116,7 @@ sub _init_parser {
     use Parse::RecDescent;
 #    $::RD_TRACE = 1;
     $::RD_HINT = 1;    $::RD_WARN = 1;
-    $parser = new Parse::RecDescent ($grammar) or $main::log->logdie (__PACKAGE__ . "Problem in grammar");
+    $parser = new Parse::RecDescent ($grammar) or $TM::log->logdie (__PACKAGE__ . "Problem in grammar");
 }
 
 sub new {
@@ -128,10 +128,10 @@ sub new {
     eval {
 #	$::RD_TRACE = 1;
 	$p = $parser->startrule (\$s, 1, \%FUNS);
-	$main::log->logdie (__PACKAGE__ . ": Found unparseable '$s'")    unless $s =~ /^\s*$/s;
-	$main::log->logdie (__PACKAGE__ . ": Incomplete input for '$s'") unless $p;
+	$TM::log->logdie (__PACKAGE__ . ": Found unparseable '$s'")    unless $s =~ /^\s*$/s;
+	$TM::log->logdie (__PACKAGE__ . ": Incomplete input for '$s'") unless $p;
     }; if ($@) {
-	$main::log->logdie (__PACKAGE__ . ": $@");
+	$TM::log->logdie (__PACKAGE__ . ": $@");
     }
 ##warn "expr ".Dumper $pr;
     return $p;

@@ -14,19 +14,20 @@ TM::Bulk - Topic Maps, Bulk Retrieval Trait
 
   my $tm = .....                          # get a map from somewhere
 
+  use TM::Bulk;
   use Class::Trait;
   Class::Trait->apply ($tm, 'TM::Bulk');  # give the map the trait
 
-  $vortex = $tm->vortex ('some-lid',
-                         {
-			  'types'       => [ 'types' ],
-			  'instances'   => [ 'instances*', 0, 20 ],
-			  'topic'       => [ 'topic' ],
-			  'roles'       => [ 'roles',     0, 10 ],
-			  'members'     => [ 'players' ],
-			 },
-			 [ 'scope1', 'scope2', .... ]
-			);
+  my $vortex = $tm->vortex ('some-lid',
+                           {
+	  	 	    'types'       => [ 'types' ],
+		 	    'instances'   => [ 'instances*', 0, 20 ],
+			    'topic'       => [ 'topic' ],
+			    'roles'       => [ 'roles',     0, 10 ],
+			    'members'     => [ 'players' ],
+			   },
+			   [ 'scope1', 'scope2', .... ]
+			   );
 
 
 =head1 DESCRIPTION

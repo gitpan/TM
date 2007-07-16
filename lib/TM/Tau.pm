@@ -382,12 +382,12 @@ sub _parse {
     my $ms     = shift;
 
     use Parse::RecDescent;
-    $parser ||= new Parse::RecDescent ($tau_grammar)           or  $main::log->logdie (scalar __PACKAGE__ . ": problem in tau grammar");
+    $parser ||= new Parse::RecDescent ($tau_grammar)           or  $TM::log->logdie (scalar __PACKAGE__ . ": problem in tau grammar");
 
     my $f = $parser->startrule (\$tau,  1, \%sources,                  # predefined sources
 				           \%filters)                  # add the currently known filters
 				           ;
-    $main::log->logdie (scalar __PACKAGE__ . ": found unparseable '$tau'") if $tau =~ /\S/s ;
+    $TM::log->logdie (scalar __PACKAGE__ . ": found unparseable '$tau'") if $tau =~ /\S/s ;
     return $f;
 }
 

@@ -113,7 +113,7 @@ Example:
 sub new {
     my $class = shift;
     my $tm    = shift;
-    $main::log->logdie (scalar __PACKAGE__.": first parameter must be an instance of TM") unless ref ($tm) && $tm->isa ('TM');
+    $TM::log->logdie (scalar __PACKAGE__.": first parameter must be an instance of TM") unless ref ($tm) && $tm->isa ('TM');
 
     my %options = @_;
     $options{closed} ||= 0;  # we assume that this is 'open' and not 'closed'

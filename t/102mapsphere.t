@@ -4,7 +4,7 @@ use TM;
 use base qw(TM);
 use Class::Trait ('TM::MapSphere',
 		  'TM::Synchronizable::MLDBM' => {
-		      exclude => [ "sync_in", "sync_out" ] # these are provided by Synchronizable::MapSphere
+		      exclude => [ "sync_in", "sync_out" ] # these are provided by TM::Synchronizable::MapSphere
 		  },
 		  'TM::Synchronizable::MapSphere');
 1;
@@ -13,14 +13,6 @@ use Class::Trait ('TM::MapSphere',
 # TM::Materialized::MLDBM + TM::MapSphere + TM::Synchronizable::MapSphere (overloads sync)
 
 #-- test suite
-
-package main;
-
-use Log::Log4perl;
-Log::Log4perl->init("t/log.conf");
-our $log = Log::Log4perl->get_logger("TM");
-
-1;
 
 use strict;
 use warnings;
@@ -128,6 +120,9 @@ _mktmps;
     
     _writetmp ($tmp[3], "ccc (ddd)
 
+implementation
+sin: http://tm.devc.at/mapsphere/implementation
+
 yyy (topicmap)
 sin: file:$tmp[4]
 oc (implementation): TM::Materialized::AsTMa
@@ -141,6 +136,7 @@ oc (implementation): TM::Materialized::AsTMa
     # that's all we have for now
     ok ($tm->mids ('xxx'),                             'child map, midlet (xxx)');
     ok ($tm->mids ('yyy'),                             'child map, midlet (yyy)');
+
     # but not this
     ok (!$tm->is_mounted ('/xxx/')->mids ('ccc'),      'child map, midlet missing (ccc)');
     ok (!$tm->is_mounted ('/xxx/')->mids ('ddd'),      'child map, midlet missing (ddd)');
@@ -159,7 +155,6 @@ oc (implementation): TM::Materialized::AsTMa
 
     # but still not this
     ok (!$tm->is_mounted ('/yyy/')->mids ('eee'),      'child map, midlet missing (eee)');
-
 
     $tm->sync_in ('/yyy/');
     # but now
@@ -232,6 +227,7 @@ eval {
 }
 
 
+__END__
 __END__
 
 

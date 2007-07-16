@@ -56,7 +56,7 @@ sub new {
 	die "URL must have the protocol file: " unless $options{url} =~ /^file:/;
 	return bless $class->SUPER::new (%options), $class;
     } else {
-	my $file = delete $options{file} or $main::log->logdie ("no file specified");
+	my $file = delete $options{file} or $TM::log->logdie ("no file specified");
 	return bless $class->SUPER::new (%options, url => 'file:'.$file), $class;
     }
 }

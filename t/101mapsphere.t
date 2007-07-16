@@ -9,14 +9,6 @@ use Class::Trait qw(TM::MapSphere);
 
 #-- test suite
 
-package main;
-
-use Log::Log4perl;
-Log::Log4perl->init("t/log.conf");
-our $log = Log::Log4perl->get_logger("TM");
-
-1;
-
 use strict;
 use warnings;
 
