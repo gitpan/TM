@@ -19,141 +19,11 @@ use Class::Trait;
 
 #== TESTS =====================================================================
 
+require_ok ('TM::Tree');
+require_ok ('TM::Graph');
 require_ok ('TM::Analysis');
 
-{ # clustering
-    use TM::Materialized::AsTMa;
-    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
-					  inline => '
-# cluster 1
-aaa subclasses bbb
-
-bbb is-a ccc
-
-(ddd)
-eee: fff
-ggg: hhh
-iii: ccc
-
-#------------------------------------
-# cluster 2
-zzz subclasses yyy
-
-zzz subclasses xxx
-
-www is-a zzz
-
-(vvv)
-uuu: rrr
-sss: ttt
-qqq: www
-    ');
-    $tm->sync_in;
-
-#warn Dumper $tm; exit;
-
-    Class::Trait->apply ($tm, 'TM::Analysis');
-
-    my $clusters = $tm->clusters (use_lid => 0);
-#    foreach (@$clusters) {
-#	print "we are connnected: ", join (",", @$_), "\n\n";
-#    }
-
-    my ($c1) = grep (grep ($_ eq 'tm:aaa', @$_), @$clusters);
-    ok (eq_set ($c1,  [
-    'tm:fff',
-    'tm:aaa',
-    'tm:bbb',
-    'tm:hhh',
-    'tm:ccc'
-    ]), 'cluster 1');
-    my ($c2) = grep (grep ($_ eq 'tm:www', @$_), @$clusters);
-    ok (eq_set ($c2,  [
-    'tm:www',
-    'tm:yyy',
-    'tm:xxx',
-    'tm:ttt',
-    'tm:rrr',
-    'tm:zzz'
-    ]), 'cluster 2');
-    my ($c3) = grep (grep ($_ eq 'tm:sss', @$_), @$clusters);
-    ok (eq_set ($c3, [    'tm:sss',  ]), 'cluster 3');
-
-    $clusters = $tm->clusters (use_roles => 1, use_type => 1, use_lid => 0);
-#warn Dumper $clusters;
-    my ($c4) = grep (grep ($_ eq 'tm:aaa', @$_), @$clusters);
-
-    is (scalar @$c4, 33, 'cluster 4');
-}
-
-{ # statistics
-    use TM;
-    my $tm1 = new TM;
-    Class::Trait->apply ($tm1, 'TM::Analysis');
-
-
-    my $stats1 = $tm1->statistics;
-#warn Dumper $stats1;
-
-    is ($stats1->{'nr_maplets'},  8, 'nr_maplets');
-    is ($stats1->{'nr_midlets'},  scalar $tm1->midlets, 'nr_midlets');
-    is ($stats1->{'nr_clusters'}, 15, 'nr_clusters');
-
-    use TM::Materialized::AsTMa;
-    my $tm2 = new TM::Materialized::AsTMa (baseuri => 'tm:',
-					   inline => '
-aaa subclasses bbb
-
-bbb is-a ccc
-    ');
-    $tm2->sync_in;
-#warn Dumper $tm2;
-
-    Class::Trait->apply ($tm2, 'TM::Analysis');
-    my $stats2 = $tm2->statistics;
-#warn Dumper $stats;
-
-    is ($stats2->{'nr_maplets'},  $stats1->{'nr_maplets'} + 2,     'nr_maplets');
-    is ($stats2->{'nr_midlets'},  $stats1->{'nr_midlets'} + 3 + 2, 'nr_midlets');
-    is ($stats2->{'nr_clusters'}, 15,                              'nr_clusters');
-    
-}
-
-{ # orphanage
-    use TM::Materialized::AsTMa;
-    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
-					  inline => '
-aaa subclasses bbb
-
-bbb is-a ccc
-    ');
-    $tm->sync_in;
-    Class::Trait->apply ($tm, 'TM::Analysis');
-
-    my $o = $tm->orphanage;
-#warn Dumper $o;
-
-    ok (!grep ($_ eq 'tm:bbb', @{$o->{untyped}}),        'bbb is not untyped');
-    ok ( grep ($_ eq 'tm:ccc', @{$o->{untyped}}),        'ccc is     untyped');
-
-    ok (!grep ($_ eq 'tm:ccc', @{$o->{empty}}),          'ccc is not untyped');
-    ok ( grep ($_ eq 'tm:aaa', @{$o->{empty}}),          'aaa is     untyped');
-
-    ok (!grep ($_ eq 'tm:aaa', @{$o->{unclassified}}),   'aaa is not unclassified');
-    ok ( grep ($_ eq 'tm:ccc', @{$o->{unclassified}}),   'ccc is     unclassified');
-
-    ok (!grep ($_ eq 'tm:bbb', @{$o->{unspecified}}),    'bbb is not unspecified');
-    ok ( grep ($_ eq 'tm:aaa', @{$o->{unspecified}}),    'aaa is     unspecified');
-
-    $o = TM::Analysis::orphanage ($tm, 'untyped');
-    ok ($o->{untyped}, 'only untyped');
-}
-
-require_ok ('TM::Tree');
-
 { # tree
-
-
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -235,7 +105,6 @@ child: noam
     eq_deeply( $pedigree2, $pedigree, "tree = tree_x" );
 }
 
-
 { # taxonomy
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
@@ -272,6 +141,243 @@ ddd subclasses aaa
 	       [ 'tm:ccc', 'tm:ddd' ]),          'taxo 5');
 
 }
+
+{ # clustering
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					  inline => '
+# cluster 1
+aaa subclasses bbb
+
+bbb is-a ccc
+
+(ddd)
+eee: fff
+ggg: hhh
+iii: ccc
+
+#------------------------------------
+# cluster 2
+zzz subclasses yyy
+
+zzz subclasses xxx
+
+www is-a zzz
+
+(vvv)
+uuu: rrr
+sss: ttt
+qqq: www
+    ');
+    $tm->sync_in;
+
+#warn Dumper $tm; exit;
+
+    Class::Trait->apply ($tm, 'TM::Graph');
+
+    my $clusters = $tm->clusters (use_lid => 0);
+#    foreach (@$clusters) {
+#	print "we are connnected: ", join (",", @$_), "\n\n";
+#    }
+
+    my ($c1) = grep (grep ($_ eq 'tm:aaa', @$_), @$clusters);
+    ok (eq_set ($c1,  [
+    'tm:fff',
+    'tm:aaa',
+    'tm:bbb',
+    'tm:hhh',
+    'tm:ccc'
+    ]), 'cluster 1');
+    my ($c2) = grep (grep ($_ eq 'tm:www', @$_), @$clusters);
+    ok (eq_set ($c2,  [
+    'tm:www',
+    'tm:yyy',
+    'tm:xxx',
+    'tm:ttt',
+    'tm:rrr',
+    'tm:zzz'
+    ]), 'cluster 2');
+    my ($c3) = grep (grep ($_ eq 'tm:sss', @$_), @$clusters);
+    ok (eq_set ($c3, [    'tm:sss',  ]), 'cluster 3');
+
+    $clusters = $tm->clusters (use_roles => 1, use_type => 1, use_lid => 0);
+#warn Dumper $clusters;
+    my ($c4) = grep (grep ($_ eq 'tm:aaa', @$_), @$clusters);
+
+    is (scalar @$c4, 33, 'cluster 4');
+}
+
+{ # graph
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					  inline => '
+
+# this test data has NOTHING todo with Bond University
+# any similarity with morons anywhere is completely coinci-whatever
+
+adam (human)
+
+(is-subclass-of)
+subclass: halb-lustiger
+superclass: bio-unit
+
+(is-subclass-of)
+subclass: human
+superclass: halb-lustiger
+
+(begets)
+parent: adam eve
+child: cain
+
+(bigots)
+parent: adam
+child: candrews
+
+candrews (halb-lustiger)
+
+(begets)
+parent: adam eve
+child: abel
+
+(bigots)
+parent: abel
+child: imorriso
+
+imorriso (halb-lustiger)
+
+(begets)
+parent: adam eve
+child: seth
+
+(begets)
+parent: adam eve
+child: azura
+
+#--
+
+(begets)
+parent: cain
+child: enoch
+
+#--
+
+(begets)
+parent: enoch
+child: irad
+
+#--
+
+(begets)
+parent: irad
+child: mehajael
+
+#--
+
+(begets)
+parent: seth
+child: enosh
+
+(begets)
+parent: seth
+child: noam
+
+   ');
+
+    Class::Trait->apply ($tm => 'TM::Graph');
+    $tm->sync_in;
+
+    ok ($tm->is_path ([ 'adam' ],  [ [ 'isa' ] ], 'human'), 'adam is human');
+    ok ($tm->is_path ([ 'adam' ],  [ [ 'isa' ] ], 'halb-lustiger'), 'adam is halb-lustiger');
+    ok ($tm->is_path ([ 'human' ], [ [ 'iko' ] ], 'bio-unit'), 'humans are bio units');
+
+    my %paths = (
+                  'cain'  => [ [ 'begets' ] ],
+                  'enoch' => [ [ 'begets' ], [ 'begets' ] ],
+                  'irad'  => [ [ 'begets' ], [ 'begets' ], [ 'begets' ] ],
+# test begets*
+                  'irad'  => (bless [ [ 'begets' ] ], '*'),
+                  'noam'  => (bless [ [ 'begets' ] ], '*'),
+# test begets | bigots
+                  'candrews' => [ [ 'begets', 'bigots' ] ],
+                  'imorriso' => (bless [ [ 'begets', 'bigots' ] ], '*'),
+                );
+
+
+   foreach my $p (keys %paths) {
+      next if $p =~ /\*/;
+      ok ($tm->is_path ([ 'adam' ], $paths{$p}, $p),  'stories which start bad, end bad '. Dumper $paths{$p});
+   }
+exit;
+
+
+#warn Dumper $tm;
+
+}
+
+exit;
+
+{ # statistics
+    use TM;
+    my $tm1 = new TM;
+    Class::Trait->apply ($tm1, 'TM::Analysis', 'TM::Graph');
+
+    my $stats1 = $tm1->statistics;
+#warn Dumper $stats1;
+
+    is ($stats1->{'nr_maplets'},  8, 'nr_maplets');
+    is ($stats1->{'nr_midlets'},  scalar $tm1->midlets, 'nr_midlets');
+    is ($stats1->{'nr_clusters'}, 15, 'nr_clusters');
+
+    use TM::Materialized::AsTMa;
+    my $tm2 = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					   inline => '
+aaa subclasses bbb
+
+bbb is-a ccc
+    ');
+    $tm2->sync_in;
+#warn Dumper $tm2;
+
+    Class::Trait->apply ($tm2, 'TM::Analysis');
+    my $stats2 = $tm2->statistics;
+#warn Dumper $stats;
+
+    is ($stats2->{'nr_maplets'},  $stats1->{'nr_maplets'} + 2,     'nr_maplets');
+    is ($stats2->{'nr_midlets'},  $stats1->{'nr_midlets'} + 3 + 2, 'nr_midlets');
+    is ($stats2->{'nr_clusters'}, 15,                              'nr_clusters');
+    
+}
+
+{ # orphanage
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					  inline => '
+aaa subclasses bbb
+
+bbb is-a ccc
+    ');
+    $tm->sync_in;
+    Class::Trait->apply ($tm, 'TM::Analysis');
+
+    my $o = $tm->orphanage;
+#warn Dumper $o;
+
+    ok (!grep ($_ eq 'tm:bbb', @{$o->{untyped}}),        'bbb is not untyped');
+    ok ( grep ($_ eq 'tm:ccc', @{$o->{untyped}}),        'ccc is     untyped');
+
+    ok (!grep ($_ eq 'tm:ccc', @{$o->{empty}}),          'ccc is not untyped');
+    ok ( grep ($_ eq 'tm:aaa', @{$o->{empty}}),          'aaa is     untyped');
+
+    ok (!grep ($_ eq 'tm:aaa', @{$o->{unclassified}}),   'aaa is not unclassified');
+    ok ( grep ($_ eq 'tm:ccc', @{$o->{unclassified}}),   'ccc is     unclassified');
+
+    ok (!grep ($_ eq 'tm:bbb', @{$o->{unspecified}}),    'bbb is not unspecified');
+    ok ( grep ($_ eq 'tm:aaa', @{$o->{unspecified}}),    'aaa is     unspecified');
+
+    $o = TM::Analysis::orphanage ($tm, 'untyped');
+    ok ($o->{untyped}, 'only untyped');
+}
+
 
 __END__
 

@@ -88,7 +88,7 @@ ccc: hhh
                              'bbb'  => [ 'subclasses' ],
                              'bbb*' => [ 'subclasses*' ],
                              'rrr'  => [ 'roles' ],
-                             'lll'  => [ 'players' ],
+##                             'lll'  => [ 'players' ],
                              }
                              );
 
@@ -133,7 +133,6 @@ ccc: hhh
                ]), 'vortex: subclass*');
 
   is (scalar @{$vortex->{'rrr'}}, 2,  'roles'); # look closer xxx subclasses vvv subclasses ...aaa !
-  is (scalar @{$vortex->{'lll'}}, 10, 'players');
 }
 
 { # basenames
@@ -161,7 +160,7 @@ bn @ s2: CCCS
     use Class::Trait;
     Class::Trait->apply ($tm, 'TM::Bulk');
     {
-	my $names = $tm->basenames ([ 'ccc', 'ggg', 'aaa' ]);
+	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ]);
 #warn Dumper $names;
 	ok ($names->{'tm:aaa'} eq 'AAAS'  || 
 	    $names->{'tm:aaa'} eq 'AAAS2' || 
@@ -170,7 +169,7 @@ bn @ s2: CCCS
 	is (scalar keys %$names, 2,    'basenames: empty scope (any)');
     }
     {
-	my $names = TM::Bulk::basenames ($tm, [ 'ccc', 'ggg', 'aaa' ], [ '*' ]);
+	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ '*' ]);
 #warn Dumper $names;
 	ok ($names->{'tm:aaa'} eq 'AAAS'  || 
 	    $names->{'tm:aaa'} eq 'AAAS2' || 
@@ -179,21 +178,21 @@ bn @ s2: CCCS
 	is (scalar keys %$names, 2,    'basenames: any scope');
     }
     {
-	my $names = TM::Bulk::basenames ($tm, [ 'ccc', 'ggg', 'aaa' ], [ 's1' ]);
+	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ 's1' ]);
 #warn Dumper $names;
 	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: one scope');
 	ok (! defined $names->{'tm:ccc'}, 'basenames: one scope');
 	is (scalar keys %$names, 2,    'basenames: one scope');
     }
     {
-	my $names = TM::Bulk::basenames ($tm, [ 'ccc', 'ggg', 'aaa' ], [ 's1', 's2' ]);
+	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ 's1', 's2' ]);
 #warn Dumper $names;
 	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: several scope');
 	ok ($names->{'tm:ccc'} eq 'CCCS', 'basenames: several scope');
 	is (scalar keys %$names, 2,    'basenames: several scope');
     }
     {
-	my $names = TM::Bulk::basenames ($tm, [ 'ccc', 'bbb', 'aaa' ], [ 's1', 's3', '*' ]);
+	my $names = $tm->names ([ 'ccc', 'bbb', 'aaa' ], [ 's1', 's3', '*' ]);
 #warn Dumper $names;
 	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: several scope plus *');
 	ok ($names->{'tm:bbb'} eq 'BBBS' ||

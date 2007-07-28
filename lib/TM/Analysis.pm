@@ -4,6 +4,7 @@ use TM;
 use Data::Dumper;
 
 use Class::Trait 'base';
+use Class::Trait 'TM::Graph';
 
 =pod
 
@@ -19,10 +20,9 @@ TM::Analysis - Topic Maps, analysis functions
 
   Class::Trait->apply ($tm, 'TM::Analysis');
 
-  print Dumper $tm->clusters;
-
   print Dumper $tm->statistics;
 
+  print Dumper $tm->orphanage;
 
 =head1 DESCRIPTION
 
@@ -31,82 +31,6 @@ This package contains some topic map analysis functionality.
 =head1 INTERFACE
 
 =over
-
-=item B<clusters>
-
-I<$hashref> = clusters (I<$tm>)
-
-computes the I<islands> of topics. It figures out which topics are connected via associations and - in case they are -
-will collate them into clusters. The result is a hash reference to a hash containing list references of topic ids
-organized in a cluster.
-
-In default mode, this function only regards topics to be in the same cluster if topics B<play> roles in one and the same
-maplet. The role topics themselves or the type or the scope are ignored.
-
-You can change this behaviour by passing in options like
-
-  use_scope => 1
-
-  use_roles => 1
-
-  use_type  => 1
-
-Obviously, with C<use_scope =E<gt> 1> you will let a lot of topics collapse into one cluster as most maplets usually are
-in the unconstrained scope.
-
-B<NOTE>: This is yet a somewhat expensive operation.
-
-=cut
-
-sub clusters {
-    my $tm    = shift;
-
-    my %opts = @_;
-# by default
-#   not using scope
-#   not using type
-#   not using roles
-    $opts{use_lid} = 1 unless defined $opts{use_lid}; #   always use maplet ID
-
-    my $i = 0;
-    my $clusters = { map { $_ => $i++ } $tm->midlets };   # we store every toplet into its own cluster
-
-    foreach my $m ($tm->match (TM->FORALL, nochar => 1)) {
-
-	my   @candidates;
-	push @candidates, $m->[TM->LID]         if $opts{use_lid};
-	push @candidates, $m->[TM->TYPE]        if $opts{use_type};
-	push @candidates, $m->[TM->SCOPE]       if $opts{use_scope};
-	push @candidates, @ { $m->[TM->ROLES] } if $opts{use_roles};
-	push @candidates, @ { $m->[TM->PLAYERS] };
-
-#warn "candidates in a boat ". Dumper \@candidates;
-
-#warn "starting with ".@roles[0];
-	my $i = $clusters->{shift @candidates};
-#warn "  with $i";
-	foreach (@candidates) {
-#warn "working on $_";
-	    my $j = $clusters->{$_};
-	    # now all entries which have currently $j must be turned into $i
-#warn "considering $i and $j";
-	    unless ($i == $j) {
-#warn "has index $j, now merge all which have $j to have $i";
-		map { $clusters->{$_} = $clusters->{$_} == $j ?  $i : $clusters->{$_} } keys %{$clusters};
-#warn Dumper $clusters;
-	    }
-	}
-    }
-
-#warn Dumper $clusters;
-
-    my @clusters = map { [] } values %$clusters;
-    map { push @{@clusters[ $clusters->{$_} ]}, $_ } keys %$clusters ;
-    return [ grep (@$_, @clusters)];  # get rid of empty clusters
-
-}
-
-=pod
 
 =item B<statistics>
 
@@ -133,15 +57,16 @@ Nr of clusters according to the C<cluster> function elsewhere in this document.
 =cut
 
 sub statistics {
-    my $tm    = shift;
+    my $self = shift;
     my %s; # result
 
     foreach my $a (@_ ? @_ : qw(nr_midlets nr_maplets nr_clusters)) {       # default is all
-	$s{$a} = scalar $tm->midlets      if $a eq 'nr_midlets';
-	$s{$a} = scalar $tm->match_forall if $a eq 'nr_maplets';
+	$s{$a} = scalar $self->midlets      if $a eq 'nr_midlets';
+	$s{$a} = scalar $self->match_forall if $a eq 'nr_maplets';
 
 	if ($a eq 'nr_clusters') { # clusters
-	    my $clusters = TM::Analysis::clusters ($tm, use_roles => 1, use_type => 1);
+	    Class::Trait->apply ($self, 'TM::Graph');                       # make sure we can do it
+	    my $clusters = $self->clusters (use_roles => 1, use_type => 1);
 	    $s{$a} = scalar @$clusters;
 	}
     };
@@ -242,8 +167,8 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.5;
-our $REVISION = '$Id: Analysis.pm,v 1.6 2006/12/13 10:46:58 rho Exp $';
+our $VERSION  = 0.6;
+our $REVISION = '$Id: Analysis.pm,v 1.7 2007/07/28 16:41:13 rho Exp $';
 
 
 1;

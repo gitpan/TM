@@ -29,7 +29,7 @@ require_ok( 'TM::Materialized::AsTMa' );
 eval {
   my $tm = new TM::Materialized::AsTMa (url => 'file:xxx');
   $tm->sync_in;
-}; like ($@, qr/does not exist/, _chomp ($@));
+}; like ($@, qr/unable to load/, _chomp ($@));
 
 { # basic operation
   my $tm = new TM::Materialized::AsTMa (inline => '# this is AsTMa

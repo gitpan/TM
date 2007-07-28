@@ -2,6 +2,14 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.30  Sa 28. Jul 18:40:45 CEST 2007
+	! TM::Bulk: renaming of basenames to names, documentation
+	! TM::Bulk: vortex request fields aligned with modern TMDM/TMRM view
+	! TM::ResourceAble::mtime now returns 0 (not undef) when the resource cannot be determined
+	! TM::Tree: cluster moved into TM::Graph (just rename your use trait from TM::Tree to TM::Graph)
+	TM : get_players has now the role optional
+	TM::Graph added: (contains cluster, frontier and is_path)
+
 1.29  Mo 16. Jul 21:14:31 CEST 2007
 	- made Log4Perl log object native into TM.pm (should now work stand-alone)
 	- TM: internalize always took (undef, \ 'http://some.uri') parameters, documented now

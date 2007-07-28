@@ -19,6 +19,7 @@ my @PODs = qw(
 	      lib/TM/Overview.pm
 	      lib/TM/FAQ.pm
 	      lib/TM/DM.pm
+              lib/TM/Graph.pm
 	      lib/TM/Tree.pm
 	      lib/TM/PSI.pm
 	      lib/TM/ResourceAble.pm

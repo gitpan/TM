@@ -72,13 +72,18 @@ manifesto:
 	find lib/ -iname '*.pm' | sort
 	find t    -iname '*.t'  | sort
 
-MAKE
-}
+#MAKE
+#}
 
-sub debian {
-    return <<MAKE
+#sub debian {
+#    return <<MAKE
 
-debian: dh-make-perl --build -cpan TM
+inject:
+	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
+	sudo mcpani --inject
+
+debian:
+	(cd /usr/local/share/packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest)
 
 MAKE
 }

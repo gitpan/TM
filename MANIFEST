@@ -43,6 +43,7 @@ lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/Bulk.pm
 lib/TM/DM.pm
+lib/TM/Graph.pm
 lib/TM/Index.pm
 lib/TM/Index/Characteristics.pm
 lib/TM/Index/Match.pm

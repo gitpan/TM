@@ -130,7 +130,9 @@ eval {
     my $f = new TM::Tau::Filter::Analyze (left => $tm, baseuri => $bu);
     $f->sync_in;
 
-    my $stats = TM::Analysis::statistics ($tm);                   # has to be here, as this is the time after parsing AsTMa
+    use Class::Trait;
+    Class::Trait->apply ($tm, 'TM::Analysis');
+    my $stats = $tm->statistics ;                   # has to be here, as this is the time after parsing AsTMa
 
     ok (eq_set ([ $f->instances ($f->mids ('metric')) ],
 		[ map { $bu . $_ } keys %$stats ]),                    'got all metrics');

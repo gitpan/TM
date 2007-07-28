@@ -1,5 +1,6 @@
 package TM::Bulk;
 
+use TM;
 use Class::Trait 'base';
 
 use Data::Dumper;
@@ -12,12 +13,13 @@ TM::Bulk - Topic Maps, Bulk Retrieval Trait
 
 =head1 SYNOPSIS
 
-  my $tm = .....                          # get a map from somewhere
+  my $tm = .....                          # get a map from anywhere
 
   use TM::Bulk;
   use Class::Trait;
   Class::Trait->apply ($tm, 'TM::Bulk');  # give the map the trait
 
+  # find out environment of topic
   my $vortex = $tm->vortex ('some-lid',
                            {
 	  	 	    'types'       => [ 'types' ],
@@ -26,54 +28,71 @@ TM::Bulk - Topic Maps, Bulk Retrieval Trait
 			    'roles'       => [ 'roles',     0, 10 ],
 			    'members'     => [ 'players' ],
 			   },
-			   [ 'scope1', 'scope2', .... ]
 			   );
-
+  # find names of topics (optionally using a scope preference list)
+  my $names = $tm->names ([ 'ccc', 'bbb', 'aaa' ], [ 's1', 's3', '*' ]);
 
 =head1 DESCRIPTION
 
 Especially when you build user interfaces, you might need access to a lot of topic-related
-information. Instead of collecting this 'by foot' the following methods help you achieve this
-more effectively.
+information. Instead of collecting this 'by foot' the following methods help you achieve this more
+effectively.
 
 =over
 
-=item B<basenames>
+=item B<names>
 
-I<$name_hash_ref> = I<$tm>->basenames (I<$lid_list_ref>, I<$scope_list_ref> )
+I<$name_hash_ref> = I<$tm>->names (I<$lid_list_ref>, [ I<$scope_list_ref> ] )
 
-This method takes a list (reference) of topic ids and a list of scoping topic ids.  For the former
-it will try to find the I<basename>s (I<topic names> for TMDM acolytes). The list of scopes directs
-the method to look first for a basename in the first scoping topic, then second, and so on. If no
-such basenames exist for a particular I<lid>, then an C<undef> is returned.
+This method takes a list (reference) of topic ids and an optional list of scoping topic ids.  For
+the former it will try to find the I<name>s (I<topic names> for TMDM acolytes).
 
-If the list of scoping topics is empty, then it will be interpreted as I<dont care>. In that case
-B<any> basename may be returned (if such exists). You can make this explicit by adding a C<*> at the
-end (or as sole entry) in the list. Otherwise the result is undefined.
+If the list of scopes is empty then the preference is on the unconstrained scope. If no name for a
+topic is in that scope, any other will be used.
 
-The overall result is a hash (reference) having the lids as keys and the basename strings as values.
+If the list of scopes is non-empty, it directs to look first for a name in the first scoping topic,
+then second, and so on. If you want to have one name in any case, append C<*> to the scoping list.
+
+If no name exist for a particular I<lid>, then an C<undef> is returned in the result hash.
+
+The overall result is a hash (reference) having the lids as keys and the name strings as values.
 
 =cut
 
-sub basenames {
+sub scoped_names {
+    my $self = shift;
+
+#@@@@@
+}
+
+sub names {
     my $self   = shift;
     my $topics = shift || [];
     my $scopes = shift || [ '*' ];
 
+#warn "looking for ".Dumper $topics;
     my $dontcare = 0;                                                  # one of the rare occasions I need a boolean
     if ($scopes->[-1] eq '*') {
 	pop @$scopes;                                                  # get rid of this '*' to have a clean topic list
 	$dontcare = 1;                                                 # remember this incident for below
     }
-    my @scopes = grep ($_, $self->mids (@$scopes));                    # make them absolute, so that we can compare later (only keep existing ones)
+    my @scopes = grep { $_ } $self->mids (@$scopes);                   # make them absolute, so that we can compare later (only keep existing ones)
 #warn "scopes".Dumper \@scopes;
 
+    my ($US) = @{$self->{usual_suspects}}{'us'};
     my %dict;                                                          # this is what we are building
 TOPICS:
     foreach my $lid (grep { $_ } $self->mids (@$topics)) {             # for all in my working list, make them absolute, and test
+	next if $dict{$lid};                                           # do not things twice
 	my @as = grep { $_->[TM->KIND] == TM->NAME }                   # filter all characteristics for basenames
 	            $self->match_forall (char => 1, topic => $lid);
         next unless @as;                                               # assertion: @as contains at least one entry!
+	unless (@scopes) {                                             # empty list? preference is unconstrained scope
+	    if (my @aas = grep ($_->[TM->SCOPE] eq $US, @as)) {
+		$dict{$lid} = $aas[0]->[TM->PLAYERS]->[1]->[0];
+		next TOPICS;
+	    }
+	}
 	foreach my $sco ($self->mids (@scopes)) {                      # check out all scope preferences (note, there is at least one in @as!)
 	    if (my @aas = grep ($_->[TM->SCOPE] eq $sco, @as)) {
 		$dict{$lid} = $aas[0]->[TM->PLAYERS]->[1]->[0];
@@ -110,7 +129,7 @@ a hash reference describing the extent of the information (see below)
 
 =item I<scopes>:
 
-a list (reference) to scopes (currently NOT honored)
+a list (reference) to scopes (currently B<NOT> honored)
 
 =back
 
@@ -122,9 +141,21 @@ read-only calls.
 
 =over
 
+=item I<topic>:
+
+fetches the midlet (which is only the subject locator, subject indicators information).
+
+=item I<names> (<n,m>):
+
+fetches all names (as array reference triple [ I<type>, I<scope>, string value ])
+
+=item I<occurrences> (<n,m>):
+
+fetches all occurrences (as array reference triple [ I<type>, I<scope>, I<value> ])
+
 =item I<instances> (<n,m>):
 
-fetches all toplets (and maplets) which are direct instances of the vortex (that is regarded as
+fetches all midlets which are direct instances of the vortex (that is regarded as
 class here);
 
 =item I<instances*> (<n,m>):
@@ -157,15 +188,7 @@ same as C<superclasses>, but creates reflexive, transitive closure
 
 =item I<roles> (<n,m>):
 
-fetches all maplet ids where the vortex B<is> a role,
-
-=item I<players> (<n,m>):
-
-fetches all maplets where the vortex B<plays> a role
-
-=item I<toplet>:
-
-fetches the complete toplet itself (all characteristics, but no maplets)
+fetches all assertion ids where the vortex B<is> plays a role
 
 =back
 
@@ -181,12 +204,10 @@ Example:
 			  'instances'   => [ 'instances*', 0, 20 ],
 			  'topic'       => [ 'topic' ],
 			  'roles'       => [ 'roles',     0, 10 ],
-			  'members'     => [ 'players' ],
 			 },
-			 [ 'scope1', 'scope2', .... ]
 			);
 
-The method dies if C<lid> does not identify a proper toplet.
+The method dies if C<lid> does not identify a proper midlet.
 
 =cut
 
@@ -194,11 +215,49 @@ sub vortex {
   my $self   = shift;
   my $lid    = shift;
   my $what   = shift;
-  my $scopes = shift and die "scopes not supported yet";
+  my $scopes = shift             and $TM::log->logdie ("scopes not supported yet");
 
-  my $alid = $self->mids ($lid);
-  my $t    = $self->midlet ($alid) or die "no midlet for '$alid'";
-  my $_t; # here all the goodies go
+  my $alid   = $self->mids ($lid) or $TM::log->logdie ("no topic '$lid'");
+
+  my ($ISSC, $ISA) = @{$self->{usual_suspects}}{'is-subclass-of', 'isa'};
+  
+  my @as = $self->match_forall (iplayer => $alid);            # find out everything we know about the player
+
+  my $_t;                                                     # here all the goodies go
+  foreach my $where (keys %{$what}) {                         # collect here what the user wants
+      my $w = shift @{$what->{$where}};
+
+      if ($w eq 'topic') {
+	  $_t->{$where} = $self->midlet ($alid);
+	  
+      } else {
+	  my @is;
+	  if (grep ($w =~ /^$_\*?$/, qw(instances types subclasses superclasses))) {
+	      $w =~ s/\*/T/;
+
+	      @is  = $self->$w ($alid); # whoa, Perl late binding rocks !
+	  
+	  } elsif ($w eq 'names') {
+	      @is = map { [ $_->[TM->TYPE], $_->[TM->SCOPE], $_->[TM->PLAYERS]->[1]->[0] ] }
+	            grep { $_->[TM->KIND] == TM->NAME }
+                    @as;
+	  
+	  } elsif ($w eq 'occurrences') {
+	      @is = map { [ $_->[TM->TYPE], $_->[TM->SCOPE], $_->[TM->PLAYERS]->[1] ] }
+	            grep { $_->[TM->KIND] == TM->OCC }
+	            @as;
+	  
+	  } elsif ($w eq 'roles') {
+	      @is = map { $_->[ TM->LID ] }
+                    grep { $_->[TM->TYPE] ne $ISSC && $_->[TM->TYPE] ne $ISA }
+	            grep { $_->[TM->KIND] == TM->ASSOC }
+                    @as;
+	  }
+	  my ($from, $to) = _calc_limits (scalar @is, shift @{$what->{$where}}, shift @{$what->{$where}});
+	  $_t->{$where} = [ @is[ $from .. $to ] ];
+      }
+  }
+  return $_t;                                                                   # and ship it all back
 
   sub _calc_limits {
       my $last  = (shift) - 1; # last available
@@ -208,33 +267,6 @@ sub vortex {
       $to = $last if $to > $last;
       return ($from, $to);
   }
-  
-  foreach my $where (keys %{$what}) {
-      my $w     = shift @{$what->{$where}};
-
-      if ($w eq 'topic') {
-	  $_t->{$where} = $t;
-	  
-      } elsif (grep ($w =~ /^$_\*?$/, qw(instances types subclasses superclasses))) {
-	  $w =~ s/\*/T/;
-
-	  my @lids  = $self->$w ($alid); # whoa, Perl late binding rocks !
-	  my ($from, $to) = _calc_limits (scalar @lids, shift @{$what->{$where}}, shift @{$what->{$where}});
-	  $_t->{$where} = [ @lids[ $from .. $to ] ];
-	  
-      } elsif ($w eq 'roles') {
-	  my @lids = map { $_->[TM->LID ]} $self->match_forall (irole => $alid);
-	  my ($from, $to) = _calc_limits (scalar @lids, shift @{$what->{$where}}, shift @{$what->{$where}});
-	  $_t->{$where} = [ @lids[ $from .. $to ] ];
-	  
-      } elsif ($w eq 'players') {
-	  my @lids =  map { $_->[TM->LID ]} $self->match_forall (iplayer => $alid);
-	  my ($from, $to) = _calc_limits (scalar @lids, shift @{$what->{$where}}, shift @{$what->{$where}});
-	  $_t->{$where} = [ @lids[ $from .. $to ] ];
-	  
-      }
-  }
-  return $_t;
 }
 
 =pod
@@ -254,72 +286,9 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.2;
-our $REVISION = '$Id: Bulk.pm,v 1.1 2005/06/20 10:03:26 rho Exp $';
+our $VERSION  = 0.4;
+our $REVISION = '$Id: Bulk.pm,v 1.2 2007/07/17 16:23:05 rho Exp $';
 
 1;
 
 __END__
-
- =item B<baseNames>
-
-I<$hash_ref> = I<$mem>->baseNames ( I<$topic_id_list_ref>,
-                              I<$scope_list_ref> )
-
-receives a list reference containing topic C<id>s. It returns a hash reference containing
-the baseName for each topic as a value with the topic id the key. The additional parameter is interpreted as
-list reference to scoping topics. If this list is undef, then any basename may be returned. If the list is
-empty ([]), then NO basename will ever be returned. If it is non-empty, then - according to the order in
-this list - the first basename matching will be selected.
-
-Example:
-
-   $names_ref = $tm->baseNames ([ 't-topic1', 't-topic-2' ],
-                                [ 'http://www.topicmaps.org/xtm/language.xtm#en' ]);
-
- =cut
-
-sub baseNames {
-    my $self   = shift;
-    my $names  = shift;
-    my $scopes = shift;
-
-    push @$scopes, $XTM::PSI::xtm{universal_scope} unless ($scopes && @$scopes); # default scope
-
-    elog ('XTM::Memory', 3, "baseNames for.... ");
-    elog ('XTM::Memory', 4, "  baseNames for ", $names, $scopes);
-
-    my %dict;
-    foreach my $n (@{$names}) {
-	next if $dict{$n};
-	(my $m = $n) =~ s/^\#//;
-	if ( $self->{topics}->{$m} ) {  # skip ids where there is nothing
-	    FIND:
-	    foreach my $scope (@$scopes) { # iterate over all scopes and find first matching
-		elog ('XTM::Memory', 5, "     looking for scope ", $scope);
-		foreach my $b (@{$self->{topics}->{$m}->baseNames}) {
-		    elog ('XTM::Memory', 5, "      in baseName ", $b, "scope", $b->scope->references);
-		    if (grep ($_->href eq $scope, @{$b->scope->references})) { # OK, perfect match
-			$dict{$n} = $b->baseNameString->string;
-			elog ('XTM::Memory', 5, "      perfect match: found $dict{$n}");
-			last FIND;
-		    } elsif (grep ($_->href eq $XTM::PSI::xtm{universal_scope}, @{$b->scope->references})) {
-            # topic map did not care
-			$dict{$n} = $b->baseNameString->string;
-			elog ('XTM::Memory', 5, "      map not care: found $dict{$n}");
-			last FIND;
-		    } elsif ($scope eq $XTM::PSI::xtm{universal_scope}) { # user did not care
-			$dict{$n} = $b->baseNameString->string;
-			elog ('XTM::Memory', 5, "      user not care: found $dict{$n}");
-			last FIND;
-		    }
-		}
-	    }
-	}
-	unless ($dict{$n}) { # silent desperation, leave it up to the app to handle this
-	    $dict{$n} = undef;
-	}
-    }
-}
-elog ('XTM::Memory', 4, "  result ", \%dict);
-return { %dict };

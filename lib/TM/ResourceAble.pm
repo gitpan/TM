@@ -111,7 +111,7 @@ sub url {
 
 I<$time> = I<$tm>->mtime
 
-This function returns the UNIX time when the resource has been modified last. C<undef> is returned
+This function returns the UNIX time when the resource has been modified last. C<0> is returned
 if the result cannot be determined. All methods from L<LWP> are supported.
 
 Special resources are treated as follows:
@@ -144,7 +144,8 @@ sub mtime {
 
     if ($url =~ /^file:(.+)/) {
 	use File::stat;
-	my $stats = stat ($1) or die "file '$1' is not accessible (or does not exist)";
+	my $stats = stat ($1);
+	return 0 unless $stats; # or die "file '$1' is not accessible (or does not exist)";
 #warn "file stats ".Dumper $stats;
 #warn "will return ".$stats->mtime;
 	return $stats->mtime;
@@ -179,15 +180,15 @@ L<TM>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 200[67], Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.1;
-our $REVISION = '$Id: ResourceAble.pm,v 1.2 2006/11/29 10:31:15 rho Exp $';
+our $VERSION = 0.2;
+our $REVISION = '$Id: ResourceAble.pm,v 1.3 2007/07/17 16:22:41 rho Exp $';
 
 1;
 
