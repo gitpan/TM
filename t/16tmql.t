@@ -91,11 +91,11 @@ foreach my $testdb (map { $tests->{database}->{$_} } (
 		    if ($expected->{type} eq 'list' || $expected->{type} eq 'set') {
 			my $exp;
 			if ($expected->{content} =~ /\[\.\.\.\]/) {
-			    $exp = [ map { [ $_ ] } $tm->midlets  ];
+			    $exp = [ map { [ $_->[TM->LID] ] } $tm->toplets  ];
 			} elsif ($expected->{content} =~ /^$/) {
 			    $exp = [];
 			} elsif ($expected->{content} =~ /\[\.\.\.\.\.\.\]/) {
-			    my @ts = $tm->midlets;
+			    my @ts = map { $_->[TM->LID] } $tm->toplets;
 			    $exp = [ map { my $x = $_; map { [ $x, $_ ] } @ts  } @ts ];
 			} else {
 			    my @s = map { $_ =~ s/\s+// or $_ } split (/\n/, $expected->{content});
@@ -105,7 +105,9 @@ foreach my $testdb (map { $tests->{database}->{$_} } (
 					      { 
 					         $_ =~ /^\w+:/ and $_
 					      or $_ =~ /(true|false)/              and new TM::Literal ($1, 'xsd:boolean')
-					      or $_ =~ /\[(.*)\]/                  and $tm->mids ($1)
+					      or $_ =~ /\[(.*)\]/                  and $tm->tids ($1)
+#or (warn $_ and 0)
+					      or $_ =~ /\[([a-f0-9]{32})\]/        and $1
 					      or $_ =~ /"(http:.*)"/   and $_ = $1 and new TM::Literal ($_, 'xsd:anyURI')
 					      or $_ =~ /"(.*)"/   and $_ = $1      and new TM::Literal ($_, 'xsd:string')
 					      or $_ =~ /(\-?\d+(\.\d+))/           and new TM::Literal ($1, 'xsd:decimal')
@@ -114,7 +116,7 @@ foreach my $testdb (map { $tests->{database}->{$_} } (
 					      split (/\s*,\s*/, $s)
 					      ];
 			    }
-#warn "expectation is: ".Dumper ($exp);
+#warn "expectation is: ".Dumper ($exp); exit;
 			}
 			_check_list ($tm, $d."/".$q->{title}.": ".$u->{qid}."/$sol_ctr: ", $expected->{type} eq 'list', $s->{code}, $exp, $s->{language}); # ordered or not
 

@@ -75,15 +75,15 @@ sub verify {
 #warn "for $root finding child $ch";
 	if ($ch =~ /C/) { # this is a subtree node
 	    if ($si) {
-		die "fail $ch (indirect) subclass of $root" unless $tm->is_subclass ($tm->mids ($ch, $root));
+		die "fail $ch (indirect) subclass of $root" unless $tm->is_subclass ($tm->tids ($ch, $root));
 	    } else {
-		ok ($tm->is_subclass ($tm->mids ($ch, $root)), "$ch (indirect) subclass of $root");
+		ok ($tm->is_subclass ($tm->tids ($ch, $root)), "$ch (indirect) subclass of $root");
 	    }
 	} else { # this is just an instance
 	    if ($si) {
-		die "fail $ch (indirect) instance of $root" unless $tm->is_a ($tm->mids ($ch, $root));
+		die "fail $ch (indirect) instance of $root" unless $tm->is_a ($tm->tids ($ch, $root));
 	    } else {
-		ok ($tm->is_a ($tm->mids ($ch, $root)),        "$ch (indirect) instance of $root");
+		ok ($tm->is_a ($tm->tids ($ch, $root)),        "$ch (indirect) instance of $root");
 	    }
 	}
     }
@@ -111,7 +111,7 @@ sub _flatten_tree {
 sub _verify_chars {
     my $tm = shift;
     my $t  = shift;
-    foreach ($tm->mids (_flatten_tree ($t))) {
+    foreach ($tm->tids (_flatten_tree ($t))) {
 	my @as = $tm->match_forall (char => 1, topic => $_);
 	if ( /i\d+/ ) { # an instance got a name and an occurrence
 	    die "char for $_: name and occurrence" unless scalar @as == 2;
@@ -227,7 +227,9 @@ if (1) { # prepopulated
 
     $start = Time::HiRes::time;
 #    warn "# verifying second run, should be faster";
+#warn Dumper $taxo;
     verify ($tm, $taxo, 1);
+
     my $indexed = (Time::HiRes::time - $start);
     ok ($indexed < $unindexed, "measurable speedup with eager (populated) index ($indexed < $unindexed)");
 

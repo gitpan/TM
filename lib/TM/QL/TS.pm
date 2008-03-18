@@ -19,6 +19,8 @@ TM::QL::TS - Topic Maps, TMQL Tuple Sequences
 
 =head1 SYNOPSIS
 
+  TBD
+
 =head1 DESCRIPTION
 
 Tuple sequences (TSs) are sequences of tuples of values. Values are either literals (L<TM::Literal>)
@@ -218,7 +220,7 @@ sub ts_atomify {
 
 #warn "serializer!! $tm";
 #warn "xxxxxxxxxxxx ".Dumper $tss;
-    my $VALUE = $tm->mids ('value');
+    my $VALUE = $tm->tids ('value');
     foreach my $t (@$tss) {
 	foreach my $i (0 .. $#$t) {
 	    my $v = $t->[$i];
@@ -417,26 +419,26 @@ my %SUBS = (
 	    'scope.0.'                  => sub { die      "scope reverse axis not yet implemented"; },
 	    'scope.0.SCALAR'            => sub { die      "scope reverse axis not yet implemented"; },
 
-	    'reifier.1.'                => sub { return   $_[0]->reified_by (  $_[1]);  },
-	    'reifier.1.SCALAR'          => sub { return   $_[0]->reified_by (${$_[1]}); },
-	    'reifier.0.'                => sub { return   $_[0]->reifies (     $_[1]);  },
-	    'reifier.0.SCALAR.'         => sub { return   $_[0]->reifies (   ${$_[1]}); },
+	    'reifier.1.'                => sub { return   $_[0]->reifies    (                     $_[1]) ->[TM->LID]; },
+	    'reifier.1.SCALAR'          => sub { return   $_[0]->reifies    (                   ${$_[1]})->[TM->LID]; },
+	    'reifier.0.'                => sub { return   $_[0]->is_reified (  $_[0]->retrieve (  $_[1]));  },
+	    'reifier.0.SCALAR.'         => sub { return   $_[0]->is_reified (  $_[0]->retrieve (${$_[1]})); },
 
-	    'indicators.1.'             => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (  $_[1]) ->[TM->INDICATORS] }; },
-	    'indicators.1.SCALAR'       => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->midlet (${$_[1]})->[TM->INDICATORS] }; },
-	    'indicators.0.TM::Literal'  => sub { return   $_[0]->mids ( \ $_[1]->[0] ) || (); },
+	    'indicators.1.'             => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->toplet (  $_[1]) ->[TM->INDICATORS] }; },
+	    'indicators.1.SCALAR'       => sub { return   map { new TM::Literal ($_, TM::Literal->URI) } @{ $_[0]->toplet (${$_[1]})->[TM->INDICATORS] }; },
+	    'indicators.0.TM::Literal'  => sub { return   $_[0]->tids ( \ $_[1]->[0] ) || (); },
 
 	    'indicators.0.SCALAR'       => sub { my $i    = _atomify ($_[0], $_[1], $_[3]);
-						 return   $_[0]->mids ( \ $i ) || (); },
+						 return   $_[0]->tids ( \ $i ) || (); },
 
-	    'locators.1.'               => sub { my $l    = $_[0]->midlet (  $_[1] )->[TM->ADDRESS]; 
+	    'locators.1.'               => sub { my $l    = $_[0]->toplet (  $_[1] )->[TM->ADDRESS]; 
 						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
-	    'locators.1.SCALAR'         => sub { my $l    = $_[0]->midlet (${$_[1]})->[TM->ADDRESS]; 
+	    'locators.1.SCALAR'         => sub { my $l    = $_[0]->toplet (${$_[1]})->[TM->ADDRESS]; 
 						 return   $l ? new TM::Literal ($l, TM::Literal->URI) : (); },
-	    'locators.0.TM::Literal'    => sub { return   $_[0]->mids ( $_[1]->[0] ) || (); },
+	    'locators.0.TM::Literal'    => sub { return   $_[0]->tids ( $_[1]->[0] ) || (); },
 
 	    'locators.0.SCALAR'         => sub { my $l    = _atomify ($_[0], $_[1], $_[3]);
-						 return   $_[0]->mids ( $l ) || (); },
+						 return   $_[0]->tids ( $l ) || (); },
 
 	    'atomify.1.'                => sub { return   \ $_[1]; },
 	    'atomify.0.TM::Literal'     => sub { return   map { $_->[TM->LID] } $_[0]->match_forall (char  => 1, value => $_[1]); },
@@ -449,7 +451,7 @@ sub ts_navigation {
     my $tss = shift;                                                                 # incoming TS
     my $nav = shift;                                                                 # the navigation
 
-    my ($TID, $VALUE, $THING) = $tm->mids ($nav->tid, 'value', 'thing');             # for the case that we need it
+    my ($TID, $VALUE, $THING) = $tm->tids ($nav->tid, 'value', 'thing');             # for the case that we need it
 
     my $navdir = $nav->axi . "." . ($nav->dir ? 1 : 0);                              # what is it what we have to do?
 #warn "navi $navdir for ".Dumper $tss;
@@ -507,7 +509,7 @@ sub ts_atomify {
     return $v if $a->[TM->KIND] == TM->ASSOC;                  # association ==> keep the identifier
 
 #warn "atomify ".Dumper $a;
-    my $VALUE = $tm->mids ('value');
+    my $VALUE = $tm->tids ('value');
     my ($v2) = $tm->get_players ($a, $VALUE);              # there should only be one!
     return new TM::Literal ($$v2, 'xsd:string')                # convert old style string into literal
 	if ref ($v2) eq 'SCALAR';                              # TODO: @@@@ when map has actually typed data

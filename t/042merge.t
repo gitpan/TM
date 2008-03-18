@@ -115,7 +115,7 @@ use TM::AsTMa::Fact;
 sub _parse {
     my $c = shift;
     my $text = shift;
-    my $ms = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps, consistency => $c);
+    my $ms = new TM (baseuri => 'tm:', consistency => $c);
     my $p  = new TM::AsTMa::Fact (store => $ms);
     my $i  = $p->parse ($text);
     return $ms;

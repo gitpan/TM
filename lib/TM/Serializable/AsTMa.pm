@@ -50,7 +50,15 @@ Specifies which encoding to use to interpret the B<following> text. This implies
 directive may appear several times to change the encoding. Whether this is a good idea
 in terms of information management, is a different question.
 
-Note: If no encoding is provided, utf8 is assumed.
+B<NOTE>: If no encoding is provided, utf8 is assumed.
+
+=item %trace integer
+
+For debugging purposes you can turn on I<tracing> by specifying an integer level. Level C<0> means
+I<no tracing>, level C<1> shows a bit more, and so forth.
+
+B<NOTE>: This is not overly developed at the moment, but can be easily extended.
+
 
 =back
 
@@ -89,8 +97,6 @@ sub deserialize {
     my $self    = shift;
     my $content = shift;
 
-#warn "DESERIALIZA ASTMA: $content";
-
     if ($content =~ /^\s*%version\s+2/s) {                                     # this is version 2.x
 	use TM::AsTMa::Fact2;
 	my $ap = new TM::AsTMa::Fact2 (store => $self);
@@ -117,184 +123,171 @@ The method understands a number of key/value pair parameters:
 
 =item C<version> (default: C<1>)
 
-Which AsTMa version the result should conform to.
+Which AsTMa version the result should conform to. Currently only version C<1> is supported.
 
 =item C<omit_trivia> (default: C<0>)
 
-This option suppresses the output of completely "naked" topics (topics without any characteristics).
+This option suppresses the output of completely I<naked> toplets (toplets without any characteristics).
+
+=item C<omit_infrastructure> (default: C<1>)
+
+This option suppresses the output of infrastructure toplets.
 
 =back
 
 =cut
 
 sub serialize  {
-    my ($self,%opts)=@_;
-    $opts{version}||=1;
+    my ($self, %opts) = @_;
+    $opts{version}     ||=1;
+#   $opts{omit_trivia} ||=1;
+    $opts{omit_infrastructure} ||=1;
     
-    $TM::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} )
-	if ($opts{version} ne 1);
+    return _serializeAsTMa1 ($self, %opts) if $opts{version} eq 1;
 
-    my $base=$self->{baseuri};
-    # the work stats: collect info from the assertions.
-    my (%topics,%assocs);
-    for my $m ($self->match(TM->FORALL))
-    {
-	my $kind=$m->[TM->KIND];
-	my $type=$m->[TM->TYPE];
-	my $scope=$m->[TM->SCOPE];
-	$scope=~s/^$base//;
-	undef $scope if ($scope eq "us");
-	$type=~s/^$base//;
-	my $lid=$m->[TM->LID];
+    $TM::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} );
 
-	if ($kind==TM->ASSOC) 
-	{
-	    if ($type eq "isa")
-	    {
-		my ($p,$c);
-		$p=($self->get_x_players($m,$base."class"))[0];
-		$c=($self->get_x_players($m,$base."instance"))[0];
-		$p=~s/^$base//;
-		$c=~s/^$base//;
-		push @{$topics{$p}->{children}},$c;
-		push @{$topics{$c}->{parents}},$p;
-	    }
-	    else
-	    {
+
+sub _serializeAsTMa1 {
+    my $self = shift;
+    my %opts = @_;
+
+    my ($THING, $US, $CLASS, $INSTANCE, $VALUE, $ISA, $NAME, $OCCURRENCE) =
+	('thing', 'us', 'class', 'instance', 'value', 'isa', 'name', 'occurrence');
+    my $baseuri = $self->{baseuri};
+
+    my $debase = sub {
+	$_[0] =~ s/^$baseuri//;
+	return $_[0];
+    };
+
+    my %assocs;
+    my %topics;                                  # the work stats: collect info from the assertions.
+ASSOCS:
+    for my $m ($self->asserts (\ '+all -infrastructure')) {
+	my $kind  = $m->[TM->KIND];
+	my $type  = $m->[TM->TYPE];
+	my $scope = $m->[TM->SCOPE];
+	my $lid   = $m->[TM->LID];
+
+	$scope = $US eq $scope ? undef : &$debase ($scope);
+
+	if ($kind == TM->ASSOC) {
+	    if ( $type eq $ISA ) {
+		my $p = &$debase ( ($self->get_x_players($m,$CLASS))[0]);
+		my $c = &$debase ( ($self->get_x_players($m,$INSTANCE))[0]);
+		push @{$topics{$p}->{children}}, $c;
+		push @{$topics{$c}->{parents}},  $p;
+
+	    } else {
 		my %thisa;
-		$thisa{type}=$type;
-		$thisa{scope}=$scope;
-		$thisa{reifies}=$self->midlet($lid)->[TM->ADDRESS];
-		
-		for my $role (@{$self->get_role_s($m)})
-		{
-		    my $rolename=$role;
-		    $rolename=~s/^$base//;
-		    # must prime the array...
-		    $thisa{roles}->{$rolename}=[];
+
+		$thisa{type}      = &$debase ($type);
+		$thisa{scope}     = $scope;
+                my ($reifier)     = $self->is_reified ($m);
+                $thisa{reifiedby} = &$debase ($reifier) if $reifier;
+
+		for my $role (@{$self->get_role_s($m)}) {
+		    my $rolename = &$debase ($role);
+		    $thisa{roles}->{$rolename}=[];                                    # must prime the array...
 		    
-		    for my $player ($self->get_x_players($m,$role))
-		    {
-			$player=~s/^$base//;
-			push @{$thisa{roles}->{$rolename}}, $player;
+		    for my $player ($self->get_x_players($m, $role)) {
+			push @{$thisa{roles}->{$rolename}}, &$debase ($player);
 		    }
 		}
-		$assocs{$lid}=\%thisa;
+		$assocs{$lid} = \%thisa;
 	    }
-	}
-	elsif ($kind==TM->NAME)
-	{
-	    my $name=($self->get_x_players($m,$base."thing"))[0];
-	    $name=~s/^$base//;
-	    undef $type if ($type eq "name");
+
+	} elsif ($kind == TM->NAME) {
+	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
 	    
-	    die "astma 1.x does not offer reification of basenames (topic $name)\n"
-		if ($self->midlet($lid)->[TM->ADDRESS]);
+	    $TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer reification of basenames (topic $thing)\n")
+		if $self->is_reified ($m);
 	    
-	    for my $p ($self->get_x_players($m,$base."value"))
-	    {
-		next if (!($p->[0]));
-		push @{$topics{$name}->{bn}}, [ $p->[0], $type, $scope ];
+	    for my $p ($self->get_x_players($m, $VALUE)) {
+		push @{$topics{$thing}->{bn}}, [ $p->[0], $type eq $NAME ? undef : &$debase($type), $scope ];
 	    }
-	}
-	elsif ($kind==TM->OCC)
-	{
-	    my $key="oc";
-	    my $name=($self->get_x_players($m,$base."thing"))[0];
-	    $name=~s/^$base//;
+
+	} elsif ($kind == TM->OCC) {
+	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
 	    
-	    die "astma 1.x does not offer reification of occurrences (topic $name)\n"
-		if ($self->midlet($lid)->[TM->ADDRESS]);
+	    $TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer reification of occurrences (topic $thing)\n")
+		if $self->is_reified ($m);
 	    
-	    undef $type if ($type eq "occurrence");
-	    for my $p ($self->get_x_players($m,$base."value"))
-	    { 
-		next if (!($p->[0]));
-		$key="in" if ($p->[1] eq XSD."string");
-		push @{$topics{$name}->{$key}}, [ $p->[0], $type, $scope ];
+	    for my $p ($self->get_x_players($m,$VALUE)) { 
+		my $key= $p->[1] eq TM::Literal::STRING ? "in" : "oc";
+		push @{$topics{$thing}->{$key}}, [ $p->[0], $type eq $OCCURRENCE ? undef : &$debase($type), $scope ];
 	    }
 	}
     }
     
-    # then from the topics
-    # we also need to run this part because of all the reification-crap...
-    # uuuggly distinction between topics and assertions
-    for my $t (grep(!$self->retrieve($_), $self->midlets))
-    {
-	my $tn=$t;
-	$tn=~s/^$base//; 
-	$topics{$tn}||={}; 
+##warn Dumper \%topics;
+
+    foreach my $tt ($self->toplets (\ '+all -infrastructure') ) {                     # then from the topics
+	my $t = $tt->[TM->LID];
+	my $tn = &$debase ($t);
+
+	$topics{$tn} ||= {}; 
 	
-	die "astma 1.x does not offer variants (topic $tn)\n"
-	    if ($self->variants($t));
+	$TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer variants (topic $tn)\n")
+	    if ($self->variants ($t));
 	
-	my $reifies=$self->midlet($t)->[TM->ADDRESS];
-	if ($reifies)
-	{
-	    if ($self->retrieve($reifies)) 
-	    {
-		# the topic reifies a PARTICULAR assoc, thus this must 
-		# be attached as passive reification to the assoc
-		$assocs{$reifies}->{reifiedby}=$tn;
-	    }
-	    else
-	    {		       
-		# active reification
-		$topics{$tn}->{reifies}=$reifies;
-	    }
-	}
-	my $sin=$self->midlet($t)->[TM->INDICATORS];
-	if ($sin && @$sin)
-	{
-	    $topics{$tn}->{sin}=$sin;
-	}
+        $topics{$tn}->{sins} = $tt->[TM->INDICATORS] if @{ $tt->[TM->INDICATORS] } > 0;
+	$topics{$tn}->{addr} = $tt->[TM->ADDRESS]    if $tt->[TM->ADDRESS] and $tt->[TM->ADDRESS] !~ /^[a-zA-Z0-9]{32}$/;
     } 
+#--------------------------------------------------------------------------------------------------------------
     
     # finally the actual dumping of the information
     my @result=("# serialized object, originally from ".($self->{url}=~/^inline:/?"inline":$self->{url}),
-		"# base $base","");
-    for my $t (sort keys %topics)
-    {
-	my $tn=$topics{$t};
-	next if ($opts{omit_trivia} && !keys %$tn);
+		"# base $baseuri","");
+TOPICS:
+    for my $t (sort keys %topics) {
+	my $tn = $topics{$t};
 
-	push @result, 
-	($tn->{parents}? "$t (".join(" ",@{$tn->{parents}}).")":$t)
-	    .($tn->{reifies}?(" reifies ".$tn->{reifies}):"");
+	if ($opts{omit_infrastructure}) {
+	    next TOPICS if $TM::infrastructure->{mid2iid}->{ $t };
+	}
+	if ($opts{omit_trivia}) {
+	    next TOPICS unless keys %$tn;
+	}
+
+	push @result,
+        $t                                                                                   # the id
+	.($tn->{parents} ? " (".join(" ",@{$tn->{parents}}).")" : "")                        # optionally the types (....)
+        .($tn->{add}     ? " reifies ". $tn->{addr}              : "");                      # optionally the subject address
 	
-	for my $k (qw(bn in oc))
-	{
-	    if ($tn->{$k})
-	    {
+	for my $k (qw(bn in oc)) {
+	    if ($tn->{$k}) {
 		push @result, 
-		map {  $k.($_->[2]?("@ ".$_->[2]):"")
-			   .($_->[1]?("(".$_->[1].")"):"").": ".$_->[0] } 
+		map {  $k.($_->[2]?(" @ ".$_->[2]):"")
+			   .($_->[1]?(" (".$_->[1].")"):"").": ".$_->[0] } 
 		(@{$tn->{$k}});
 	    }
 	}
-	if ($tn->{sin})
-	{
-	    map { push @result, "sin: ".$_; } (@{$tn->{sin}});
+	if ($tn->{sins}) {
+	    map { push @result, "sin: ".$_; } (@{$tn->{sins}});
 	}
-	push @result,"";
+	push @result,"";                                                                     # will end up as empty line
     }
 
-    map 
-    {
-	my $a=$assocs{$_};
+    map {
+	my $a = $_;
 	push @result,"(".$a->{type}.")"
-	    .($a->{scope}?(" @".$a->{scope}):"")
-	    .($a->{reifies}?(" reifies ".$a->{reifies}):"")
-	    .($a->{reifiedby}?(" is-reified-by ".$a->{reifiedby}):"");
+                     .($a->{scope}     ? " @".$a->{scope}                  : "")
+                     .($a->{reifiedby} ? " is-reified-by ".$a->{reifiedby} : "");
 	map 
 	{ 
 	    push @result, 
 	    "$_: ".join(" ",@{$a->{roles}->{$_}});  
 	} (sort keys %{$a->{roles}});
 	push @result,"";
-    } (sort { $assocs{$b}->{type} cmp $assocs{$a}->{type}} keys %assocs);
+    }
+    map { $assocs{ $_ } }
+    sort { $assocs{$b}->{type} cmp $assocs{$a}->{type} } 
+    keys %assocs;
     
     return join("\n",@result)."\n";
+}
 }
 
 =pod
@@ -307,16 +300,23 @@ L<TM>, L<TM::Serializable>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[1-6], Robert Barta <drrho@cpan.org>, Alexander Zangerl <he@does.not.want.his.email.anywhere>, All rights reserved.
+Copyright 200[1-68], Robert Barta <drrho@cpan.org>, Alexander Zangerl <he@does.not.want.his.email.anywhere>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.3';
+our $VERSION  = '0.4';
 our $REVISION = '$Id: az';
 
 1;
 
 __END__
+
+# not sure what it does, will check later
+#	    if ($tn->{reifies}) {
+#		next TOPICS if grep { $_ && $tn->{reifies} eq $_ } @iaddr;
+#	    }
+	}
+

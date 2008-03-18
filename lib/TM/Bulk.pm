@@ -48,60 +48,67 @@ This method takes a list (reference) of topic ids and an optional list of scopin
 the former it will try to find the I<name>s (I<topic names> for TMDM acolytes).
 
 If the list of scopes is empty then the preference is on the unconstrained scope. If no name for a
-topic is in that scope, any other will be used.
+topic is in that scope, some other will be used.
 
 If the list of scopes is non-empty, it directs to look first for a name in the first scoping topic,
 then second, and so on. If you want to have one name in any case, append C<*> to the scoping list.
 
-If no name exist for a particular I<lid>, then an C<undef> is returned in the result hash.
+If no name exist for a particular I<lid>, then an C<undef> is returned in the result hash. References
+to non-existing topics are ignored.
 
-The overall result is a hash (reference) having the lids as keys and the name strings as values.
+The overall result is a hash (reference). The keys are of the form C<topic-id @ scope-id> (without
+the blanks) and the name strings are the values.
 
 =cut
-
-sub scoped_names {
-    my $self = shift;
-
-#@@@@@
-}
 
 sub names {
     my $self   = shift;
     my $topics = shift || [];
     my $scopes = shift || [ '*' ];
 
-#warn "looking for ".Dumper $topics;
+#warn "looking for ".Dumper ($topics). "with scopes ".Dumper $scopes;
     my $dontcare = 0;                                                  # one of the rare occasions I need a boolean
     if ($scopes->[-1] eq '*') {
 	pop @$scopes;                                                  # get rid of this '*' to have a clean topic list
 	$dontcare = 1;                                                 # remember this incident for below
     }
-    my @scopes = grep { $_ } $self->mids (@$scopes);                   # make them absolute, so that we can compare later (only keep existing ones)
+    my @scopes = grep { $_ } $self->tids (@$scopes);                   # make them absolute, so that we can compare later (only keep existing ones)
 #warn "scopes".Dumper \@scopes;
 
-    my ($US) = @{$self->{usual_suspects}}{'us'};
+    my ($US) = ('us');
+
     my %dict;                                                          # this is what we are building
 TOPICS:
-    foreach my $lid (grep { $_ } $self->mids (@$topics)) {             # for all in my working list, make them absolute, and test
-	next if $dict{$lid};                                           # do not things twice
+    foreach my $lid (grep { $_ } $self->tids (@$topics)) {             # for all in my working list, make them absolute, and test
+#	next if $dict{$lid};                                           # do not things twice
+#	$dict{$lid} = undef;                                           # but make sure we have an entry there, whatever comes next
+
 	my @as = grep { $_->[TM->KIND] == TM->NAME }                   # filter all characteristics for basenames
 	            $self->match_forall (char => 1, topic => $lid);
-        next unless @as;                                               # assertion: @as contains at least one entry!
-	unless (@scopes) {                                             # empty list? preference is unconstrained scope
+	unless (@as) {                                                 # no names? => done 
+	    $dict{$lid} = undef;
+	    next;
+	}
+                                                                       # assertion: @as contains at least one entry!
+	unless (@scopes) {                                             # empty list? => preference is unconstrained scope
 	    if (my @aas = grep ($_->[TM->SCOPE] eq $US, @as)) {
-		$dict{$lid} = $aas[0]->[TM->PLAYERS]->[1]->[0];
+		$dict{$lid.'@'.$US} = $aas[0]->[TM->PLAYERS]->[1]->[0];
 		next TOPICS;
 	    }
 	}
-	foreach my $sco ($self->mids (@scopes)) {                      # check out all scope preferences (note, there is at least one in @as!)
+	foreach my $sco ($self->tids (@scopes)) {                      # check out all scope preferences (note, there is at least one in @as!)
 	    if (my @aas = grep ($_->[TM->SCOPE] eq $sco, @as)) {
-		$dict{$lid} = $aas[0]->[TM->PLAYERS]->[1]->[0];
+		$dict{$lid.'@'.$sco} = $aas[0]->[TM->PLAYERS]->[1]->[0];
 		next TOPICS;
 	    }
 	}
-	$dict{$lid} = $dontcare ? $as[0]->[TM->PLAYERS]->[1]->[0]      # get the name and derereference it
-	                        : undef;                               # otherwise we have none
+	if ($dontcare) {                                               # get some name item and derereference it
+	    $dict{$lid.'@'.$as[0]->[TM->SCOPE]} = $as[0]->[TM->PLAYERS]->[1]->[0]; # scope it with what we have
+	} else {                                                       # otherwise send back nothing
+	    $dict{$lid} = undef;
+	}
     }
+#warn "returning dict ".Dumper \%dict;
     return \%dict;
 }
 
@@ -143,7 +150,7 @@ read-only calls.
 
 =item I<topic>:
 
-fetches the midlet (which is only the subject locator, subject indicators information).
+fetches the toplet (which is only the subject locator, subject indicators information).
 
 =item I<names> (<n,m>):
 
@@ -155,7 +162,7 @@ fetches all occurrences (as array reference triple [ I<type>, I<scope>, I<value>
 
 =item I<instances> (<n,m>):
 
-fetches all midlets which are direct instances of the vortex (that is regarded as
+fetches all toplets which are direct instances of the vortex (that is regarded as
 class here);
 
 =item I<instances*> (<n,m>):
@@ -188,7 +195,15 @@ same as C<superclasses>, but creates reflexive, transitive closure
 
 =item I<roles> (<n,m>):
 
-fetches all assertion ids where the vortex B<is> plays a role
+fetches all assertion ids where the vortex plays a role
+
+=item I<peers> (<n,m>):
+
+fetches all topics which are also a direct instance of any of the (direct) types of this topic
+
+=item I<peers*> (<n,m>):
+
+fetches all topics which are also a (direct or indirect) instances of any of the (direct) types of this topic
 
 =back
 
@@ -207,7 +222,7 @@ Example:
 			 },
 			);
 
-The method dies if C<lid> does not identify a proper midlet.
+The method dies if C<lid> does not identify a proper toplet.
 
 =cut
 
@@ -217,9 +232,9 @@ sub vortex {
   my $what   = shift;
   my $scopes = shift             and $TM::log->logdie ("scopes not supported yet");
 
-  my $alid   = $self->mids ($lid) or $TM::log->logdie ("no topic '$lid'");
+  my $alid   = $self->tids ($lid) or $TM::log->logdie ("no topic '$lid'");
 
-  my ($ISSC, $ISA) = @{$self->{usual_suspects}}{'is-subclass-of', 'isa'};
+  my ($ISSC, $ISA) = ('is-subclass-of', 'isa');
   
   my @as = $self->match_forall (iplayer => $alid);            # find out everything we know about the player
 
@@ -228,7 +243,7 @@ sub vortex {
       my $w = shift @{$what->{$where}};
 
       if ($w eq 'topic') {
-	  $_t->{$where} = $self->midlet ($alid);
+	  $_t->{$where} = $self->toplet ($alid);
 	  
       } else {
 	  my @is;
@@ -252,6 +267,39 @@ sub vortex {
                     grep { $_->[TM->TYPE] ne $ISSC && $_->[TM->TYPE] ne $ISA }
 	            grep { $_->[TM->KIND] == TM->ASSOC }
                     @as;
+
+          } elsif ($w eq 'peers') { # TODO! test cases
+              @is = grep { $_ ne $alid }
+                    map { $self->instances ($_) }
+	            $self->types ($alid);
+
+          } elsif ($w eq 'peers*') {
+              @is = grep { $_ ne $alid }
+	            map { $self->instancesT ($_) }
+	            $self->types ($alid);
+
+	  } elsif ($w eq 'associations') { # TODO! test case
+sub _morph {
+    my $lid = shift;
+    my $a   = shift;
+
+    my ($ps, $rs) = ($a->[TM->PLAYERS], $a->[TM->ROLES]);
+    my $r;                                                                    # my own role
+    my %rs;                                                                   # the other roles
+    for (my $i = 0; $i < @$ps; $i++) {
+        if ($lid eq $ps->[$i]) {                                              # we talk about ourselves
+            $r = $rs->[$i];
+        } else {                                                              # this is about something else
+            push @{ $rs{ $rs->[$i] } }, $ps->[$i];
+        }
+    }
+    return ($r, \%rs);
+}
+              @is = map { [  $_->[TM->TYPE], $_->[TM->SCOPE], _morph ($alid, $_) ] }
+                    grep { $_->[TM->TYPE] ne $ISSC && $_->[TM->TYPE] ne $ISA }
+                    grep { $_->[TM->KIND] == TM->ASSOC }
+                    @as;
+
 	  }
 	  my ($from, $to) = _calc_limits (scalar @is, shift @{$what->{$where}}, shift @{$what->{$where}});
 	  $_t->{$where} = [ @is[ $from .. $to ] ];
@@ -286,7 +334,7 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.4;
+our $VERSION  = 0.5;
 our $REVISION = '$Id: Bulk.pm,v 1.2 2007/07/17 16:23:05 rho Exp $';
 
 1;

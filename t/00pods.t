@@ -14,6 +14,7 @@ plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 my @PODs = qw(
 	      lib/TM.pm
 	      lib/TM/Analysis.pm
+	      lib/TM/Axes.pm
 	      lib/TM/Bulk.pm
 	      lib/TM/Literal.pm
 	      lib/TM/Overview.pm

@@ -88,7 +88,7 @@ _mktmps;
 
 	# astma map is not sync'ed in
 	my $child = $tm->is_mounted ('/xxx/');
-	ok (!$tm->mids ('ccc'),                           'child has no content');
+	ok (!$child->mids ('ccc'),                        'child has no content');
 	$tm->sync_out;
     }
     utime time+1, time+1, $tmp[1];                        # fake that the file is mod'ed in the future

@@ -56,24 +56,22 @@ This package provides a I<mapspheric> trait, i.e. all functionality to convert a
 (hierarchical) Topic Maps database. The basic idea is that one map (the I<root>) contains not only
 arbitrary map data, but can also contain references to other maps. On the top level, addressed as
 C</> is then the root map. The child maps have addresses such as C</abc/> and
-C</internet/web/browsers>.
+C</internet/web/browsers/>. The idea is also that a map can contain other maps, simply by having
+topics which stand for these child maps. In that sense, a map is always a tree of maps (hence
+I<MapSphere>).
 
-The idea is that a map can contain other maps, simply by having topics which stand for these child
-maps. In that sense, a map is always a tree of maps (I<Map Sphere>). These trees are not necessarily
-static. At any point, a new map can be hooked in, or removed. This process is quite similar to
-I<mounting> devices into a UNIX file system, hence the naming.
+These trees are not necessarily static. At any point, a new map can be hooked in, or removed. This
+process is quite similar to I<mounting> devices into a UNIX file system.
 
-Each of the referenced child maps is represented as a topic of a predefined type C<TM::PSI
-TOPICMAP>, the subject indicator is interpreted as the URL to the resources for these maps.
+Each of the referenced child maps is represented as a topic of a predefined type C<TM::PSI::TOPICMAP>, 
+the subject indicator is interpreted as the URL to the resources for these maps.
 
 The root map can be any subclass of L<TM>. You can therefore choose to have only a shortlived
 mapsphere which will be lost on process termination, or alternatively, to take one of the persistent
-storages.
-
-Also, the individual child maps can be of different provenances. Any subclass of L<TM> will do,
-consequently also any which have the trait of L<TM::ResourceAble> or L<TM::Synchronizable>. This
-implies that this database can be heterogenic, in that different maps can be stored differently, or
-can even be kept remotely.
+storages. Also, the individual child maps can be of different provenances. Any subclass of L<TM>
+will do, consequently also any which have the trait of L<TM::ResourceAble> or
+L<TM::Synchronizable>. This implies that this database can be heterogenuous, in that different maps
+can be stored differently, or can even be kept remotely.
 
 Once you have your map sphere, you can write it out via synchronization with the external
 resources. You can do this for the whole sphere, or for a particular subtree of maps. Conversely,
@@ -292,6 +290,7 @@ sub is_mounted {
 =item B<mounttab>
 
 %mt = %{ I<$tm>->mounttab }
+
 I<$tm>->mounttab ( \ I<$%mt> )
 
 This accessor sets/gets the mount table.
@@ -349,7 +348,7 @@ Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 200[4-6] by Robert Barta
+Copyright (C) 200[4-7] by Robert Barta
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself, either Perl version 5.8.4 or, at your option, any later version of Perl 5 you may have
@@ -357,7 +356,7 @@ available.
 
 =cut
 
-our $VERSION  = 0.04;
+our $VERSION  = 0.05;
 our $REVISION = '$Id: MapSphere.pm,v 1.25 2006/12/13 10:46:58 rho Exp $';
 
 1;

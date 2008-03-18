@@ -1209,13 +1209,13 @@ sub _eval_val {
 
     } elsif (ref ($va) eq 'PEall') {
 	my $tm  = _eval_var     ($cs, '%_');                             # get the context map
-	return [ map { [ $_ ] } $tm->midlets ];                          # we had a whole map as value, this equals the set of things in the map
+	return [ map { [ $_->[TM->LID] ] } $tm->toplets ];               # we had a whole map as value, this equals the set of things in the map
 
     } elsif (ref ($va) eq 'PEti') {
 #warn "eval ti".Dumper $va;
 ##@@@@@@@@
 	my $tm  =  _eval_var ($cs, '%_');
-	my $tid = $tm->mids ($va->tid) ;
+	my $tid = $tm->tids ($va->tid) ;
 	return $tid ? [ [ $tid ] ]                                       # by definition flattened
                     : [          ];                                      # very, very empty
 

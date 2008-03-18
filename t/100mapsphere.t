@@ -23,7 +23,7 @@ use Data::Dumper;
     ok ($tm->does ('TM::MapSphere'), 'trait: mapsphere');
     ok ($tm->isa  ('TM'),            'class: non-persistent');
 
-    ok ($tm->mids ('thing'), 'basic things are there');
+    ok ($tm->tids ('thing'), 'basic things are there');
     is ($tm->baseuri, 'tm:', 'baseuri');
     ok ($tm->is_mounted ('/'), 'automount of /');
 }
@@ -49,10 +49,10 @@ use Data::Dumper;
     $tm->mount ('/xxx/', new TM);
 
     ok ($tm->is_mounted ('/xxx/'),                       'mount of xxx');
-    ok ($tm->mids ('xxx'),                               'topic xxx');
-    is ($tm->midlet ($tm->mids ('xxx'))->[TM->ADDRESS], 
+    ok ($tm->tids ('xxx'),                               'topic xxx');
+    is ($tm->midlet ($tm->tids ('xxx'))->[TM->ADDRESS], 
 	'tm://nirvana/',                                 'mounted midlet, address');
-    ok (eq_array ($tm->midlet ($tm->mids('xxx'))->[TM->INDICATORS], 
+    ok (eq_array ($tm->midlet ($tm->tids('xxx'))->[TM->INDICATORS], 
 		  [
 		   ]),                                   'mounted midlet, indicators');
     eval { # use a taken mount point
@@ -68,13 +68,13 @@ use Data::Dumper;
     $tm->mount ('/yyy/xxx/',     new TM);
     $tm->mount ('/zzz/',         new TM);
 
-    ok (eq_set ([ $tm->instances  ('tm://nirvana/topicmap') ],
+    ok (eq_set ([ $tm->instances  ('topicmap') ],
 		[ 
 		  'tm://nirvana/xxx',
 		  'tm://nirvana/yyy',
 		  'tm://nirvana/zzz',
 		  ]),                                    'mounted midlet, found as map instance');
-    ok (eq_set ([ $tm->instances  ($tm->mids (\ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap')) ],
+    ok (eq_set ([ $tm->instances  ($tm->tids (\ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap')) ],
 		[ 
 		  'tm://nirvana/xxx',
 		  'tm://nirvana/yyy',
@@ -99,40 +99,40 @@ use Data::Dumper;
 	ok ($tm->is_mounted ($p)->isa ('TM'),            "mounting: mount point $p verified");
     }
 
-    ok ($tm->mids ('xxx'),                               'child xxx');
-    ok ($tm->mids ('yyy'),                               'child yyy');
-    ok ($tm->mids ('zzz'),                               'child zzz');
+    ok ($tm->tids ('xxx'),                               'child xxx');
+    ok ($tm->tids ('yyy'),                               'child yyy');
+    ok ($tm->tids ('zzz'),                               'child zzz');
 
     {
 	my $child = $tm->is_mounted ('/xxx/');
-	ok ($child->mids ('yyy'),                        'grandchild yyy');
+	ok ($child->tids ('yyy'),                        'grandchild yyy');
 
 	my $cchild = $tm->is_mounted ('/xxx/yyy/');
-	ok ($cchild->mids ('zzz'),                       'grandgrandchild zzz');
+	ok ($cchild->tids ('zzz'),                       'grandgrandchild zzz');
     }
     {
 	my $child = $tm->is_mounted ('/yyy/');
-	ok ($child->mids ('xxx'),                        'grandchild xxx');
+	ok ($child->tids ('xxx'),                        'grandchild xxx');
     }
 
     $tm->umount ('/zzz/');
     ok (!$tm->is_mounted ('/zzz/'),                      'zzz unmounted');
-    ok (!$tm->mids ('zzz'),                              'child zzz dead');
-    ok ($tm->mids ('xxx'),                               'child xxx still alive');
-    ok ($tm->mids ('yyy'),                               'child yyy still alive');
+    ok (!$tm->tids ('zzz'),                              'child zzz dead');
+    ok ($tm->tids ('xxx'),                               'child xxx still alive');
+    ok ($tm->tids ('yyy'),                               'child yyy still alive');
 
     $tm->umount ('/yyy/xxx/');
     ok (!$tm->is_mounted ('/yyy/xxx/'),                  '/yyy/xxx/ unmounted');
-    ok ($tm->mids ('xxx'),                               'child xxx still alive');
-    ok ($tm->mids ('yyy'),                               'child yyy still alive');
+    ok ($tm->tids ('xxx'),                               'child xxx still alive');
+    ok ($tm->tids ('yyy'),                               'child yyy still alive');
 
     $tm->umount ('/xxx/');
     ok (!$tm->is_mounted ('/xxx/'),                      '/xxx/* unmounted');
     ok (!$tm->is_mounted ('/xxx/yyy/'),                  '/xxx/* unmounted');
     ok (!$tm->is_mounted ('/xxx/yyy/zzz/'),              '/xxx/* unmounted');
 
-    ok (!$tm->mids ('xxx'),                              'child xxx dead');
-    ok ($tm->mids ('yyy'),                               'child yyy still alive');
+    ok (!$tm->tids ('xxx'),                              'child xxx dead');
+    ok ($tm->tids ('yyy'),                               'child yyy still alive');
 }
 
 __END__
@@ -174,7 +174,7 @@ __END__
 		   'inline:xxx (yyy)
 '		   
 		   ]),                                   'mounted midlet, indicators');
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
+    ok (eq_set ([ $ms->instances  ('topicmap') ],
 		[ 'tm://nirvana/rumsti' ]),              'mounted midlet, found as map instance');
     ok (eq_set ([ $ms->instances  ($ms->mids (\ 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap')) ],
 		[ 'tm://nirvana/rumsti' ]),              'mounted midlet, found as map instance');
@@ -185,14 +185,14 @@ __END__
 
     ok ($ms->is_mounted ('/ramsti/'),                     'one map mounted');
 
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
+    ok (eq_set ([ $ms->instances  ('topicmap') ],
 		[ 
 		  'tm://nirvana/rumsti',
 		  'tm://nirvana/ramsti'
-		  ]),                                    'mounted midlets, found as map instances');
+		  ]),                                    'mounted toplets, found as map instances');
 
     $ms->umount ('/rumsti/');
-    ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
+    ok (eq_set ([ $ms->instances  ('topicmap') ],
 		[ 'tm://nirvana/ramsti' ]),              'mounted midlet, found as map instance');
 }
 
@@ -246,7 +246,7 @@ END { unlink ($tmp) ; unlink ($tmp.".lock") ; }
 	$ms->is_mounted ('/')->sync_in;
 #warn Dumper $ms->is_mounted ('/');
 
-	ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
+	ok (eq_set ([ $ms->instances  ('topicmap') ],
 		    [ 'tm://nirvana/xxx' ]),              'regained map instance');
 
 	ok (!$ms->is_mounted ('/xxx/'),                   'no recursive automount');
@@ -257,7 +257,7 @@ END { unlink ($tmp) ; unlink ($tmp.".lock") ; }
 	$ms->mount   ('/'     => new TM::Materialized::MLDBM (file => $tmp));
 	$ms->sync_in ('/');
 
-	ok (eq_set ([ $ms->instances  ('tm://nirvana/topicmap') ],
+	ok (eq_set ([ $ms->instances  ('xxxxxxtopicmap') ],
 		    [ 'tm://nirvana/xxx' ]),              'regained map instance');
 
 	my $child = $ms->is_mounted ('/xxx/');
@@ -426,7 +426,7 @@ LOOP:
 		my $t = $ms->path ('/rumsti/yyy');                               # map not synced in, so it can't have it
 		ok (0,                                                          "$c: toplet should not be there");
 	    }; like ($@, qr/empty/,                                             "$c: got no toplet");
-	    exit;
+
 	    {
 		# I probably should not refer to internals, here, but for testing it's ok?
 		my $store = $ms->tao ('/rumsti/');

@@ -64,6 +64,9 @@ lib/TM/LTM/CParser.pm: lib/TM/LTM/Parser.pm
 	perl -MParse::RecDescent - /tmp/grammar TM::LTM::CParser
 	mv CParser.pm lib/TM/LTM/
 
+axespod:
+	perl -Ilib support/mkaxespod.pl > lib/TM/Axes.pm
+
 dependencies:
 	scandeps.pl `grep .pm MANIFEST` `grep bin/ MANIFEST`| grep -v undef
 # 	egrep -e '(^use | use ).*;' `find t -iname '*.t'; find lib -iname '*.pm'; find bin -iname '*'` | perl -ne '/^.+?:\\s*use ([A-Za-z0-9:]+)/; print "\$\$1\\n"' | egrep -v '(base|Carp|POSIX|vars|strict|constant|warnings|Class::Struct|Fcntl|Data::Dumper|Storable|lib|UNIVERSAL|Digest::MD5|IO::File|File::Temp|File::stat|Getopt::Long)' | egrep -v '^TM' | grep -v '^XTM' | sort -u | perl -ne 's/;//; chomp; next unless \$\$_; print "\\"\$\$_\\"    => "; eval "use \$\$_; print (\\\$\$\$\${_}::VERSION || \\"undef\\")"; print ",\\n"'

@@ -23,11 +23,14 @@ eval {
   my $tm = new TM::Materialized::MLDBM2 ();
 }; like ($@, qr/no file/, _chomp ($@));
 
-my $tmp = '/tmp/xxx';
+my ($tmp);
+use IO::File;
+use POSIX qw(tmpnam);
+do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
 
-END { unlink ($tmp) || warn "# cannot unlink tmp file"; }
+END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
 
- {
+{
      my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
     
      ok ($tm->isa('TM'),                       'correct class');
@@ -78,26 +81,27 @@ my $whatever3; # just a temp
     is ($tm->baseuri, 'tm:',       'baseuri survived');
 
 # test 1
-    is ($tm->mids ('rumsti') , 'tm:rumsti', 'found inserted by assertion 1');
-    is ($tm->mids ('ramsti') , 'tm:ramsti', 'found inserted by assertion 2');
-    ok ($tm->is_subclass ($tm->mids ('ramsti', 'rumsti')), 'found subclass 1');
-    ok ($tm->is_subclass ($tm->mids ('rimsti', 'rumsti')), 'found subclass 2');
+    is ($tm->tids ('rumsti') , 'tm:rumsti', 'found inserted by assertion 1');
+    is ($tm->tids ('ramsti') , 'tm:ramsti', 'found inserted by assertion 2');
+    ok ($tm->is_subclass ($tm->tids ('ramsti', 'rumsti')), 'found subclass 1');
+    ok ($tm->is_subclass ($tm->tids ('rimsti', 'rumsti')), 'found subclass 2');
 
 # test 2
-    ok (eq_array ([ $tm->mids ('aaa') ],                        [ 'tm:aaa' ]), 'found inserted 1');
-    ok (eq_array ([ $tm->mids (\ 'http://aaa/') ],              [ 'tm:aaa' ]), 'found inserted 2');
+    ok (eq_array ([ $tm->tids ('aaa') ],                        [ 'tm:aaa' ]), 'found inserted 1');
+    ok (eq_array ([ $tm->tids (\ 'http://aaa/') ],              [ 'tm:aaa' ]), 'found inserted 2');
 # test 3
-    ok (eq_array ([ $tm->mids ('http://AAA/') ],                [ 'tm:aaa' ]), 'found inserted 3');
+    ok (eq_array ([ $tm->tids ('http://AAA/') ],                [ 'tm:aaa' ]), 'found inserted 3');
 
     is_deeply ( $tm->externalize ('tm:aaa'),
 		[
+		 'tm:aaa',
 		 'http://AAA/',
 		 [ 'http://aaa/' ]
 		 ] ,                                                           'externalize 1');
 # test 4
-    ok (eq_array ([ $tm->mids ('tm:ccc') ],                     [ 'tm:ccc' ]), 'found inserted 4');
+    ok (eq_array ([ $tm->tids ('tm:ccc') ],                     [ 'tm:ccc' ]), 'found inserted 4');
 # test 5
-    ok (eq_array ([ $tm->mids ('http://bbb/') ],                [ $whatever ]), 'found inserted 5');
+    ok (eq_array ([ $tm->tids ('http://bbb/') ],                [ $whatever ]), 'found inserted 5');
 # test 6
     ok (!$tm->retrieve ('tm:fff'),                                              'looking for fff, not anymore there (real test)');
 # test 7
@@ -111,28 +115,29 @@ my $whatever3; # just a temp
     my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
 #warn Dumper $tm;
 
-    ok (eq_set ([ $tm->instances  ('tm:assertion-type') ],[ 'tm:isa', 'tm:is-subclass-of' ]), 'subsumption: instances 1');
-    ok (eq_set ([ $tm->instances  ('tm:scope') ],         [ 'tm:us' ]),                       'subsumption: instances 2');
+    ok (eq_set ([ $tm->instances  ('assertion-type') ],[ 'isa', 'is-subclass-of' ]),                             'subsumption: instances 1');
+    ok (eq_set ([ $tm->instances  ('scope') ],         [ 'us' ]),                                                'subsumption: instances 2');
 
 #warn Dumper [ $tm->instancesT ('thing') ];
-    ok (eq_set ([ $tm->instancesT ('tm:thing') ],         [ $tm->midlets ]),                  'subsumption: instances 4');
-    ok (eq_set ([$tm->instances ('tm:isa') ], [
-                                             'tm:52f4b78b40050b928e3f0bc945ca974e',
-                                             'tm:4a0acace7864ce2c66ff9ff89575b0a4',
-                                             'tm:55a68be5cad02dd73034330f1407db3a'
-					    ]),                                               'subsumption: instances 5');
+    ok (eq_set ([ $tm->instancesT ('thing') ],         [ map { $_->[TM->LID] } $tm->toplets ]),                  'subsumption: instances 4');
+#warn Dumper [ $tm->instances ('isa') ];
+    ok (eq_set ([$tm->instances ('isa') ], [
+					    'c667ce5f4e485b45698c75621bc63893',
+					    '9aa74da04e36d6f5c05ffe1c91eab7d2',
+					    '8168aba8d6a9284c70e9c461a8977892'
+					    ]),                                                                  'subsumption: instances 5');
 
-    ok (eq_set ([$tm->types ('tm:isa')],  [ 'tm:assertion-type']),                           'subsumption: types 1');
-    ok (eq_set ([$tm->typesT ('tm:isa')], [ 'tm:assertion-type',  'tm:class' ]),             'subsumption: typesT 1');
+    ok (eq_set ([$tm->types ('isa')],  [ 'assertion-type']),                                                     'subsumption: types 1');
+    ok (eq_set ([$tm->typesT ('isa')], [ 'assertion-type',  'class' ]),                                          'subsumption: typesT 1');
 
 
-    ok (eq_set ([ $tm->subclasses ('tm:thing') ],        [  ]),                              'subsumption: subclasses 1');
-    ok (eq_set ([ $tm->subclasses ('tm:characteristic') ],
-                [ 'tm:occurrence', 'tm:unique-characteristic', 'tm:name' ]),                 'subsumption: subclasses 2');
+    ok (eq_set ([ $tm->subclasses ('thing') ],        [  ]),                                                     'subsumption: subclasses 1');
+    ok (eq_set ([ $tm->subclasses ('characteristic') ],
+                [ 'occurrence', 'unique-characteristic', 'name' ]),                                              'subsumption: subclasses 2');
 
-    ok (eq_set ([ $tm->subclassesT ('tm:characteristic') ],
-                [ 'tm:characteristic', 'tm:occurrence', 
-		  'tm:unique-characteristic', 'tm:name' ]),                                  'subsumption: subclassesT 1');
+    ok (eq_set ([ $tm->subclassesT ('characteristic') ],
+                [ 'characteristic', 'occurrence', 
+		  'unique-characteristic', 'name' ]),                                                            'subsumption: subclassesT 1');
 }
 
 __END__

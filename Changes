@@ -2,13 +2,37 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.31  Di 18. Mär 13:37:54 CET 2008
+	- TM::Bulk: added peers and peers* (rho)
+	- TM::Bulk: added associations (rho)
+	- TM::Bulk: fixed broken test cases (rho)
+	- TM::DM: fixed names, occurrences bug (a->z)
+	- TM: major reorg of the documentation (rho/a->z)
+	- TM::hash: no longer publicly documented (but works as before) (rho)
+	- TM::Axes: documentation of match search specifications (rho)
+	- TM: duplicate subject indicators are now systematically suppressed (a->z)
+	- TM::Tau: added some magic to treat < and * the same (rho)
+	- TM::Serializable::AsTMa: changed default omit_trivia to 1 (rho)
+	- TM: 'add' method now tries to protect _local_ LIDs, see doc (rho)
+	- TM: 'insane' method tries to detect inconsistencies in the TM structure (rho)
+	! TM: 'toplets' return ***REAL*** structures, not just IDs (rho)
+	- TM: 'asserts' return assertions, analog to toplets (rho)
+	- TM::Statistics: you have to ask for nr_toplets and nr_asserts (rho)
+	! TM: had to rename 'hash' because of a possible collision with another package (CPAN smoke tests), (rho)
+	- mldbm2.t: added "real" temp file handling (triggered spurious errors at smoke tests) (rho)
+	! TM: toplets return now only topic-like things (not assertions) (rho)
+	- TM: asserts returns now assertions, names, assocs, occs (rho)
+	! TM: toplets does not try anymore to make the list unique (rho)
+	! TM: methods is_reified and reifies aligned to canonical TMDM interpretation (rho)
+	- TM::Serializable::AsTMa: newly introduced directive %trace allows a bit more debugging (rho)
+
 1.30  Sa 28. Jul 18:40:45 CEST 2007
 	! TM::Bulk: renaming of basenames to names, documentation
 	! TM::Bulk: vortex request fields aligned with modern TMDM/TMRM view
 	! TM::ResourceAble::mtime now returns 0 (not undef) when the resource cannot be determined
 	! TM::Tree: cluster moved into TM::Graph (just rename your use trait from TM::Tree to TM::Graph)
-	TM : get_players has now the role optional
-	TM::Graph added: (contains cluster, frontier and is_path)
+	- TM : get_players has now the role optional
+	- TM::Graph added: (contains cluster, frontier and is_path)
 
 1.29  Mo 16. Jul 21:14:31 CEST 2007
 	- made Log4Perl log object native into TM.pm (should now work stand-alone)

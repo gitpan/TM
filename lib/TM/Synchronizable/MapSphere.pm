@@ -76,7 +76,7 @@ notation):
 use constant MAX_DEPTH => 99;
 
 sub sync_in {
-    my $self = shift;
+    my $self  = shift;
     my $pref  = shift || '/';                                                            # prefix determines from where we would want to start to sync
     my $depth = shift || MAX_DEPTH;
 

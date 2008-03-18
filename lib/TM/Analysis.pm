@@ -39,12 +39,12 @@ following fields:
 
 =over
 
-=item C<nr_midlets>
+=item C<nr_toplets>
 
 Nr of midlets in the map. This includes ALL midlets for topics and also those for
 assertions.
 
-=item C<nr_maplets>
+=item C<nr_asserts>
 
 Nr of assertions in the map.
 
@@ -60,9 +60,9 @@ sub statistics {
     my $self = shift;
     my %s; # result
 
-    foreach my $a (@_ ? @_ : qw(nr_midlets nr_maplets nr_clusters)) {       # default is all
-	$s{$a} = scalar $self->midlets      if $a eq 'nr_midlets';
-	$s{$a} = scalar $self->match_forall if $a eq 'nr_maplets';
+    foreach my $a (@_ ? @_ : qw(nr_toplets nr_asserts nr_clusters)) {       # default is all
+	$s{$a} = scalar $self->toplets      if $a eq 'nr_toplets';
+	$s{$a} = scalar $self->match_forall if $a eq 'nr_asserts';
 
 	if ($a eq 'nr_clusters') { # clusters
 	    Class::Trait->apply ($self, 'TM::Graph');                       # make sure we can do it
@@ -71,8 +71,8 @@ sub statistics {
 	}
     };
 
-    # size of map
-    # payload (basenames, occurrence data, variant
+    # TODO: size of map
+    # TODO: payload (basenames, occurrence data, variant
 
     return \%s;
 }
@@ -124,7 +124,7 @@ sub orphanage {
     my %supers    = (); # each topic -> how many superclasses
     my %subs      = (); # each topic -> how many subclasses
 
-    my ($ISA, $ISSC, $CLASS, $INSTANCE) = @{$self->{usual_suspects}}{'isa', 'is-subclass-of', 'class', 'instance'};
+    my ($ISA, $ISSC, $CLASS, $INSTANCE) = ('isa', 'is-subclass-of', 'class', 'instance');
 
     foreach my $a (values %{$self->{assertions}}) {
 	$types{$a->[TM->LID]}++; $instances{$a->[TM->TYPE]}++;
@@ -139,7 +139,7 @@ sub orphanage {
     }
 #warn Dumper (\%types , \%instances, \%supers, \%subs);
 
-    my @all = $self->midlets;
+    my @all = map { $_->[TM->LID] } $self->toplets;
     my %o;
     foreach my $a (@_ ? @_ : qw(untyped empty unclassified unspecified)) {       # default is all
 	$o{$a} = [ grep !$types{$_},     @all ] if $a eq 'untyped';
@@ -160,14 +160,14 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[3-6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[3-68] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.6;
+our $VERSION  = 0.9;
 our $REVISION = '$Id: Analysis.pm,v 1.7 2007/07/28 16:41:13 rho Exp $';
 
 

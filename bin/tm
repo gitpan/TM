@@ -361,7 +361,7 @@ our $log;    # others may want to use this as $main::log
 use TM::Tau;
 
 $TM::Tau::filters{'^io:stdout$'} =
-$TM::Tau::filters{'^-$'}         = [ 'TM::Serializable::Summary' ];        # every map on stdout should be a summari
+$TM::Tau::filters{'^-$'}         = [ 'TM::Serializable::Summary' ];        # every map on stdout should be a summary
 
 #-- extensions, loading ------------------------------------------------------------------
 foreach my $m (keys %sources) {

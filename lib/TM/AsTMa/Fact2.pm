@@ -35,7 +35,7 @@ sub _expand_template {
 
 #warn "params".Dumper $params;
 
-    my @returns = $store->match (TM->FORALL, type => 'tm:return', irole => 'tm:thing', iplayer => $store->mids ($ted) )
+    my @returns = $store->match (TM->FORALL, type => 'return', irole => 'thing', iplayer => $store->tids ($ted) )
                   or die "template '$ted' does not have a 'return' characteristic";
 #warn Dumper \@returns;
     my $return = $returns[0]->[TM->PLAYERS]->[1] and (scalar @returns == 1
@@ -1306,8 +1306,8 @@ sub _is_template {
     my $store = shift;
     my $id    = shift;
 
-    my $t = $store->mids ($id) or return undef;
-    return $store->is_a ($t, $store->mids (\ TEMPLATE));
+    my $t = $store->tids ($id) or return undef;
+    return $store->is_a ($t, $store->tids (\ TEMPLATE));
 }
 
 sub _is_ontology {
@@ -1323,9 +1323,10 @@ sub _is_ontology {
     } elsif ($prefix eq 'xsd') {                                                          # this is the other predefined prefix
 	$prefixes->{$prefix} = XSD;
     } else {
-	my $p = $store->mids ($prefix);
-	if ($p && $store->is_a ($p, $store->mids (\ ONTOLOGY))) {                         # is the topic an instance of astma:ontology?
-	    $prefixes->{$prefix} = $store->midlet ($store->mids ($prefix))->[TM->INDICATORS]->[0]        # then take its subject indicator as expanded URI
+	my $p = $store->tids ($prefix);
+	if ($p && $store->is_a ($p, $store->tids (\ ONTOLOGY))) {                         # is the topic an instance of astma:ontology?
+	    $prefixes->{$prefix} = 
+                $store->toplet ($store->tids ($prefix))->[TM->INDICATORS]->[0]            # then take its subject indicator as expanded URI
 		or die "no subject indicator for '$prefix' provided";                     # if there is none, complain
 	}
     }
@@ -1368,9 +1369,7 @@ sub parse {
     } elsif ($@) {
 	die $@;                                                          # otherwise re-raise the exception
     }
-#warn "in parse end";
 #warn "in parse end ".Dumper $self->{USER}->{implicits};
-
     { # resolving implicit stuff
 	my $implicits = $self->{USER}->{implicits};
 	my $store     = $self->{USER}->{store};
@@ -1381,10 +1380,8 @@ sub parse {
 		    [ undef, undef, 'is-subclass-of', TM->ASSOC, [ 'superclass', 'subclass' ], [ $superclass, $_ ] ] 
 		    }  keys %{$implicits->{'subclasses'}->{$superclass}});
 	    }
-#warn "done with subclasses";
 	}
 	{ # all things in isa-things are THINGS, simply add them
-##warn "isa things ".Dumper [keys %{$implicits->{'isa-thing'}}];
 	    $store->internalize (map { $_ => undef } keys %{$implicits->{'isa-thing'}});
 	}
 	{ # establishing the scoping topics
@@ -1392,7 +1389,7 @@ sub parse {
                                  [ undef, undef, 'isa', TM->ASSOC, [ 'class', 'instance' ], [ 'scope', $_ ] ] 
 				 } keys %{$implicits->{'isa-scope'}});
 	}
-        $store->externalize ( $store->instances ($store->mids (\ TEMPLATE)) );                  # "removing templates now";
+        $store->externalize ( $store->instances ($store->tids (\ TEMPLATE)) );                  # "removing templates now";
     }
     return $self->{USER}->{store};
 }

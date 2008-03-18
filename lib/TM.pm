@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.30';
+our $VERSION  = '1.31';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -41,117 +41,194 @@ TM - Topic Maps, Base Class
 
     my $tm = new TM (baseuri => 'tm://whatever/');   # empty map
 
-    # add a midlet (= minimal topic, only identification, no characteristics)
+    # add a toplet (= minimal topic, only identification, no characteristics)
     # by specifying an internal ID
-    $tm->internalize ('aaa');                     # only internal identifier
-    $tm->internalize ('bbb' =>   'http://bbb/');  # with a subject address
-    $tm->internalize ('ccc' => \ 'http://ccc/');  # with a subject indicator
+    $tm->internalize ('aaa');                        # only internal identifier
+    $tm->internalize ('bbb' =>   'http://bbb/');     # with a subject address
+    $tm->internalize ('ccc' => \ 'http://ccc/');     # with a subject indicator
 
     # without specifying an internal ID (will be auto-generated)
-    $tm->internalize (undef =>   'http://ccc/');  # with a subject address
-    $tm->internalize (undef => \ 'http://ccc/');  # with a subject indicator
+    $tm->internalize (undef =>   'http://ccc/');     # with a subject address
+    $tm->internalize (undef => \ 'http://ccc/');     # with a subject indicator
 
-    # get rid of midlet(s)
+    # get rid of toplet(s)
     $tm->externalize ('tm://whatever/aaa', ...);
 
-    # add an assertion (association or characteristic)
-    $a = $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'rumsti', 'ramsti' ]));
+    # find full URI of a toplet
+    my $tid  = $tm->tids ('person');                     # returns tm://whatever/person
+    my @tids = $tm->tids ('person', ...)                 # for a whole list
 
-    # get rid of assertion(s)
-    $tm->retract ($a->[TM->LID], ...);
+    my $tid  = $tm->tids (  'http://bbb/');              # with subject address
+    my $tid  = $tm->tids (\ 'http://ccc/');              # with subject indicator
 
-    # extract particular assertions
-    my @as = $tm->retrieve ('id..of...assertion...here');
+    my @ts   = $tm->toplets;                             # get all toplets
+    my @ts   = $tm->toplets (\ '+all -infrastructure');  # only those you added
+
+    my @as   = $tm->asserts;                             # all assertions
+    my @as   = $tm->asserts ('23ac4637....345');         # only that one
+    my @as   = $tm->asserts (\ '+all -infrastructure');  # only those you added
+
+    # create standalone assertion
+    my $a = Assertion->new (type    => 'is-subclass-of',
+                            roles   => [ 'subclass', 'superclass' ],
+                            players => [ 'rumsti', 'ramsti' ]);
+    $tm->assert ($a);                                    # add that to map
+
+    # create a name
+    my $n = Assertion->new (kind    => TM->NAME,
+                            type    => 'name',
+                            scope   => 'us', 
+                            roles   => [ 'thing', 'value' ],
+                            players => [ 'rumsti', new TM::Literal ('AAA') ])
+    # create an occurrence
+    my $o = Assertion->new (kind    => TM->OCC,
+                            type    => 'occurrence',
+                            scope   => 'us',
+                            roles   => [ 'thing', 'value' ],
+                            players => [ 'rumsti', new TM::Literal ('http://whatever/') ])
+
+    $tm->assert ($n, $o);                                # throw them in
+
+    $tm->retract ($a->[TM->LID], ...);                   # get rid of assertion(s)
+
+    my @as = $tm->retrieve ('id..of...assertion');       # extract particular assertions
 
     # find particular assertions
+    # generic search patterns
     my @as = $tm->match_forall (scope   => 'tm://whatever/sss');
 
     my @bs = $tm->match_forall (type    => 'tm://whatever/ttt',
                                 roles   => [ 'tm://whatever/aaa', 'tm://whatever/bbb' ]);
 
+    # specialized search patterns (see TM::Axes)
     my @cs = $tm->match_forall (type    => 'tm://whatever/is-subclass-of', 
 			        arole   => 'tm://whatever/superclass', 
 			        aplayer => 'tm://whatever/rumsti', 
 			        brole   => 'tm://whatever/subclass');
 
-    my @ds = $tm->match_forall (type    => 'tm://whatever/isa'
-                                instance=> 'tm://whatever/person');
-
+    my @ds = $tm->match_forall (type    => 'tm://whatever/person'
+                                instance=> 1);
 
     # perform merging, cleanup, etc.
     $tm->consolidate;
 
-    # find full URI of a topic (uhm, midlet)
-    my $mid  = $tm->mids ('person');      # returns tm://whatever/person
-    my @mids = $tm->mids ('person', ...)  # for a whole list
-
-    # get all midlets
-    my @ms   = $tm->midlets;    
-
     # taxonomy stuff
-    warn "%-|" if $tm->is_a ($tm->mids ('gw_bush', 'moron')); # what a subtle joke
+    warn "%-|" if $tm->is_a ($tm->tids ('gw_bush', 'moron')); # what a subtle joke
 
-    die unless $tm->is_subclass ($tm->mids ('politician', 'moron');
+    die unless $tm->is_subclass ($tm->tids ('politician', 'moron');
 
     # returns Mr. Spock if Volcans are subclassing Aliens
-    warn "my best friends: ". Dumper [ $tm->instancesT ($tm->mids ('alien')) ];
+    warn "my best friends: ". Dumper [ $tm->instancesT ($tm->tids ('alien')) ];
 
 
 =head1 ABSTRACT
 
-This (monster) class provides read/write access to so-called I<materialized> maps, i.e. maps which
-completely can reside in memory. Implementations for non-materialized maps can be derived from it.
+This class provides read/write access to a data structure according to the Topic Maps paradigm. As
+it stands, this class implements directly so-called I<materialized> maps, i.e. those maps which
+completely reside in memory. Implementations for non-materialized maps can be derived from it.
 
 =head1 DESCRIPTION
 
-As it stands, this package implements directly so-called I<materialized> maps, i.e. those maps which
+This class implements directly so-called I<materialized> topic maps, i.e. those maps which
 completely reside in memory. Non-materialized and non-materializable maps can be implemented by
 deriving from this class by overloading one or all of the sub-interfaces. If this is done cleverly,
 then any application, even a TMQL query processor can operate on non-materialized (virtual) maps in
 the same way as on materialized ones.
+
+=head2 Data Structures
+
+The Topic Maps paradigm knows two abstractions
+
+=over
+
+=item I<TMDM>, Topic Maps Data Model 
+
+L<http://www.isotopicmaps.org/sam/sam-model/>
+
+=item I<TMRM>, Topic Maps Reference Model 
+
+L<http://www.isotopicmaps.org/tmrm/>
+
+=back
+
+For historical reasons, this package adopts an abstraction which is in between these
+two. Accordingly, there are only following types of data structures
+
+=over
+
+=item Toplets:
+
+These are like TMDM topics, but only contain addressing information (subject identifiers and subject
+addresses) along an internal identifier.
+
+=item Assertions:
+
+These are like TMDM associations, but are generalized to host also occurrences and names. Also
+associations using predefined association types, such as C<isa> (I<instance-class>) and C<iko>
+(I<subtype-supertype>) are represented as assertions.
+
+=item Variants:
+
+No idea what they are good for. They can be probably safely ignored.
+
+=back
 
 The data manipulation interface is very low-level and B<directly> exposes internal data structures.
 As long as you do not mess with the information you get and you follow the API rules, this can
 provide a convenient, fast, albeit not overly comfortable interface. If you prefer more a TMDM-like
 style of accessing a map then have a look at L<TM::DM>.
 
-=head2 Midlets and Maplets
-
-To make the data structure as flat as possible, map content is stored in two hashes. One is holding
-I<midlets>, i.e. simplified forms of topics and the other contains only I<maplets>, a simplified
-form of association.
-
-=head3 Maplets
-
-Maplets contain the role/player combinations we are so used to. As such they are suitable to
-represent all associations in a map, including those C<isa> and C<is-subclass-of> ones. Each
-maplets includes its own type and the scope (which is always defined and defaults to the
-universal scope.
-
-Also names and occurrences follow a similar structure, whereby one player is the topic, the other is
-the literal value. But such maplets also have a type and a scope component.
-
-=head3 Midlets
-
-Midlets are only the part of a topic which deals with its subject identification, either via
-a subject locator or any number of subject indicating URIs. That's it.
-
-Not quite. As every maplet is also a subject, you will find an entry for each of them there.
 
 =head2 Identifiers
 
 Of course, L<TM> supports the subject locator and the subject indicator mechanism as mandated
 by the Topic Maps standards.
 
-Additionally, though, this package also uses I<internal> identifiers to address everything which
-looks and smells like a topic: associations, names and occurrences. For topics the application (or
+Additionally, this package also uses I<internal> identifiers to address everything which looks and
+smells like a topic, also associations, names and occurrences. For topics the application (or
 author) of the topic map will most likely provide these internal identifiers. For the others the
 identifiers are generated.
 
-In any case, all identifiers are I<absolute> using the C<baseuri> as an absolute URI to resolve
-against. So, a local identifier C<chinese-working-conditions> will become
-C<http://exploitation.is.sexy/chinese-working-conditions> if the base URI of the map were
-C<http://exploitation.is.sexy/>. The method C<mids> helps you in this process.
+Since v1.31 this package distinguishes between 3 kinds of internal identifiers:
+
+=over
+
+=item I<canonicalized> toplet identifiers
+
+These identifiers are always interpreted local to a map, in that the C<baseuri> of the map is used
+as prefix. So, a local identifier
+
+  chinese-working-conditions
+
+will become
+
+  tm://nirvana/chinese-working-conditions
+
+if the base URI of the map were
+
+  tm://nirvana/
+
+So if you want to use identifiers such as these, then you should either use the absolut version
+(including the base URI) or use the method C<tids> to find the absolute version.
+
+=item I<sacrosanct> toplet identifiers
+
+All toplets from the infrastructure are declared I<sacrosanct>, i.e. untouchable. Examples are
+C<isa>, C<class> or C<us> (universal scope).
+
+These identifiers are always the same in all maps this package system manages. That implies that if
+you use such an identifier, then you cannot attach a local meaning to it. And it implies that at
+merging time, toplet with these identifiers will merge. Even if there are no subject indicators or
+addresses.
+
+It is probably a good idea to leave such toplets alone as the software is relying on the stability
+of the local identifiers.
+
+=item assertion identifiers
+
+You will hardly experience them.
+
+=back
 
 =head2 Consistency
 
@@ -162,23 +239,24 @@ consistency conditions are met:
 
 =item B<A1> (fixed on)
 
-Every topic appearing in some association as type, role or player is also registered as topic.
+Every identifier appearing in some assertion as type, scope, role or player is also registered as
+toplet.
 
 =item B<A2> (fixed on)
 
-Every association in the map is also a registered topic.
+Every assertion in the map is also a registered toplet.
 
 =item B<Indicator_based_Merging> (default: on)
 
-Two (or more) topics sharing the same I<subject identifier> are treated as one topic.
+Two (or more) toplets sharing the same I<subject identifier> are treated as one toplet.
 
 =item B<Subject_based_Merging> (default: on)
 
-Two (or more) topics sharing the same I<subject locator> are treated as one topic.
+Two (or more) toplets sharing the same I<subject locator> are treated as one toplet.
 
 =item B<TNC_based_Merging> (default: off)
 
-Two (or more) topics sharing the same name in the same scope are treated as one topic.
+Two (or more) toplet sharing the same name in the same scope are treated as one toplet.
 
 =back
 
@@ -193,16 +271,16 @@ use constant {
 =pod
 
 While the first two (A1, A2) are related with the internal consistency of the data structure, the
-others are a choice the application can make. See method C<consistency>.
+others are a choice the application can make (See method C<consistency>).
 
-This consistency is not automatically provided when a map is modified by the application. It is the
+I<Consistency> is not automatically provided when a map is modified by the application. It is the
 applications responsibility to trigger the process to consolidate the map.
 
-When an IO driver is consuming a map from a resource (say loading from an XTM file), then that
-driver will ensure that the map is consolidated according to the current settings before it is
-handed to the application. The application is then in full control of the map as it can change, add
-and delete topics and associations. This implies that that can become unconsolidated in this
-process. The method C<consolidate> reinstates consistency again.
+When an IO driver is consuming a map from a resource, say, loading from an XTM file, then that
+driver will ensure that the map is consolidated according to the current settings before it hands it
+to the application. The application is then in full control of the map as it can change, add and
+delete toplets and assertions. This implies that that can become unconsolidated in this process. The
+method C<consolidate> reinstates consistency again.
 
 You can change these defaults by (a) providing an additional option to the constructor
 
@@ -210,11 +288,13 @@ You can change these defaults by (a) providing an additional option to the const
            consistency => [ TM->Subject_based_Merging,
                             TM->Indicator_based_Merging ]);
 
-or (b) by using the accessor C<consistency> (see below).
+or (b) by later using the accessor C<consistency> (see below).
 
-=head1 INFRASTRUCTURE INTERFACE
+=head1 MAP INTERFACE
 
 =head2 Constructor
+
+I<$tm> = new TM (...)
 
 The constructor will create an empty map, or, to be more exact, it will fill the map with the
 taxonomy from L<TM::PSI> which covers basic concepts such as I<topic> or I<associations>.
@@ -230,14 +310,45 @@ controls how an absolute URI is built from this identifier.
 
 =item C<consistency> (default: [ Subject_based_Merging, Indicator_based_Merging ])
 
-=item C<psis>
+This controls the consistency settings. They can be changed later with the C<consistency> method.
 
-=back
+=item C<psis>
 
 If you need to roll your own taxonomy to bootstrap with, you can pass in a structure which has
 exactly the same structure as that in L<TM::PSI>.
 
+=back
+
+TODO: phase out psis parameter (no one needs that really)
+
 =cut
+
+our $infrastructure;                                                                    # default set = core + topicmaps_inc + astma_inc
+
+sub _prime_infrastructure {                                                             # generate a fragmentary TM structure for the infrastructure
+    foreach my $h ($TM::PSI::core,
+		   $TM::PSI::topicmaps_inc,
+		   $TM::PSI::tmql_inc,
+		   $TM::PSI::astma_inc) {
+	foreach my $k (keys %{ $h->{mid2iid} }) {
+	    $infrastructure->{mid2iid}->{$k} = [ $k, undef, $h->{mid2iid}->{$k} ];      # and manifest them as toplets
+	}
+
+	map { $infrastructure->{assertions}->{ $_->[TM->LID] } = $_ }                   # manifest assertions
+##	map { $infrastructure->{mid2iid}->{$_->[TM->LID]} = [ $_->[TM->LID], undef, [] ],  # also as toplets
+##	      $_ }
+	map { $_->[TM->LID] = mklabel ($_);                                             #   after computing the hash LID
+	      $_ }
+	map { canonicalize ( undef, $_ ) }                                              #   after canonicalizing them
+	map { $_->[TM->KIND]  = TM->ASSOC;                                              #   adding defaults
+	      $_->[TM->SCOPE] = TM::PSI::US; 
+	      $_ }
+	map { Assertion->new (type    => $_->[0],                                       #   which is built here
+			      roles   => $_->[1],                                       #     with the roles list
+			      players => $_->[2])}                                      #     with the players list
+	@{ $h->{assertions} };
+    }
+}
 
 sub new {
   my $class = shift;
@@ -250,17 +361,10 @@ sub new {
   my $self = bless \%self, $class;
 
   unless ($self->{mid2iid}) {                                                     # we need to do fast cloning of basic vocabulary
-      use TM::PSI;
-      my $psis = $self{psis} || $TM::PSI::topicmaps;
-      my $mids = $psis->{mid2iid};
-      my $bu   = $self->{baseuri};
-                                                                                  # now create low-level TM content via fast cloning
-      $self->{mid2iid}        = { map { $bu.$_ => [ undef, [ @{$mids->{$_}} ] ] }   keys %{$mids} };
-      $self->{usual_suspects} = { map { $_ => mids ($self, $_) } @TM::PSI::Usual_Suspects };
-      assert ($self,              map { Assertion->new (type    => $_->[0],
-							roles   => [@{$_->[1]}],  # here we clone the roles/player list
-							players => [@{$_->[2]}])} @{$psis->{assertions}}  );
-      delete $self{psis};                                                         # we do not need it anymore
+      $infrastructure or _prime_infrastructure;
+
+      %{ $self->{mid2iid} }    = %{ $infrastructure->{mid2iid} };                      # shallow clone
+      %{ $self->{assertions} } = %{ $infrastructure->{assertions} };                   # shallow clone
   }
 
   $self->{last_mod} = 0;                                                          # book keeping
@@ -297,7 +401,7 @@ sub baseuri {
 
 I<@merging_constraints> = I<$tm>->consistency
 
-I<$tm>->consistency (I<@list_of_constants>)
+I<$tm>->consistency (I<@list_of_consistency_constants>)
 
 This method provides read/write access to the consistency settings.
 
@@ -336,6 +440,8 @@ sub last_mod {
 
 I<$tm>->consolidate
 
+I<$tm>->consolidate (I<@list_of_consistency_constants>)
+
 This method I<consolidates> a map by performing the following actions:
 
 =over
@@ -350,15 +456,15 @@ perform merging based on subject indicators (see TMDM section 5.3.2)
 
 =item * 
 
-remove all superfluous midlets (those which do not take part in any association)
+remove all superfluous toplets (those which do not take part in any assertion)
 
 B<NOTE>: Not implemented yet!
 
 =back
 
-The optional parameter is a list of constants, all of which are defined in L<TM>. If the list is
-empty, then the consistency of the map will be used, otherwise the consistency as defined with this
-list will override.
+This method will normally use the map's consistency settings. These settings can be overridden by
+adding consistency settings as parameters (see L</Consistency>). In that case the map's settings are
+B<not> modified, so use this carefully.
 
 B<NOTE>: In all cases the map will be modified.
 
@@ -392,6 +498,8 @@ sub consolidate {
 #== find merging points and memorize this in mergers =======================================================================
   my %mergers;                                                             # will contain the merging edges
   my $mid2iid = $self->{mid2iid};                                          # shortcut
+  my $asserts = $self->{assertions};                                       # shortcut
+  my $baseuri = $self->{baseuri};                                          # shortcut
 
 MERGE:
   foreach my $this (keys %{$mid2iid}) {
@@ -404,34 +512,47 @@ MERGE:
 	  foreach my $sin (@{$thism->[TM->INDICATORS]}) {                  # walk over the subject indicators
 	      if (my $that  = $SINs{$sin}) {                               # $that is now a key pointing to a merging partner
 #warn "merging (IND) $this >> $that"; #. Dumper $thism, $thatm;
-		  $mergers{_find_free ($this, \%mergers)} = $that;
+		  _add_merge (\%mergers, $baseuri, $this, $that);
 
-		  sub _find_free {
-		      my $this = shift;
-		      my $mergers = shift;
-		      
-		      my $this2 = $this;
-		      my $this3;
-		      while ($this3 = $mergers->{$this2}) {
-			  if ($this3 eq $this || $this3 eq $this2) {       # loop, we do not need it
-			      return $this3;
-			  } else {
-			      $this2 = $this3;                             # we follow the trail
-			  }
-		      }
-		      return $this2;                                       # this2 was the end of the trail
-		  }
               } else {                                                     # no merging, so enter the sins
                   $SINs{$sin} = $this;
 	      }
 	  }
       }
+
+sub _add_merge {
+    my $mergers = shift;
+    my $bu      = shift;
+    my $this    = shift;
+    my $that    = shift;
+
+    ($this, $that) = ($that, $this) if $this =~ /^$bu/;                    # we swap them to favor that which resembles the baseURI
+    $mergers->{_find_free ($this, $mergers)} = $that;                      # find a free place to make that mapping
+}
+
+sub _find_free {
+    my $this = shift;
+    my $mergers = shift;
+    
+    my $this2 = $this;
+    my $this3;
+    while ($this3 = $mergers->{$this2}) {
+	if ($this3 eq $this || $this3 eq $this2) {       # loop, we do not need it
+	    return $this3;
+	} else {
+	    $this2 = $this3;                             # we follow the trail
+	}
+    }
+    return $this2;                                       # this2 was the end of the trail
+}
+
 #-- based on subject address ---------------------------------------------------------------------------------------------
       if ($subj) {
 	  if (my $sid = $thism->[TM->ADDRESS]) {
 	      if (my $that = $SIDs{$sid}) {                                # found partner => should be merged
 #warn "merging (ADDR) $this >> $that";
-		  $mergers{_find_free ($this, \%mergers)} = $that;
+		  _add_merge (\%mergers, $baseuri, $this, $that);
+###### old		  $mergers{_find_free ($this, \%mergers)} = $that;
 		  # must obviously both have the same subject address, so, no reason to touch this
 	      } else {                                                     # there is no partner, first one with this subject address
 		  $SIDs{$sid} = $this;
@@ -441,9 +562,9 @@ MERGE:
 #warn "after TM->ADDRESS on '$this' ";#.Dumper $mid2iid;
   }
 #-- based on TNC ---------------------------------------------------------------------------------------------
-  if ($tnc) {
-      my ($THING, $VALUE) = @{$self->{usual_suspects}}{'thing', 'value'};
-      foreach my $a (values %{$self->{assertions}}) {
+   if ($tnc) {
+      my ($THING, $VALUE) = ('thing', 'value');
+      foreach my $a (values %$asserts) {
 	  next unless $a->[TM->KIND] == TM->NAME;                          # we are only interested in basenames
 #warn "checking assertion ".Dumper $a;
 	  my ($v) = get_x_players ($self, $a, $VALUE);                     # if we get back a longer list, bad luck
@@ -453,7 +574,8 @@ MERGE:
 #warn "    --> player is $this";
 	  if (my $that = $BNs{$bn_plus_scope}) {                           # if we have seen it before
 #warn "  -> SEEN";
-	      $mergers{_find_free ($this, \%mergers)} = $that;
+	      _add_merge (\%mergers, $baseuri, $this, $that);
+#### old      $mergers{_find_free ($this, \%mergers)} = $that;
 	  } else {                                                         # it is new to use, we store it into %BNs
 #warn "  -> NOT SEEN";
 	      $BNs{$bn_plus_scope} = $this;
@@ -481,7 +603,7 @@ MERGE:
 	  }
       }
 #      warn "consoli loop $_: changes: $changes";
-      warn "early finish" if $_ == 1 and $changes == 0;
+#      warn "early finish" if $_ == 1 and $changes == 0;
       last if $changes == 0;
 #      die "not clean" if $_ == 2 and $changes > 0;
   }
@@ -490,6 +612,18 @@ MERGE:
 
 
 #== actual merging ========================================================================================
+
+  # recanonicalize affected assertions
+  {
+      my $changed = _relabel (\%mergers, $self->baseuri, values %$asserts );
+      while (my ($k, $a) = each %$changed) {
+	  delete $asserts->{ $k };
+#	  delete $mid2iid->{ $k };
+#	  $mid2iid->{ $a->[TM->LID] } = [ $a->[TM->LID], undef, [] ];
+	  $asserts->{ $a->[TM->LID] } = $a;
+      }
+  }
+
   foreach my $that (keys %mergers) {
       my $this  = $mergers{$that};
       my $thism = $mid2iid->{$this};
@@ -499,10 +633,15 @@ MERGE:
       $log->logdie ("two different subject addresses for two topics to be merged ($this, $that)")
 	  if $thism->[TM->ADDRESS] and $thatm->[TM->ADDRESS] and 
 	     $thism->[TM->ADDRESS] ne  $thatm->[TM->ADDRESS];
+
 #warn "merge now $that > $this";
-             $thism->[TM->ADDRESS]  ||=   $thatm->[TM->ADDRESS];                 # first subject address, then indicators
-      push @{$thism->[TM->INDICATORS]}, @{$thatm->[TM->INDICATORS]};
-      $mid2iid->{$that} = $thism;
+             $thism->[TM->ADDRESS]  ||=   $thatm->[TM->ADDRESS];                 # first subject address
+      {                                                                          # then indicators
+	  my $Is = $thism->[TM->INDICATORS];                                     # reference to thism indicators
+	  push @$Is, @{$thatm->[TM->INDICATORS]};                                # add the others to it
+	  { my %X; map { $X{$_}++ } @$Is; @$Is = keys %X; }                      # make that unique
+      }
+      $mid2iid->{$that} = $thism;                                                # finally
   }
 #warn "after post-merger ". Dumper $mid2iid;
 
@@ -516,127 +655,178 @@ MERGE:
 
 I<$tm>->add (I<$tm2>, ...)
 
-This method accepts a list of L<TM> objects and adds all content (associations and topics) from
-these maps.
+This method accepts a list of L<TM> objects and adds all content from these maps to the current
+object.
 
-B<NOTE>: There is B<NO> merging done. Use explicitly method C<consolidate> for it.
+B<NOTE>: There is B<NO> merging done for user-supplied toplets. Use explicitly method C<consolidate>
+for it. Merging is done for all sacrosanct toplets, i.e. those from the infrastructure.
+
+From v1.31 onwards this method tries to favour the I<internal> identifiers (LIDs) of B<this> map
+over LIDs of the added maps. This means, firstly, that internal identifiers of B<this> map are
+B<not> touched (or re-generated) in any way and that any shorthands (without a baseuri prefix) will
+remain valid when using C<tids>. Secondly, LIDs in the added map will be attempted to blend into
+B<this> map by changing simply their prefix. If that newly generated LID is already taken by
+something in B<this> map, then the original LID will be used. That allows many added LIDs be used
+together with C<tids> without change in code. Of course, the only reliable way to reach a topic is a
+subject locator or an indicator.
+
+B<NOTE>: This procedure implies that some assertions are recomputed, so that also their LID will
+change!
+
 
 =cut
 
 sub add {
-    my $self = shift;
+    my $self    = shift;
+    my $baseuri = $self->{baseuri};
+    my $mid2iid = $self->{mid2iid};                                            # shorthand
+    my $asserts = $self->{assertions};
 
-#warn "store add". Dumper \@_;
-    foreach (@_) {                                         # deal with one store after the other
-	while (my ($k, $v) = each %{$_->{assertions}}) {
-	    $self->{assertions}->{$k} = $v;                # there should not be any conflicts, using MD5 hashes over type/scope/roles/players should be good enough
-	}
-	my $mid2iid = $self->{mid2iid};                    # shorthand
+    foreach (@_) {                                                             # deal with one store after the other
+	my $baseuri2 = $_->{baseuri};
+
+	my %changes;                                                           # will contain old -> new internal identifier mappings
 	while (my ($k, $v) = each %{$_->{mid2iid}}) {
-	    if (! $mid2iid->{$k}) {                        # we had no entry here => simply...
-		$mid2iid->{$k} = $v;                       # ...add what the other has
-	    } else {                                       # same internal identifier? danger lurking...
-		if (!$v->[0]) {                            # new had undef there, leave what we have
-		} elsif (!$mid2iid->{$k}->[0]) {           # old had nothing, =>
-		    $mid2iid->{$k}->[0] = $v->[0];         # copy it
-		} elsif ($mid2iid->{$k}->[0] eq $v->[0]) { # old had something and new has something and they are the same
-		    # leave it
-		} else {                                   # not good, subject addresses differ
-		    $log->logdie ("using the same internal identifier '$k', but different subject addresses (".$mid2iid->{$k}->[0].",".$v->[0].") is not good (change the baseuri of one map)");
-		}
-		push @{$mid2iid->{$k}->[1]}, @{$v->[1]};   # simply add all the subject indication stuff
+
+	    if ($infrastructure->{mid2iid}->{$k}) { # infrastructure toplets are sacrosanct
+	    } else {
+		(my $k2 = $k) =~ s/^$baseuri2/$baseuri/;                       # replace baseuri2 prefix
+
+		$k2  = $k if $mid2iid->{$k2};                                  # if there is a collision, bounce back to original
+		$k2 .= '1' while $mid2iid->{$k2};                              # while there is still a collision ... (this only in case of same baseuris)
+#		$k2 = $baseuri.sprintf ("uuid-%010d", $TM::toplet_ctr++)
+#		    if $mid2iid->{$k2};                                        # if there is a collision, create generic one
+
+		$changes{$k}    = $k2;
+		$v->[TM->LID]   = $k2;                                         # use that key as canonical one
+		$mid2iid->{$k2} = $v;                                          # ...add what the other has
 	    }
+	}
+
+#warn Dumper \%changes;
+	my $changed = _relabel (\%changes, $baseuri, values %{ $_->{assertions} } );
+#warn Dumper $changed;
+	while (my ($k, $a) = each %$changed) {
+#	    delete $mid2iid->{ $k };
+#	    $mid2iid->{ $a->[TM->LID] } = [ $a->[TM->LID], undef, [] ]; # put the new one in here
+	    $asserts->{ $a->[TM->LID] } = $a;                                  # and also in the assertions part
 	}
     }
     $self->{last_mod} = Time::HiRes::time;
+}
+
+
+sub _relabel {
+    my $changes = shift;
+    my $baseuri = shift;
+
+    my %changed;                                                                          # we record here old LID -> newly relabelled assertion
+    foreach my $a (@_) {
+	my ($this, $that);
+#warn "working on ".Dumper $a;
+        $a->[TM->SCOPE]     = $that if $that = $changes->{ $a->[TM->SCOPE] }; $this ||= $that;
+	$a->[TM->TYPE]      = $that if $that = $changes->{ $a->[TM->TYPE]  }; $this ||= $that;
+	
+	map { $_ = $this = $that if $that = $changes->{ $_ } } @{ $a->[TM->ROLES]   };
+	map { $_ = $this = $that if $that = $changes->{ $_ } } @{ $a->[TM->PLAYERS] };
+#warn "$this for ".Dumper $a;
+	$changed{ $a->[TM->LID] } = $a if $this;                                          # something has changed
+
+	$a->[TM->CANON] = 0; canonicalize (undef, $a);
+	$a->[TM->LID]   = mklabel ($a);
+	
+    }
+    return \%changed;
 }
 
 =pod
 
 =item B<diff>
 
-I<$diff> = $tm->diff($oldmap)
+I<$diff> = I<$new_tm>->diff (I<$old_tm>)
 
-I<$diff> = TM::diff($newmap, $oldmap)
+I<$diff> = TM::diff (I<$new_tm>, I<$old_tm>)
 
-I<$diff> = TM::diff($newmap, $oldmap, {consistency=>[TM->Subject_based_Merging], include_changes=>1})
+I<$diff> = TM::diff (I<$new_tm>, I<$old_tm>, 
+                     {consistency => [TM->Subject_based_Merging], 
+                      include_changes => 1})
 
-diff compares two topicmaps and returns their differences as a hash reference.
-If diff is used in OO-style, the current map is interpreted as the new map and the map in the 
-arguments as the old one.
-The function honours the options I<consistency> and I<include_changes>.
+C<diff> compares two topic maps and returns their differences as a hash reference. While it works on
+any two maps, it is most useful when one map (the I<old map>) is modified into a I<new map>.
 
-For any changes, the midlet and assertion identifiers are returned by default; 
-the option include_changes causes the return of the actual midlets and assertions
-themselves. The option makes diff's output more self-contained: with the option 
-enabled, one can fully (re)create the new map from the old one plus the diff (and vice versa).
+If C<diff> is used in OO-style, the current map is interpreted as the I<new> map and the map in the
+arguments as I<the old one>.
 
-The consistency parameter uses the same format as the TM constructor (see L</Constructor>)
-and describes how corresponding topics in the two maps are to be identified.
-Topics with the same topic ids are always considered equal. If Subject based consistency is
-active, topics with the same Subject Locator are considered equal (overriding the topic identities).
-If Indicator based consistency is active, topics with a matching Subject Indicator are considered
-equal (overriding the previous identities). 
+By default, the toplet and assertion identifiers for any changes are returned; the option
+C<include_changes> causes the return of the actual toplets and assertions themselves. The option
+makes C<diff>'s output more self-contained: with this option enabled, one can fully (re)create the
+new map from the old one using the diff (or vice versa).
 
-Note that this overriding of previous conditions for identity is necessary to keep the 
-equality relationship unique and one-to-one.
-As an example, consider the following scenario: a topic I<a> in the old map
-is split into multiple new topics I<a> and I<b> in the new map. If I<a> had a locator or identifier
-that is moved to I<b> (and if consistency options are active), then the identity detector 
-will consider I<b> to be equal to I<a>, and B<not> I<a> in the new map to correspond to I<a> in the old map.
-However, this will never lead to loss of information: I<a> in the new map is flagged as completely
-new topic.
+The C<consistency> option uses the same format as the TM constructor (see L</Constructor>) and
+describes how corresponding toplets in the two maps are to be identified.  Toplets with the same ids
+are always considered equal. If I<subject based consistency> is active, toplets with the same I<subject
+locator> are considered equal (overriding the topic identities).  If I<indicator based consistency> is
+active, toplets with a matching I<subject indicator> are considered equal (overriding the previous
+identities).
 
-The differences between old and new map are returned beneath the keys I<plus>, I<minus>, I<identities> and
-I<modified>. If include_changes is on, the extra keys I<plus_midlets>, I<minus_mildlets> and 
-I<assertions> are defined. The values of all these keys are hashes themselves.
+Note that this overriding of previous conditions for identity is necessary to keep the equality
+relationship unique and one-to-one.  As an example, consider the following scenario: a toplet I<a> in
+the old map is split into multiple new toplets I<a> and I<b> in the new map. If I<a> had a locator or
+identifier that is moved to I<b> (and if consistency options were active), then the identity detector
+will consider I<b> to be equal to I<a>, and B<not> I<a> in the new map to correspond to I<a> in the
+old map.  However, this will never lead to loss of information: I<a> in the new map is flagged as
+completely new toplet.
+
+The differences between old and new map are returned beneath the keys I<plus>, I<minus>,
+I<identities> and I<modified>. If C<include_changes> is on, the extra keys I<plus_midlets>,
+I<minus_midlets> and I<assertions> are populated. The values of all these keys are hashes
+themselves.
 
 =over
 
 =item I<plus>, I<minus>
 
-The plus and minus hashes list new or removed topics, respectively (with their midlet identifiers as keys). 
-For each topic, the value if the hash is an array of associated assertion ids. The array is empty but defined
-if there are no associated assertions.
+The C<plus> and C<minus> hashes list new or removed toplets, respectively (with their identifiers as
+keys).  For each toplet, the value of the hash is an array of associated assertion ids. The array is
+empty but defined if there are no associated assertions.
 
-For 'normal' topics the attached assertions 
-are the usual ones (names, occurrences) and class-instance relationships (attached to the instance topic).
-For associations, the assertions are attached to the type topic.
+For 'normal' toplets the attached assertions are the usual ones (names, occurrences) and
+class-instance relationships (attached to the instance toplet).  For associations, the assertions
+are attached to the I<type> toplet.
 
 =item I<identities>
 
-This hash consists of the non-trivial topic identities that were found. If neither Subject- nor
-Indicator-based merging is active, then this hash is empty. Otherwise, the keys are topic identifiers
-in the old map, with the corresponding topic identifier in the new map as value.
+This hash consists of the non-trivial toplet identities that were found. If neither Subject- nor
+Indicator-based merging is active, then this hash is empty. Otherwise, the keys are toplet
+identifiers in the old map, with the corresponding toplet identifier in the new map as value.
 
 =item I<modified>
 
-The modified hash contains the changes for matched topics. The key is the topic identifier in 
-the old map (which is potentially different from the one in the new map; see identities above).
-The value is a hash with three keys: I<plus>, I<minus> and I<identities>. 
-The value for the identities key is defined if and only if the midlet associated with this topic has
-changed (i.e. Subject Locator or Indicators have changed). 
-The values for the plus and minus keys are arrays with the new or removed assertions that are attached
-to this topic. These arrays are defined but empty where no applicable information is present.
+The I<modified> hash contains the changes for matched toplets. The key is the toplet identifier in
+the old map (which is potentially different from the one in the new map; see the note about
+identities above). The value is a hash with three keys: I<plus>, I<minus> and I<identities>.  The
+value for the C<identities> key is defined if and only if the toplet associated with this toplet has
+changed (i.e. Subject Locator or Indicators have changed).  The values for the C<plus> and C<minus>
+keys are arrays with the new or removed assertions that are attached to this toplet. These arrays are
+defined but empty where no applicable information is present.
 
-=item I<plus_midlets>, I<minus_mildlets>
+=item I<plus_midlets>, I<minus_midlets>
 
-These hashes hold the actual new or removed midlets if the option include_changes is active.
-Keys are the midlet ids, values are references to the actual midlet datastructures.
+These hashes hold the actual new or removed toplets if the option C<include_changes> is active.
+Keys are the toplet ids, values are references to the actual toplet data structures.
 
 =item I<assertions>
 
-This hash holds the actual assertions where the maps differ; it exists only if the option 
-include_changes is active. Keys are the assertion identifiers, values the references to the
-actual assertion datastructures. Note that assertion ids uniquely identify the assertion contents,
+This hash holds the actual assertions where the maps differ; it exists only if the option
+C<include_changes> is active. Keys are the assertion identifiers, values the references to the
+actual assertion data structure. Note that assertion ids uniquely identify the assertion contents,
 therefore this hash can hold assertions from both new and old map.
 
 =back
 
 =cut 
 
-sub diff
-{
+sub diff {
     my ($newmap,$oldmap,$options)=@_;
     return undef if (!$oldmap || !$newmap);
 
@@ -656,11 +846,11 @@ sub diff
 	my $key=($map eq $oldmap?"old":"new");
 	my $value=($map eq $oldmap?1:2);
 
-	for my $m ($map->midlets(\ '+all'))
+	for my $m ($map->toplets(\ '+all'))
 	{
 	    # get the topic-aspects (tid, locators and identifiers)
 	    # for finding unchanged/new/old topics
-	    my $midlet=$map->midlet($m);
+	    my $midlet=$map->toplet($m);
 	    $locators{$key}->{$midlet->[TM->ADDRESS]}=$m
 		if ($midlet->[TM->ADDRESS]);
 	    map { $indicators{$key}->{$_}=$m } (@{$midlet->[TM->INDICATORS]});
@@ -718,8 +908,8 @@ sub diff
     my @checkassertion;
     for my $t (keys %checkmidlet)
     {
-	if (!eq_deeply($oldmap->midlet($t),
-		       $newmap->midlet($old2new{$t})))
+	if (!eq_deeply($oldmap->toplet($t),
+		       $newmap->toplet($old2new{$t})))
 	{
 	    $modified{$t}->{identities}=1;
 	    $modified{$t}->{plus}||=[];
@@ -759,7 +949,7 @@ sub diff
 				 type=>$type,
 				 roles=>\@newroles,players=>\@newplayers);
 	    $newmap->canonicalize($n);
-	    my $newid=$base.TM::hash($n);
+	    my $newid=$base.TM::mklabel($n);
 	    $old2newid{$t}=$newid;
 
 	    if ($plusass{$newid})
@@ -846,19 +1036,19 @@ sub diff
 	# (assertions are fine, their names always reflect their content uniquely)
 
 	my (%plusm,%minusm,%ass,$a);
-	map { $plusm{$_}=$newmap->midlet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
-	map { $minusm{$_}=$oldmap->midlet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (keys %minus);
+	map { $plusm{$_}=$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
+	map { $minusm{$_}=$oldmap->toplet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (keys %minus);
 
 	for my $k (keys %modified)
 	{
 	    # these are corresponding topics with differing midlet (contents)
 	    if ($modified{$k}->{identities})
 	    {
-		$plusm{$k}=$newmap->midlet($old2new{$k});
-		$minusm{$k}=$oldmap->midlet($k);
+		$plusm{$k}=$newmap->toplet($old2new{$k});
+		$minusm{$k}=$oldmap->toplet($k);
 	    }
-	    map { $plusm{$_}=$newmap->midlet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{plus}}); 
-	    map { $minusm{$_}=$oldmap->midlet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{minus}}); 
+	    map { $plusm{$_}=$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{plus}}); 
+	    map { $minusm{$_}=$oldmap->toplet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{minus}}); 
 	}
 
 	$returnvalue->{plus_midlets}=\%plusm;
@@ -876,11 +1066,11 @@ sub diff
 
 I<$tm>->melt (I<$tm2>)
 
-This - probably more auxilary - function copies relevant aspect of a second map into the object.
+This - probably more auxiliary - function copies relevant aspect of a second map into the object.
 
 =cut
 
-our @ESSENTIALS = qw(mid2iid assertions baseuri usual_suspects variants);
+our @ESSENTIALS = qw(mid2iid assertions baseuri variants);
 
 sub melt {
     my $self = shift;
@@ -892,39 +1082,481 @@ sub melt {
 
 =pod
 
+=item B<insane>
+
+warn "topic map broken" if I<$tm>->insane
+
+This method tests invariant conditions inside the TM structure of that map. Specifically,
+
+=over
+
+=item *
+
+each toplet has a LID which points to a toplet with the same address
+
 =back
 
-=head1 MANIPULATION INTERFACE
+It returns a string with a message or C<undef> if everything seems fine.
 
-This package provides a low-level implementation of a memory-based assertion store. The assertions
-are stored together with some hash information to speed up particular access patterns.  It is
-designed to hold a significant amount of information in pure-Perl representation in memory. It is a
-also a prime candidate to be implemented in C later.  All changes to the store are immediate; there
-is no transaction concept at this level.
+=cut
 
-The whole map consists of two components: An assertion holds association information, occurrence
-attachments to topics and name attachments to topics. Subject identifiers and one (!) subject
-locator is kept in a minimalistic topic. Every assertion is ALSO a topic.
+sub insane {
+    my $self = shift;
 
-On this level you can modify each component individually giving you much freedom and direct access
-to the map structure. Needless to say, that you can shoot yourself into the knee.
+    my $mid2iid = $self->{mid2iid};
+    my $asserts = $self->{assertions};
 
-=head2 Identifiers
+# Test 1: all toplet LIDs point to something in mid2iid which refers to themselves
+    foreach my $k (keys %$mid2iid) {
+	my $t = $mid2iid->{$k};
+	return "toplet LID $k not in mid2iid" 
+	    unless $mid2iid->{ $t->[TM->LID] };
+	return "LID $k inconsistent with toplet LID"
+	    unless $mid2iid->{ $t->[TM->LID] } == $t;
+	return "key $k looks like assertion, but has not assertions entry" 
+	    if $k =~ /[[:xdigit:]]{16}/ and !$asserts->{$k};
+    }
+## Test 2: all assertions are toplets
+#    foreach my $k (keys %$asserts) {
+#	return "assertion $k has no toplet entry"
+#	    unless $mid2iid->{ $asserts->{$k}->[TM->LID] };
+#	return "assertion $k toplet entry has a different LID"
+#	    unless $mid2iid->{ $asserts->{$k}->[TM->LID] }->[TM->LID] eq $k;
+#    }
+    return undef; # pass all tests
+}
 
-All identifiers which are passed into methods here MUST be absolute URIs. This interface makes no
-attempt to I<absolutize> identifiers. The URIs are kept as strings, not L<URI> objects.
+=pod
 
-=head2 Assertions
+=back
 
-One assertion is a record containing its own identifier, the scope, the type of the assocation, a
-(redundant) field whether this is an association, an occurrence or a name and then all roles and all
-players, in separate lists.
+=head1 TOPLET INTERFACE
 
-These lists B<always> have the same length, so that every player corresponds to exactly one role. If
-one role is played by several players, the role appears multiple times.
+I<Toplets> are light-weight versions of TMDM topics. They only carry addressing information and are
+represented by an array (struct) with the following fields:
 
-These lists are also canonicalized, i.e. ordered in such a way, that assertions can be compared. To
-flag that an assertion is canonicalized there is another field in the assertion record.
+=cut
+
+struct 'Toplet' => [
+    saddr       => '$',
+    sinds       => '$',
+];
+
+=pod
+
+=over
+
+=item C<saddr> (index: C<ADDRESS>)
+
+It contains the B<subject locator> (address) URI, if known. Otherwise C<undef>.
+
+=item C<sinds> (index: C<INDICATORS>)
+
+This is a reference to a list containing B<subject identifiers> (indicators). The list can be empty,
+no duplicate removal is attempted.
+
+=back
+
+Example:
+
+   # dogmatic way to produce it
+   my $to = Toplet->new (saddr => 'http://subject-address.com/',
+                         sinds => []);
+
+   # also good and well
+   my $to = [ 'http://subject-address.com/', [] ];
+
+To access the individual fields, you can either use the struct accessors C<saddr> and C<sinds>, or
+use the constants defined above for indices into the array:
+
+=cut
+
+use constant {
+#   LID        => 0,
+    ADDRESS    => 1,
+    INDICATORS => 2
+};
+
+=pod
+
+Example:
+
+   warn "indicators: ", join (", ", @{$to->saddr});
+
+   warn "locator:    ", $to->[TM->ADDRESS];
+
+=head2 Methods
+
+=over
+
+=item B<internalize>
+
+I<$iid>  = I<$tm>->internalize (I<$some_id>)
+
+I<$iid>  = I<$tm>->internalize (I<$some_id> => I<$some_id>)
+
+I<@iids> = I<$tm>->internalize (I<$some_id> => I<$some_id>, ...)
+
+This method does some trickery when a new toplet should be added to the map, depending on how
+parameters are passed into it. The general scheme is that pairs of identifiers are passed in.  The
+first is usually the internal identifier, the second a subject identifier or the subject
+locator. The convention is that subject identifier URIs are passed in as string references, whereas
+subject locator URIs are passed in as strings.
+
+The following cases are covered:
+
+=over
+
+=item C<ID =E<gt> undef>
+
+If the ID is already an absolute URI and contains the C<baseuri> of the map as prefix, then this URI
+is used. If the ID is some other URI, then a toplet with that URI as subject locator is searched in
+the map. If such a toplet already exists, then nothing special needs to happen.  If no such toplet
+existed, a new URI, based on the C<baseuri> and a random number will be created and the original URI
+is used as subject address.
+
+=item C<ID =E<gt> URI>
+
+Like above, only that the URI is directly interpreted as subject address.
+
+=item C<ID =E<gt> \ URI> (reference to string)
+
+Like above, only that the URI is used as another subject identifier. If the toplet already existed,
+then this subject identifier is simply added. Duplicates are suppressed (since v1.31).
+
+=item C<undef =E<gt> URI>
+
+Like above, only that the internal identifier has to be created if there is no toplet with the URI
+as subject address.
+
+=item C<undef =E<gt> \ URI>
+
+Like above, only that the internal identifier has to be (maybe) created and the URI us used as
+subject identifier.
+
+=item C<undef =E<gt> undef>
+
+A topic with a generated ID will be inserted. Not sure what this is good for.
+
+=back
+
+In any case, the internal identifier(s) of all inserted (or existing) toplets are returned for
+convenience.
+
+=cut
+
+my $toplet_ctr = 0;
+
+sub internalize {
+    my $self    = shift;
+    my $baseuri = $self->{baseuri};
+
+#warn "internalize base: $baseuri";
+
+    my @mids;
+    my $mid2iid = $self->{mid2iid};
+    while (@_) {
+	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
+#warn "internalize $k, $v";
+	# make sure that $k contains a mid
+
+	if (defined $k) {
+	    if ($mid2iid->{$k}) {                                  # this identifier is already in the map
+                # null
+	    } elsif ($k =~ /^$baseuri/) {                          # ha, perfect, another identifier already in form
+		# null                                             # keep it as it is
+	    } elsif ($k =~ /^\w+:/) {                              # some other absURL
+		if (my $k2 = $self->tids ($k)) {                   # we already had it
+		    ($k, $v) = ($k2, $k);
+		} else {                                           # it is unknown so far
+		    ($k, $v) = ($baseuri.sprintf ("uuid-%010d", $toplet_ctr++), $k);
+		}
+	    } elsif (my $k2 = $self->tids ($k)) {
+		$k = $k2;                                          # then we already have it, maybe under a different mid, take that
+
+	    } else {                                               # this means we have a relURI and it is not from that map
+		$k = $baseuri.$k;                                  # but now it is
+	    }
+
+	} elsif (ref ($v) eq 'Assertion') {                        # k is not defined, lets look at v, but if that is an assertion
+	    $k = $baseuri.sprintf ("uuid-%010d", $toplet_ctr++);   # generate a new one
+	} elsif (my $k2 = $self->tids ($v)) {                      # k is not defined, lets look at v; we already had it
+	    $k = $k2;                                              # this will be k then
+	} else {                                                   # it is unknown so far
+	    $k = $baseuri.sprintf ("uuid-%010d", $toplet_ctr++);   # generate a new one
+	}
+
+#warn "really internalizing '$k' '$v'";
+	push @mids, $k;
+
+	$v = $v->[TM->LID] if ref ($v) eq 'Assertion';             # for internal reification we use the assertion's LID
+
+	$mid2iid->{$k} ||= [ $k, undef, [] ];                      # now see that we have an entry in the mid2iid table
+	my $kentry = $mid2iid->{$k};                               # keep this as a shortcut
+
+	if ($v) {
+	    if (ref($v)) {                                         # being a reference means that we have a subject indication
+		push @{$kentry->[TM->INDICATORS]}, $$v             # append it to the list
+		    unless grep {$$v eq $_} @{$kentry->[TM->INDICATORS]};   # if not yet there
+	    } elsif ($kentry->[TM->ADDRESS]) {                     # this is a subject address and, oh, there is already a subject address, not good
+		$log->logdie ("duplicate subject address '$v' for '$k'") unless $v eq $kentry->[TM->ADDRESS];
+	    } else {                                               # everything is fine, we can set it
+		$kentry->[TM->ADDRESS] = $v;                 
+	    }
+	}
+    }
+    $self->{mid2iid}  = $mid2iid; #!! needed for Berkeley DBM recognize changes on deeper levels
+    $self->{last_mod} = Time::HiRes::time;
+    return wantarray ? @mids : $mids[0];
+}
+
+=pod
+
+=item B<toplet> (old name B<midlet>)
+
+I<$t>  = I<$tm>->toplet (I<$mid>)
+
+I<@ts> = I<$tm>->toplet (I<$mid>, ....)
+
+This function returns a reference to a toplet structure. It can be used in scalar and list context.
+
+=cut
+
+sub midlet {
+    return toplet (@_);
+}
+
+sub toplet {
+    my $self = shift;
+    my $mid2iid = $self->{mid2iid};
+
+    if (wantarray) {
+	return (map { defined $_ ? $mid2iid->{$_} : $_ } @_);
+    } else {
+	return $mid2iid->{$_[0]};
+    }
+}
+
+=pod
+
+=item B<toplets> (old name B<midlets>)
+
+I<@mids> = I<$tm>->toplets
+
+I<@mids> = I<$tm>->toplets (I<@list_of_ids>)
+
+I<@mids> = I<$tm>->toplets (I<$selection_spec>)
+
+This function returns toplet id(s) from the map.
+
+If no parameter is provided, all I<things> are returned. This includes really everything also
+infrastructure toplets.
+
+If an explicit list is provided as parameter, the only exciting thing which will happen is that
+these IDs are absolutized.
+
+If a search specification is used, it has to be passed in as string reference. That string contains
+the selection specification using the following simple language:
+
+    specification -> { ( '+' | '-' ) group }
+
+whereby I<group> is one of the following:
+
+=over
+
+=item C<all>
+
+refers to B<all> toplets in the map. This includes those supplied by the application. The list also
+includes all infrastructure topics which the software maintains for completeness.
+
+=item C<infrastructure>
+
+refers to all toplets the infrastructure has provided. This implies that
+
+   all - infrastructure
+
+is everything the user (application) has supplied.
+
+=back
+
+Examples:
+
+     # all toplets except those from TM::PSI
+     $tm->toplets (\ '+all -infrastructure')
+
+B<NOTE>: No attempt is made to make this list unique.
+
+B<NOTE>: The specifications are not commutative, but are interpreted from left-to-right. So C<all
+-infrastructure +infrastructure> is not the same as C<all +infrastructure -infrastructure>. In the
+latter case the infrastructure toplets have been added twice, and are then deducted completely with
+C<-infrastructure>.
+
+=cut
+
+sub midlets {
+    return toplets (@_);
+}
+
+sub toplets {
+    my $self = shift;
+
+    if ($_[0]) {                                                # if there is some parameter
+	if (ref ($_[0]) ) {                                     # whoohie, a search spec
+	    my $spec = ${$_[0]};
+	    my $l = []; # will be list
+	    while ($spec =~ s/([+-])(\w+)//) {
+#warn "working on $1   $2";
+		if ($2 eq 'all') {
+		    $l = _mod_list ($1 eq '+', $l, values %{$self->{mid2iid}});
+		} elsif ($2 eq 'infrastructure') {
+		    $l = _mod_list ($1 eq '+', $l, values %{$infrastructure->{mid2iid}});
+		} else {
+		    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+		}
+	    }
+	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+	    return @$l;
+	} else {
+	    my $m = $self->{mid2iid};
+	    return @$m{$self->tids (@_)};                        # make all these fu**ing identifiers map-absolute
+	}
+    } else {                                                     # if the list was empty, we assume every thing in the map
+	return values %{$self->{mid2iid}};
+    }
+sub _mod_list {
+    my $pm = shift; # non-zero for +
+    my $l  = shift;
+    if ($pm) {
+	return [ @$l, @_ ];
+    } else {
+	my %minus;
+	@minus{ @_ } = (1) x @_;
+        return [ grep (!$minus{$_}, @$l) ];
+    }
+}
+sub _mk_uniq {
+    my %uniq;
+    @uniq {@_} = (1) x @_;
+    return keys %uniq;
+}
+
+}
+
+=pod
+
+=item B<tids> (old name B<mids>)
+
+I<$mid>  = I<$tm>->tids (I<$some_id>)
+
+I<@mids> = I<$tm>->tids (I<$some_id>, ...)
+
+This function tries to build absolute versions of the identifiers passed in. C<undef> will be
+returned if no such can be constructed. Can be used in scalar and list context.
+
+=over
+
+=item *
+
+If the passed in identifier is a relative URI, so it is made absolute by prefixing it with the map
+C<baseuri> and then we look for a toplet with that internal identifier.
+
+=item *
+
+If the passed in identifier is an absolute URI, where the C<baseuri> is a prefix, then that URI will
+be used as internal identifier to look for a toplet.
+
+=item *
+
+If the passed in identifier is an absolute URI, where the C<baseuri> is B<NOT> a prefix, then that
+URI will be used as subject locator and such a toplet will be looked for.
+
+=item *
+
+If the passed in identifier is a reference to an absolute URI, then that URI will be used as subject
+identifier and such a toplet will be looked for.
+
+=back
+
+=cut
+
+sub mids {
+    return tids (@_);
+}
+
+sub tids {
+    my $self    = shift;
+    my $mid2iid = $self->{mid2iid};                                    # shorthand
+
+    my @ks;
+  MID:
+    foreach my $k (@_) {
+	if (! defined $k) {                                            # someone put in undef
+	    push @ks, undef;
+
+	} elsif (ref ($k)) {                                           # would be subject indicator ref
+	    my $kk = $$k;
+	    foreach my $k2 (keys %{$mid2iid}) {
+		if (grep ($_ eq $kk, 
+			  @{$mid2iid->{$k2}->[TM->INDICATORS]}
+			  )) {
+		    push @ks, $mid2iid->{$k2}->[TM->LID];              # LID points to 'canonical' internal identifier
+		    next MID;
+		}
+	    }
+	    push @ks, undef;
+
+	} elsif (my $kk = $mid2iid->{$k}) {                            # we already have something which looks like a tid
+	    push @ks, $kk->[TM->LID];                                  # give back the 'canonical' one
+
+	} elsif ($k =~ /^\w+:/) {                                      # must be some other uri, must be subject address
+	    no warnings;
+	    my @k2 = grep ($mid2iid->{$_}->[TM->ADDRESS] eq $k, keys %{$mid2iid});
+	    push @ks,  @k2 ? $mid2iid->{$k2[0]}->[TM->LID] : undef;    # we take the first we find
+
+	} else {                                                       # only a string, like 'aaa'
+
+	    my $k2 = $self->{baseuri}.$k;                              # make it absolute, and...
+	    push @ks, $mid2iid->{$k2}                                  # see whether there is something
+                        ? $mid2iid->{$k2}->[TM->LID] : undef;          # and then take canonical LID
+	}
+    }
+#warn "mids ".Dumper (\@_)." returning ".Dumper (\@ks);
+    return wantarray ? @ks : $ks[0];
+}
+
+=pod
+
+=item B<externalize>
+
+I<$tm>->externalize (I<$some_id>, ...)
+
+This function simply deletes the toplet entry for the given internal identifier(s). See C<tids> to
+find these. The function returns all deleted toplet entries.
+
+B<NOTE>: Assertions in which this topic is involved will B<not> be removed. Use C<consolidate> to
+clean up all assertion where non-existing toplets still exist.
+
+=cut
+
+sub externalize {
+    my $self = shift;
+
+    my $mid2iid = $self->{mid2iid};
+    my @doomed = map { delete $mid2iid->{$_} } @_;
+    $self->{mid2iid} = $mid2iid; ## !! needed for Berkeley DBM recognize changes on deeper levels
+    $self->{last_mod} = Time::HiRes::time;
+    return @doomed;
+}
+
+=pod
+
+=back
+
+=head1 ASSERTIONS INTERFACE
+
+One assertion is a record containing its own identifier, the scope, the type of the assocation, an
+field whether this is an association, an occurrence or a name and then all roles and all players,
+both in separate lists.
 
 =cut
 
@@ -932,13 +1564,12 @@ struct 'Assertion' => [
     lid         => '$',
     scope       => '$',
     type        => '$',
-    kind        => '$', # argh
+    kind        => '$', # argh, redundant, but very useful
     roles       => '$',
     players     => '$',
     canon       => '$',
 ];
 
-# indices into this array for fast access
 use constant {
     LID     => 0,
     SCOPE   => 1,
@@ -955,20 +1586,19 @@ Assertions consist of the following components:
 
 =over
 
-=item C<LID>:
+=item I<lid> (index C<LID>):
 
-Every assertion is also a thing in the map, so it has an identifier. For midlet-related information
-this is the absolute topic ID, for maplets this is a unique identifier generated from a canonicalized
-form of the assertion itself.
+Every assertion is also a thing in the map, so it has an identifier. It is a unique identifier
+generated from a canonicalized form of the assertion itself.
 
-=item C<SCOPE>:
+=item I<scope> (index: C<SCOPE>)
 
-Yes, the scope of the assertion.
+This component holds the scope of the assertion.
 
-=item C<KIND> (redundant information):
+=item I<kind> (index: C<KIND>, redundant information):
 
-For technical reasons (read: it is faster) we distinguish between full associations (C<ASSOC>), and
-characteristics (C<NAME>, C<OCC>).
+For technical reasons (read: it is faster) we distinguish between full associations (C<ASSOC>),
+names (C<NAME>) and occurrences (C<OCC>).
 
 =cut
 
@@ -981,139 +1611,770 @@ use constant {
 
 =pod
 
-=item C<TYPE>:
+=item I<type> (index: C<TYPE>):
 
-The topic ID of the type of this assertion.
+The toplet id of the type of this assertion.
 
-=item C<ROLES>:
+=item I<roles> (index: C<ROLES>):
 
-A list reference which holds a list of topic IDs for the roles.
+A list reference which holds a list of toplet ids for the roles.
 
-=item C<PLAYERS>:
+=item I<players> (index: C<PLAYERS>):
 
-A list reference which holds a list of topic IDs for the players.
+A list reference which holds a list of toplet IDs for the players.
 
-=item C<CANON>:
+=item I<canon> (index: C<CANON>):
 
-Either C<1> or undef to signal whether this assertion has been (already) canonicalized (see L</canonicalize>).
+Either C<1> or C<undef> to signal whether this assertion has been (already) canonicalized (see
+L</canonicalize>). If an assertion is canonicalized, then the players and roles lists are sorted
+(somehow), so that assertions can be easily compared.
 
 =back
 
-=head2 Assertion Construction Functions
+Obviously the lists for roles and players B<always> have the same length, so that every player
+corresponds to exactly one role. If one role is played by several players, the role appears multiple
+times.
 
-These lowest-level functions deal with housekeeping functions for assertions.
+As a special case, names and occurrences are mapped into assertions, by
 
 =over
 
-=item Constructor
+=item *
 
-I<$assertion> = Assertion->new (...)
+setting the I<roles> to C<thing> and C<value>,
 
-Any of the above fields can be defined.
+=item *
 
-=item B<absolutize>
+setting the I<players> to the toplet id in question and using a L<TM::Literal> as the player for
+C<value>,
 
-I<$assertion> = absolutize (I<$tm>, I<$assertion>)
+=item *
 
-This method takes one assertion and makes sure that all identifiers in it (for the type, the scope
-and all the role and players) are made absolute for the context map. It returns this very assertion.
+using the I<type> component to store the name/occurrence type,
 
-=cut
+=item *
 
-sub absolutize {
-    my $self = shift;
-    my $a    = shift;
+using as I<kind> either C<NAME> or C<OCC>
 
-    return $a if $a->[CANON];                                                                 # skip it if we are already canonicalized
-#warn "in abosl ".Dumper $a;
-    $a->[TYPE]    =            mids ($self,         $a->[TYPE])    if $a->[TYPE];
-    $a->[SCOPE]   =            mids ($self,         $a->[SCOPE])   if $a->[SCOPE];
-
-    map { $_ =                 mids ($self, $_) } @{$a->[ROLES]}   if $a->[ROLES];            # things which are references, we will keep
-    map { $_ = ref ($_) ? $_ : mids ($self, $_) } @{$a->[PLAYERS]} if $a->[PLAYERS];          # the others are treated as ids (could be literal references!)
-#warn "after abosl ".Dumper $a;
-    return $a;
-}
-
-=pod
-
-=item B<canonicalize>
-
-I<$assertion> = canonicalize (I<$tm>, I<$assertion>)
-
-This method takes an assertion and reorders the roles (together with their respective players) in a
-consistent way. It also makes sure that the KIND is defined (defaults to C<ASSOC>), that the type is
-defined (defaults to C<THING>) and that all references are made absolute LIDs. Finally, the field
-C<CANON> is set to 1 to indicate that the assertion is canonicalized.
-
-The function will not do anything if the assertion is already canonicalized.  The component C<CANON>
-is set to C<1> if the assertion has been canonicalized.
-
-Conveniently, the function returns the same assertion, albeit a maybe modified one.
-
-=cut
-
-sub canonicalize {
-    my $self = shift;
-#    my $LIDs = $store->{si};
-#    my $base = $store->{baseuri};
-    my $s    = shift;
-#warn "in canon ".Dumper $s;
-#warn "using LIDs ".Dumper $LIDs;
-
-    return $s if $s->[CANON];                                  # skip it if we are already canonicalized
-
-# reorder role/players canonically
-    my $rs = $s->[ROLES];
-    my $ps = $s->[PLAYERS];
-    my @reorder = (0..$#$ps);                                  # create 0, 1, 2, ..., how many roles
-#warn @reorder;
-    # sort according to roles (alphanum) and at ties according to players on position $a, $b
-    @reorder = sort { $rs->[$a] cmp $rs->[$b] || $ps->[$a] cmp $ps->[$b] } @reorder;
-#warn @reorder;
-    $s->[ROLES]   = [ map { $rs->[$_] } @reorder ];
-    $s->[PLAYERS] = [ map { $ps->[$_] } @reorder ];
-
-# we are done (almost)
-    $s->[CANON]   = 1;
-
-#warn "in canon return ".Dumper $s;
-    return $s;
-}
-
-=pod
-
-=item B<hash>
-
-I<$hash> = hash (I<$assertion>);
-
-For internal optimization all characteristics have an additional HASH component which can be used to
-maintain indices. This function takes a assertion and computes an MD5 hash and sets the C<HASH>
-component if that is not yet defined.
-
-Such a hash only makes sense if the assertion is canonicalized, otherwise an exception is raised.
+=back
 
 Example:
 
-    my $a = Assertion->new (lid => 'urn:x-rho:important');
-    print "this uniquely (well) identifies the assertion ". hash ($a);
+   # general association
+   $a = Assertion->new (type => 'is-subclass-of', 
+                        roles   => [ 'subclass', 'superclass' ], 
+                        players => [ 'rumsti',   'ramsti' ])
+
+
+   warn $a->scope . " is the same as " . $a->[TM->SCOPE];
+
+   # create a name
+   $n = Assertion->new (kind    => TM->NAME,
+                        type    => 'name',
+                        scope   => 'us', 
+                        roles   => [ 'thing', 'value' ],
+                        players => [ 'rumsti', new TM::Literal ('AAA') ])
+
+   # create an occurrence
+   $n = Assertion->new (kind    => TM->OCC,
+                        type    => 'occurrence',
+                        scope   => 'us',
+                        roles   => [ 'thing', 'value' ],
+                        players => [ 'rumsti', new TM::Literal ('http://whatever/') ])
+
+=head2 Methods
+
+=over
+
+=item B<assert>
+
+I<$tm>->assert (I<@list-of-assertions>)
+
+This method takes a list of assertions, canonicalizes them and then injects them into the map. If
+one of the newly added assertions already existed in the map, it will be ignored.
+
+In this process, all assertions will be completed (if fields are missing). If an assertion does not
+have a type, it will default to C<$TM::PSI::THING>. If an assertion does not have a scope, it
+defaults to C<$TM::PSI::US>. Any assertion not having an LID will get one.
+
+Then the assertion will be canonicalized (unless it already was). This implies that
+non-canonicalized assertions will be modified, in that the role/player lists change.
+
+The method returns a list of all asserted assertions (sic).
+
+Example:
+
+  my $a = Assertion->new (type => 'rumsti');
+  $tm->assert ($a);
 
 =cut
 
-sub hash {
-  my $a = shift;
-  $log->logdie ("refuse to hash non canonicalized assertion") unless $a->[CANON];
-  use Digest::MD5 qw(md5_hex);
-  return md5_hex ($a->[SCOPE], $a->[TYPE], @{$a->[ROLES]}, map { ref ($_) ? join ("", @$_) : $_ } @{$a->[PLAYERS]});  # recompute the hash if necessary
-#                                                                           ^^^^^^^^^^^^^^                            # this is a literal value
-#                                                                                            ^^                       # this is for a normal identifier
+sub assert {
+    my $self = shift;
+    my ($THING, $US) = ('thing', 'us');
+
+#warn "sub $THING assert $self".ref ($self);
+
+    my $asserts = $self->{assertions};
+    foreach (@_) {
+	unless ($_->[CANON]) {
+	    $_->[KIND]  ||= ASSOC;
+
+	    $_->[TYPE]  ||= $THING;
+	    $_->[TYPE]    = $self->internalize ($_->[TYPE] => undef);
+	    $_->[SCOPE] ||= $US;
+	    $_->[SCOPE]   = $self->internalize ($_->[SCOPE] => undef);
+
+	    $_->[ROLES]   = [ map { $self->internalize ($_ => undef ) } @{$_->[ROLES]} ];
+	    $_->[PLAYERS] = [ map { $_ = ref ($_) ? $_ : $self->internalize ($_ => undef) } @{$_->[PLAYERS]}  ];
+
+	    canonicalize (undef, $_);
+
+	    $_->[LID]   ||= mklabel ($_);
+#	    $_->[LID]     = $self->internalize ($_->[LID] => undef);
+	}
+	$asserts->{$_->[LID]} = $_;
+    }
+    $self->{assertions} = $asserts;                            ### HACK ALERT: needed for Berkeley DBM recognize changes on deeper levels
+    $self->{last_mod} = Time::HiRes::time;
+    return @_;
 }
+
+=pod
+
+=item B<retrieve>
+
+I<$assertion>  = I<$tm>->retrieve (I<$some_assertion_id>)
+
+I<@assertions> = I<$tm>->retrieve (I<$some_assertion_id>, ...)
+
+This method takes a list of assertion IDs and returns the assertion(s) with the given (subject)
+ID(s). If the assertion is not identifiable, C<undef> will be returned in its place. Called in list
+context, it will return a list of assertion references.
+
+=cut
+
+sub retrieve {
+  my $self = shift;
+
+  if (wantarray) {
+      return map { $self->{assertions}->{$_} } @_;
+  } else {
+      return $self->{assertions}->{$_[0]};
+  }
+}
+
+=pod
+
+=item B<asserts>
+
+I<@assertions> = I<$tm>->asserts (I<$selection_spec>)
+
+If a search specification is used, it has to be passed in as string reference. That string contains
+the selection specification using the following simple language:
+
+    specification -> { ( '+' | '-' ) group }
+
+whereby I<group> is one of the following:
+
+=over
+
+=item C<all>
+
+refers to B<all> assertions in the map. This includes those supplied by the application, but also
+all predefined associations, names and occurrences.
+
+=item C<associations>
+
+refers to all assertions which are actually associations
+
+=item C<names>
+
+refers to all assertions which are actually name characteristics
+
+=item C<occurrences>
+
+refers to all assertions which are actually occurrences
+
+=item C<infrastructure>
+
+refers to all assertions the infrastructure has provided. This implies that
+
+   all - infrastructure
+
+is everything the user (application) has supplied.
+
+=back
+
+Examples:
+
+     # all toplets except those from TM::PSI
+     $tm->asserts (\ '+all -infrastructure')
+
+     # like above, without assocs, so with names and occurrences
+     $tm->asserts (\ '+all -associations')
+
+B<NOTE>: No attempt is made to make this list unique.
+
+B<NOTE>: The specifications are not commutative, but are interpreted from left-to-right. So C<all
+-associations +associations> is not the same as C<all +associations -associations>.
+C<-infrastructure>.
+
+=cut
+
+sub asserts {
+    my $self = shift;
+
+    if ($_[0]) {
+	if (ref ($_[0])) {
+	    my $spec = ${$_[0]};
+	    my $l = []; # will be list
+	    while ($spec =~ s/([+-])(\w+)//) {
+		if ($2 eq 'all') {
+		    $l = _mod_list ($1 eq '+', $l,                                      values %{$self->{assertions}});
+		} elsif ($2 eq 'associations') {
+		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->ASSOC } values %{$self->{assertions}});
+		} elsif ($2 eq 'names') {
+		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->NAME }  values %{$self->{assertions}});
+		} elsif ($2 eq 'occurrences') {
+		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->OCC }   values %{$self->{assertions}});
+		} elsif ($2 eq 'infrastructure') {
+		    $l = _mod_list ($1 eq '+', $l,                                      values %{$TM::infrastructure->{assertions}} );
+		} else {
+		    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+		}
+	    }
+	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+	    return @$l;
+	} else {
+	    return $self->{assertions}->{@_};
+	}
+    } else {
+	return @{ $self->{assertions} };
+    }
+}
+
+=pod
+
+=item B<is_asserted>
+
+I<$bool> = I<$tm>->is_asserted (I<$a>)
+
+This method will return C<1> if the passed-in assertion exists in the store. The assertion will be
+canonicalized before checking, but no defaults will be added if parts are missing.
+
+=cut
+
+sub is_asserted {
+    my $self  = shift;
+    my $a     = shift;
+
+    unless ($a->[CANON]) {
+	absolutize   ($self, $a);
+	canonicalize (undef, $a);
+	$a->[TM->LID] = mklabel ($a);
+    }
+    return $self->{assertions}->{ $a->[TM->LID] };
+}
+
+=pod
+
+=item B<retract>
+
+I<$tm>->retract (I<@list_of_assertion_ids>)
+
+This methods expects a list of assertion IDs and will remove the assertions from the map. If an ID
+is bogus, it will be ignored.
+
+Only these particular assertions will be deleted. Any toplets mentioned in these assertions will
+remain. Use C<consolidate> to remove unnecessary toplets.
+
+=cut
+
+sub retract {
+  my $self = shift;
+
+# TODO: does delete $self->{assertions}->{@_} work?
+  my $assertions = $self->{assertions};
+  map { 
+      delete $assertions->{$_} # delete them from the primary store
+  } @_; 
+  $self->{assertions} = $assertions; ##!! needed for Berkeley DBM recognize changes on deeper levels
+  $self->{last_mod} = Time::HiRes::time;
+}
+
+=pod
+
+=item B<match>, B<match_forall>, B<match_exists>
+
+I<@assertions> = I<$tm>->match (TM->FORALL [ , I<search-spec> ] );
+
+I<@assertions> = I<$tm>->match (TM->EXISTS [ , I<search-spec> ] );
+
+I<@assertions> = I<$tm>->match_forall ( [ I<search-spec> ] );
+
+I<@assertions> = I<$tm>->match_exists ( [ I<search-spec> ] );
+
+These methods take a search specification and return matching assertions. The result list contains
+references to the assertions themselves, not to copies. You can change the assertions themselves on
+your own risk (read: better not do it).
+
+For C<match>, if the constant C<FORALL> is used as first parameter, this method returns a list of
+B<all> assertions in the store following the search specification. If the constant C<EXISTS> is
+used, the method will return a non-empty value if B<at least one> can be found. Calling the more
+specific C<match_forall> is the same as calling C<match> with C<FORALL>. Similar for
+C<match_exists>.
+
+B<NOTE>: C<EXISTS> is not yet implemented.
+
+For I<search specifications> there are two alternatives:
+
+=over
+
+=item Generic Search
+
+Here the search specification is a hash with the same fields as for the constructor of an assertion:
+
+Example:
+
+   $tm->match (TM->FORALL, type    => '...',
+                           scope   => '...,
+                           roles   => [ ...., ....],
+                           players => [ ...., ....]);
+
+Any combination of assertion components can be used, all are optional, with the only constraint that
+the number of roles must match that for the players. All involved IDs should be absolutized before
+matching.
+
+=item Specialized Search
+
+The implementation also understands a number of specialized search specifications. These are
+listed in L<TM::Axes>.
+
+=back
+
+B<NOTE>: Some combinations will be very fast, while others quite slow. If you experience
+problems, then it might be time to think about indexing (see L<TM::Index>).
+
+=cut
+
+use constant {
+    EXISTS => 1,
+    FORALL => 0
+    };
+
+our %exists_handlers = (); # they should be written at some point
+
+our %forall_handlers = (
+			'' => {
+			    code => sub { # no params => want all of them
+				my $self   = shift;
+				return values %{$self->{assertions}};
+			    },
+			    desc => 'returns all assertions',
+			    params => {},
+			},
+
+			'nochar' => {
+			    code => sub {
+				my $self   = shift;
+				return
+				    grep ($_->[KIND] <= ASSOC,
+					  values %{$self->{assertions}});
+			    },
+			    desc   => 'returns all associations (so no names or occurrences)',
+			    params => { 'nochar' => '1'}
+			},
+#-- taxos ---------------------------------------------------------------------------------------------
+			'subclass.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $st     = shift;
+				my ($ISSC, $SUBCLASS) = ('is-subclass-of', 'subclass');
+				return () unless shift eq $ISSC;
+				return
+				    grep ( $self->is_x_player   ($_, $st, $SUBCLASS),
+ 				    grep ( $_->[TYPE] eq $ISSC,
+				    values %{$self->{assertions}}));
+			    },
+			    desc => 'returns all assertions where there are subclasses of a given toplet',
+			    params => { 'type' => 'which toplet should be the superclass', subclass => '1'}
+			},
+			
+			'superclass.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $st     = shift;
+				my ($ISSC, $SUPERCLASS) = ('is-subclass-of', 'superclass');
+				return () unless shift eq $ISSC;
+				return
+				    grep ( $self->is_x_player   ($_, $st, $SUPERCLASS),
+				    grep ( $_->[TYPE] eq $ISSC,
+				    values %{$self->{assertions}}));
+			    },
+			    desc => 'returns all assertions where there are superclasses of a given toplet',
+			    params => { 'type' => 'which toplet should be the subclass', superclass => '1'}
+			},
+
+			'class.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $t      = shift;
+				my ($ISA, $CLASS) = ('isa', 'class');
+				return () unless shift eq $ISA;
+				return
+				    grep ( $self->is_x_player   ($_, $t, $CLASS),
+				    grep ( $_->[TYPE] eq $ISA,
+				    values %{$self->{assertions}}));
+			    },
+			    desc => 'returns all assertions where there are instances of a given toplet',
+			    params => { type => 'which toplet should be the class', class => '1'}
+			},
+
+			'instance.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $i      = shift;
+				my ($ISA, $INSTANCE) = ('isa', 'instance');
+				return () unless shift eq $ISA;
+				return
+				    grep ( $self->is_x_player   ($_, $i, $INSTANCE),
+				    grep ( $_->[TYPE] eq $ISA,
+				    values %{$self->{assertions}}));
+			    },
+			    desc => 'returns all assertions where there are classes of a given toplet',
+			    params => { type => 'which toplet should be the instance', instance => '1'}
+			},
+#--
+			'char.irole' => {
+			    code => sub {
+				warn "char.irole is deprecated. use char.topic instead";
+				my $self   = shift;
+				my $topic  = $_[1];
+				return undef unless $topic;
+				return
+				    grep ($self->is_player ($_, $topic) &&                              # TODO: optimize this grep away (getting chars is expensive)
+				          NAME <= $_->[KIND] && $_->[KIND] <= OCC,
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'deprecated: return all assertions which are characteristics for a given toplet',
+			    params => { char => '1', irole => 'the toplet for which characteristics are sought'}
+			},
+
+			'char.topic' => {
+			    code => sub {
+				my $self   = shift;
+				my $topic  = $_[1];
+				return
+				    grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
+				          $_->[PLAYERS]->[0] eq $topic,                                   # first role is always the 'thing'
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions which are characteristics for a given toplet',
+			    params => { char => '1', topic => 'the toplet for which characteristics are sought'}
+			},
+
+			'char.value' => {
+			    code => sub {
+				my $self   = shift;
+				my $value  = $_[1];
+				return
+				    grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
+					  $_->[PLAYERS]->[1]->[0] eq $value->[0] &&                       # second role is always the value
+					  $_->[PLAYERS]->[1]->[1] eq $value->[1],                         # test value AND type
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions which are characteristics for some topic of a given value',
+			    params => { char => '1', value => 'the value for which all characteristics are sought'}
+			},
+
+			'char.topic.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $topic  = $_[1];
+				my $type   = $_[2];
+				return
+				    grep ($self->is_subclass ($_->[TYPE], $type),
+				    grep ($_->[PLAYERS]->[0] eq $topic &&                         # first role is always the 'thing'
+					  NAME <= $_->[KIND] && $_->[KIND] <= OCC,
+				    values %{$self->{assertions}}));
+			    },
+			    desc => 'return all assertions which are a characteristic of a given type for a given topic',
+			    params => { char => '1', topic => 'the toplet for which these characteristics are sought', type => 'type of characteristics' }
+			},
+
+			'lid' => {
+			    code => sub {
+				my $self   = shift;
+				my $lid    = $_[1];
+				return
+				    $self->{assertions}->{$lid} || ();
+			    },
+			    desc => 'return one particular assertions with a given ID',
+			    params => { lid => 'the ID of the assertion' }
+			},
+
+			'type' => {
+			    code => sub {
+				my $self   = shift;
+				my $type   = $_[0];
+				return 
+				    grep ($self->is_subclass ($_->[TYPE], $type),
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions with a given type',
+			    params => { type => 'the type of the assertion' }
+			},
+			
+			'iplayer' => {
+			    code => sub {
+				my $self   = shift;
+				my $ip     = $_[0];
+				return 
+				    grep ($self->is_player ($_, $ip), 
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions where a given toplet is a player',
+			    params => { iplayer => 'the player toplet' }
+			},
+
+			'iplayer.type' => {
+			    code => sub {
+				my $self      = shift;
+				my ($ip, $ty) = @_;
+				return 
+				    grep ($self->is_player ($_, $ip)          &&
+					  $self->is_subclass ($_->[TYPE], $ty),
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions of a given type where a given toplet is a player',
+			    params => { iplayer => 'the player toplet', type => 'the type of the assertion' }
+			},
+
+			'iplayer.irole' => {
+			    code => sub {
+				my $self      = shift;
+				my ($ip, $ir) = @_;
+				return 
+				    grep ($self->is_player ($_, $ip, $ir), 
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions where a given toplet is a player of a given role',
+			    params => { iplayer => 'the player toplet', irole => 'the role toplet (incl subclasses)' },
+			},
+
+			'iplayer.irole.type' => {
+			    code => sub {
+				my $self           = shift;
+				my ($ip, $ir, $ty) = @_;
+				return 
+				    grep ($self->is_subclass ($_->[TYPE], $ty) && 
+					  $self->is_player ($_, $ip, $ir), 
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions of a given type where a given toplet is a player of a given role',
+			    params => { iplayer => 'the player toplet', 
+					irole => 'the role toplet (incl subclasses)',
+					type => 'the type of the assertion' }
+			},
+
+			'irole.type' => {
+			    code => sub {
+				my $self      = shift;
+				my ($ir, $ty) = @_;
+				return
+				    grep ($self->is_role ($_, $ir)             &&
+					  $self->is_subclass ($_->[TYPE], $ty),
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions of a given type where there is a given role',
+			    params => { irole => 'the role toplet (incl subclasses)', type => 'the type of the assertion' }
+			},
+
+			'irole' => {
+			    code => sub {
+				my $self      = shift;
+				my ($ir)      = @_;
+				return
+				    grep ($self->is_role ($_, $ir),
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions where there is a given role',
+			    params => { irole => 'the role toplet (incl subclasses)' }
+			},
+
+			'aplayer.arole.brole.type' => {
+			    code => sub {
+				my $self   = shift;
+				my ($ap, $ar, $br, $ty) = @_;
+				return
+				    grep ( $self->is_role     ($_, $br),
+				    grep ( $self->is_player   ($_, $ap, $ar),
+				    grep ( $self->is_subclass ($_->[TYPE], $ty),
+				    values %{$self->{assertions}})));
+			    },
+			    desc => 'return all assertions of a given type where a given toplet plays a given role and there exist another given role',
+			    params => { aplayer => 'the player toplet for the arole', 
+					arole => 'the role toplet (incl subclasses) for the aplayer',
+					brole => 'the other role toplet (incl subclasses)',
+					type => 'the type of the assertion'
+					}
+			},
+			
+			'aplayer.arole.bplayer.brole.type' => {
+			    code => sub {
+				my $self  = shift;
+				my ($ap, $ar, $bp, $br, $ty) = @_;
+				return
+				    grep ( $self->is_player ($_, $bp, $br),
+			            grep ( $self->is_player ($_, $ap, $ar),
+			            grep ( $self->is_subclass ($_->[TYPE], $ty),
+				    values %{$self->{assertions}})));
+			    },
+			    desc => 'return all assertions of a given type where a given toplet plays a given role and there exist another given role with another given toplet as player',
+			    params => { aplayer => 'the player toplet for the arole', 
+					arole => 'the role toplet (incl subclasses) for the aplayer',
+					brole => 'the other role toplet (incl subclasses)',
+					bplayer => 'the player for the brole',
+					type => 'the type of the assertion'
+					}
+			},
+
+			'anyid' => {
+			    code => sub {
+				my $self   = shift;
+				my $lid    = shift;
+				return
+				    grep (
+				     $self->is_subclass ($_->[TYPE], $lid) ||   # probably not a good idea
+					  $_->[TYPE]  eq         $lid           ||   # this seems a bit safer
+					  $_->[SCOPE] eq         $lid           ||
+					  $self->is_player ($_, $lid)           ||
+					  $self->is_role   ($_, $lid)           ,
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions where a given toplet appears somehow',
+			    params => { anyid => 'the toplet' }
+			}
+		    
+			);
+
+sub _allinone {
+    my $self     = shift;
+    my $exists   = shift;
+    my $template = Assertion->new (@_);                              # we create an assertion on the fly
+#warn "allinone ".Dumper $template;
+#			   $self->absolutize   ($template);  
+#warn "allinone2".Dumper $template;
+    $self->canonicalize ($template);                                # of course, need to be canonicalized
+#warn "allinone3".Dumper $template;
+
+#warn "in store match template ".Dumper $template;
+    my @mads;
+  ASSERTION:
+    foreach my $m (values %{$self->{assertions}}) {                 # arbitrary AsTMa! queries TBD, can be faster as well
+	
+	next if defined $template->[KIND]  && $m->[KIND]  ne $template->[KIND];         # does kind match?
+#warn "after kind";
+	next if defined $template->[SCOPE] && $m->[SCOPE] ne $template->[SCOPE];        # does scope match?
+#warn "after scope";
+	next if defined $template->[TYPE]  && !$self->is_subclass ($m->[TYPE], $template->[TYPE]);         # does type match?
+#warn "after type";
+			       
+	my ($rm, $rc) = ($m->[ROLES],   $template->[ROLES]);
+	push @mads, $m and next ASSERTION             if ! @$rc;     # match ok, if we have no roles
+#warn "after push roles";
+	next if @$rm != @$rc;                                        # quick check: roles must be of equal length
+#warn "after roles";
+	my ($pm, $pc) = ($m->[PLAYERS], $template->[PLAYERS]);
+	push @mads, $m and next ASSERTION             if ! @$pc;     # match ok, if we have no players
+	next if @$pm != @$pc;                                        # quick check: roles and players must be of equal length
+#warn "after players";
+	for (my $i = 0; $i < @{$rm}; $i++) {                         # order is canonicalized, would not want to test all permutations
+#warn "before role tests : is $rm->[$i] subclass of $rc->[$i]?";
+	    next ASSERTION if defined $rc->[$i] && !$self->is_subclass ($rm->[$i], $rc->[$i]);              # go to next assertion if that does not match
+#warn "after role ok";
+	    next ASSERTION if defined $pc->[$i] && $pm->[$i] ne $pc->[$i];
+	}
+#warn "after players  roles";
+	return (1) if $exists;                                       # with exists that's it
+	push @mads, $m;                                              # with forall we do continue to collect
+    }
+#warn "we return ".Dumper \@mads;
+    return @mads;                                                    # and return what we got
+}
+
+
+sub match_forall {
+    my $self   = shift;
+    my %query  = @_;
+#warn "forall ".Dumper \%query;
+
+    my @skeys = sort keys %query;                                                           # all fields make up the key
+    my $skeys = join ('.', @skeys);
+    my @svals = map { $query{$_} } @skeys;
+
+    if (my $idxs = $self->{indices}) {                                                      # there are indices to help me
+	my $key   = "$skeys:" . join ('.', @svals);
+	foreach my $idx (@$idxs) {
+	    if (my $lids  = $idx->is_cached ($key)) {                                       # if result was cached, lets take the list of lids
+#		warn "using cached for $key". Dumper $lids;
+		return map { $self->{assertions}->{$_} } @$lids;                            # and return fully fledged
+	    }
+	}
+	# obviously we have not found it                                                    # not defined means not cache => recompute
+	my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                         # do it the hard way
+	$idxs->[0]->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later, simply use the first [0]
+	return @as;
+    } else {                                                                                # no cache, let's do the ochsentour
+	return _dispatch_forall ($self, \%query, $skeys, @svals);
+    }
+
+sub _dispatch_forall {
+    my $self  = shift;
+    my $query = shift;
+    my $skeys = shift;
+
+#warn "keys for this $skeys";
+    if (my $handler = $forall_handlers{$skeys}) {                                           # there is a constraint and we have a handler
+	return &{$handler->{code}} ($self, @_); 
+    } else {                                                                                # otherwise
+	return _allinone ($self, 0, %$query);                                               # we use a generic handler, slow but should do the trick
+    }
+}
+
+}
+
+sub match_exists {
+    my $self   = shift;
+    my %query  = @_;
+
+#warn "exists ".Dumper $query;
+
+    my @skeys = sort keys %query;                                                           # all fields make up the key
+    my $skeys = join ('.', @skeys);
+
+#warn "keys for this $skeys";
+    if (my $handler = $exists_handlers{$skeys}) {                                           # there is a constraint and we have a handler
+	return &{$handler->{code}} ($self, map { $query{$_} } @skeys); 
+    } else {                                                                                # otherwise
+	return _allinone ($self, 1, %query);                                                # we use a generic handler, slow but should do the trick
+    }
+}
+
+sub match {
+    my $self   = shift;
+    my $exists = shift; # FORALL or EXIST, DOES NOT work yet
+
+    return $exists ? match_exists ($self, @_) : match_forall ($self, @_);
+}
+
 
 =pod
 
 =back
 
-=head2 Assertion Role Retrieval
+=head2 Role Retrieval
 
 =over
 
@@ -1191,8 +2452,8 @@ I<@player_ids> = get_players   (I<$tm>, I<$assertion>, [ I<$role_id> ])
 
 I<@player_ids> = get_x_players (I<$tm>, I<$assertion>, I<$role_id>)
 
-This function returns the player(s) for the given role. If the role is not provided all players
-are returned.
+This function returns the player(s) for the given role. If the role is not provided all players are
+returned.
 
 The "x" version does not honor subclassing.
 
@@ -1303,927 +2564,114 @@ sub get_role_s {
 
 =back
 
-=head2 Assertion Map Methods
+
+=head2 Auxiliary Functions
 
 =over
 
-=item B<assert>
+=item B<absolutize>
 
-I<$tm>->assert (I<@list-of-assertions>)
+I<$assertion> = absolutize (I<$tm>, I<$assertion>)
 
-This method takes a list of assertions, canonicalizes them and then injects them into the map. If
-one of the newly added assertions already existed in the map, it will be ignored.
-
-In this process, all assertions will be completed (if fields are missing) and will be canonicalized
-(unless they already were). This implies that non-canonicalized assertions will be modified, in that
-the role/player lists change.
-
-If an assertion does not have a type, it will default to C<$TM::PSI::THING>. If an assertion does
-not have a scope, it defaults to C<$TM::PSI::US>. Any assertion not having an LID will get one.
-
-Examples:
-
-  my $a = Assertion->new (type => 'rumsti');
-  $ms->assert ($a);
-
-The method returns a list of all asserted assertions (sic).
+This method takes one assertion and makes sure that all identifiers in it (for the type, the scope
+and all the role and players) are made absolute for the context map. It returns this very assertion.
+It will not touch canonicalized assertions.
 
 =cut
 
-sub assert {
+sub absolutize {
     my $self = shift;
-    my ($THING, $US) = @{$self->{usual_suspects}}{'thing', 'us'};
+    my $a    = shift;
 
-#warn "sub $THING assert $self".ref ($self);
+    return $a if $a->[CANON];                                                                 # skip it if we are already canonicalized
+#warn "in abosl ".Dumper $a;
+    $a->[TYPE]    =            tids ($self,         $a->[TYPE])    if $a->[TYPE];
+    $a->[SCOPE]   =            tids ($self,         $a->[SCOPE])   if $a->[SCOPE];
 
-    my $assertions = $self->{assertions};
-    foreach (@_) {
-	unless ($_->[CANON]) {
-	    $_->[KIND]  ||= ASSOC;
-
-	    $_->[TYPE]  ||= $THING;
-	    $_->[TYPE]    = $self->internalize ($_->[TYPE] => undef);
-	    $_->[SCOPE] ||= $US;
-	    $_->[SCOPE]   = $self->internalize ($_->[SCOPE] => undef);
-
-	    $_->[ROLES]   = [ map { $self->internalize ($_ => undef ) } @{$_->[ROLES]} ];
-	    $_->[PLAYERS] = [ map { $_ = ref ($_) ? $_ : $self->internalize ($_ => undef) } @{$_->[PLAYERS]}  ];
-
-	    $self->canonicalize ($_);
-
-	    $_->[LID]   ||= hash ($_);                         # the LID is either already there, or it will default to a hash over the canonicalized info
-	    $_->[LID]     = $self->internalize ($_->[LID] => undef);
-	}
-	$assertions->{$_->[LID]} = $_;
-    }
-    $self->{assertions} = $assertions; ##!! needed for Berkeley DBM recognize changes on deeper levels
-    $self->{last_mod} = Time::HiRes::time;
-    return @_;
+    map { $_ =                 tids ($self, $_) } @{$a->[ROLES]}   if $a->[ROLES];            # things which are references, we will keep
+    map { $_ = ref ($_) ? $_ : tids ($self, $_) } @{$a->[PLAYERS]} if $a->[PLAYERS];          # the others are treated as ids (could be literal references!)
+#warn "after abosl ".Dumper $a;
+    return $a;
 }
 
 =pod
 
-=item B<retrieve>
+=item B<canonicalize>
 
-I<$assertion>  = I<$tm>->retrieve (I<$some_assertion_id>)
+I<$assertion> = canonicalize (I<$tm>, I<$assertion>)
 
-I<@assertions> = I<$tm>->retrieve (I<$some_assertion_id>, ...)
+This method takes an assertion and reorders the roles (together with their respective players) in a
+consistent way. It also makes sure that the KIND is defined (defaults to C<ASSOC>), that the type is
+defined (defaults to C<THING>) and that all references are made absolute LIDs. Finally, the field
+C<CANON> is set to 1 to indicate that the assertion is canonicalized.
 
-This method takes a list of assertion IDs and returns the assertion(s) with the given (subject)
-ID(s). If the assertion is not identifiable, C<undef> will be returned in its place. Called in list
-context, it will return a list of assertion references.
+The function will not do anything if the assertion is already canonicalized.  The component C<CANON>
+is set to C<1> if the assertion has been canonicalized.
 
-=cut
+Conveniently, the function returns the same assertion, albeit a maybe modified one.
 
-sub retrieve {
-  my $self = shift;
-
-  if (wantarray) {
-      return map { $self->{assertions}->{$_} } @_;
-  } else {
-      return $self->{assertions}->{$_[0]};
-  }
-}
-
-=pod
-
-=item B<is_asserted>
-
-I<$bool> = I<$tm>->is_asserted (I<$a>)
-
-This method will return C<1> if the passed-in assertion exists in the store. The assertion will be
-canonicalized before checking, but no defaults will be added if parts are missing.
+TODO: remove map parameter, it is no longer necessary
 
 =cut
 
-sub is_asserted {
-    my $self  = shift;
-    my $a     = shift;
-
-    unless ($a->[CANON]) {
-	absolutize   ($self, $a);
-	canonicalize ($self, $a);
-    }
-    return $self->{assertions}->{$self->{baseuri} . hash ($a)};
-}
-
-=pod
-
-=item B<retract>
-
-I<$tm>->retract (I<@list_of_assertion_ids>)
-
-This methods expects a list of assertion IDs and will remove the assertions from the map. If an ID
-is bogus, it will be ignored.
-
-Only these particular assertions will be deleted. Any topics in these assertions will remain. Use
-C<consolidate> to remove unnecessary topics.
-
-=cut
-
-sub retract {
-  my $self = shift;
-
-# TODO: does delete $self->{assertions}->{@_} work?
-  my $assertions = $self->{assertions};
-  map { 
-      delete $assertions->{$_} # delete them from the primary store
-  } @_; 
-  $self->{assertions} = $assertions; ##!! needed for Berkeley DBM recognize changes on deeper levels
-  $self->{last_mod} = Time::HiRes::time;
-}
-
-=pod
-
-=item B<match>, B<match_forall>, B<match_exists>
-
-I<@list> = I<$tm>->match (C<TM-E<gt>FORALL> or C<TM-E<gt>EXISTS> [ , I<search-spec>, ... ]);
-
-I<@list> = I<$tm>->match_forall                    ( I<search-spec>, ... ]);
-
-I<@list> = I<$tm>->match_exists                    ( I<search-spec>, ... ]);
-
-These methods takes a search specification and return matching assertions. The result list contains
-references to the assertions themselves, not to copies. You can change the assertions themselves on
-your own risk (read: better not do it).
-
-For C<match>, if the constant C<FORALL> is used as first parameter, this method returns a list of
-all assertions in the store following the search specification. If the constant C<EXISTS> is used
-the method will return a non-empty value if at least one can be found. Calling the more specific
-C<match_forall> is the same as calling C<match> with C<FORALL>. Similar for C<match_exists>.
-
-B<NOTE>: C<EXISTS> is not yet implemented.
-
-The search specification is a hash with the same fields as for the constructor of an assertion:
-
-Example:
-
-   $tm->match (TM->FORALL, type    => '...',
-                           scope   => '...,
-                           roles   => [ ...., ....],
-                           players => [ ...., ....]);
-
-Any combination of assertion components can be used, all are optional, with the only constraint that
-the number of roles must match that for the players. All involved IDs will be absolutized before
-matching.
-
-B<NOTE>: Some combinations will be very fast, while others quite slow. The latter is the case when
-there is no special-purpose matcher implemented and the general-purpose one has to be used as a
-fallback.
-
-B<NOTE>: The implementation also understands a number of rather specialized query handlers. These
-are not yet documented here as there may be some shifts in the near future.
-
-=cut
-
-use constant {
-    EXISTS => 1,
-    FORALL => 0
-    };
-
-our %exists_handlers = (); # they should be written at some point
-
-our %forall_handlers = ('' => 
-		       sub { # no params => want all of them
-			   my $self   = shift;
-			   return values %{$self->{assertions}};
-		       },
-
-		       'nochar' =>
-		       sub {
-			   my $self   = shift;
-			   return
-			       grep ($_->[KIND] <= ASSOC,
-					   values %{$self->{assertions}});
-		       },
-#-- taxos ---------------------------------------------------------------------------------------------
-		       'subclass.type' =>
-		       sub {
-			   my $self   = shift;
-			   my $st     = shift;
-			   my ($ISSC, $SUBCLASS) = @{$self->{usual_suspects}}{'is-subclass-of', 'subclass'};
-			   return () unless shift eq $ISSC;
-			   return
-			       grep ( $self->is_x_player   ($_, $st, $SUBCLASS),
-			       grep ( $_->[TYPE] eq $ISSC,
-				      values %{$self->{assertions}}));
-		       },
-
-		       'superclass.type' =>
-		       sub {
-			   my $self   = shift;
-			   my $st     = shift;
-			   my ($ISSC, $SUPERCLASS) = @{$self->{usual_suspects}}{'is-subclass-of', 'superclass'};
-			   return () unless shift eq $ISSC;
-			   return
-			       grep ( $self->is_x_player   ($_, $st, $SUPERCLASS),
-			       grep ( $_->[TYPE] eq $ISSC,
-				      values %{$self->{assertions}}));
-		       },
-
-		       'class.type' =>
-		       sub {
-			   my $self   = shift;
-			   my $t      = shift;
-			   my ($ISA, $CLASS) = @{$self->{usual_suspects}}{'isa', 'class'};
-			   return () unless shift eq $ISA;
-			   return
-			       grep ( $self->is_x_player   ($_, $t, $CLASS),
-			       grep ( $_->[TYPE] eq $ISA,
-				      values %{$self->{assertions}}));
-		       },
-
-		       'instance.type' =>
-		       sub {
-			   my $self   = shift;
-			   my $i      = shift;
-			   my ($ISA, $INSTANCE) = @{$self->{usual_suspects}}{'isa', 'instance'};
-			   return () unless shift eq $ISA;
-			   return
-			       grep ( $self->is_x_player   ($_, $i, $INSTANCE),
-			       grep ( $_->[TYPE] eq $ISA,
-				      values %{$self->{assertions}}));
-		       },
-#--
-		       'char.irole' =>
-		       sub {
-			   warn "char.irole is deprecated. use char.topic instead";
-			   my $self   = shift;
-			   my $topic  = $_[1];
-			   return undef unless $topic;
-			   return
-			       grep ($self->is_player ($_, $topic) &&                              # TODO: optimize this grep away (getting chars is expensive)
-				        NAME <= $_->[KIND] && $_->[KIND] <= OCC,
-					   values %{$self->{assertions}});
-		       },
-
-		       'char.topic' =>
-		       sub {
-			   my $self   = shift;
-			   my $topic  = $_[1];
-			   return
-			       grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
-				     $_->[PLAYERS]->[0] eq $topic,                                   # first role is always the 'thing'
-					   values %{$self->{assertions}});
-		       },
-
-		       'char.value' =>
-		       sub {
-			   my $self   = shift;
-			   my $value  = $_[1];
-			   return
-			       grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
-				     $_->[PLAYERS]->[1]->[0] eq $value->[0] &&                       # second role is always the value
-				     $_->[PLAYERS]->[1]->[1] eq $value->[1],                         # test value AND type
-					   values %{$self->{assertions}});
-		       },
-
-		       'char.topic.type' =>
-		       sub {
-			   my $self   = shift;
-			   my $topic  = $_[1];
-			   my $type   = $_[2];
-			   return
-			       grep ($self->is_subclass ($_->[TYPE], $type),
-				     grep ($_->[PLAYERS]->[0] eq $topic &&                         # first role is always the 'thing'
-					   NAME <= $_->[KIND] && $_->[KIND] <= OCC,
-					   values %{$self->{assertions}}));
-		       },
-
-		       'lid' => # have unique ID?
-		       sub {
-			   my $self   = shift;
-			   my $lid    = $_[1];
-			   return
-			       $self->{assertions}->{$lid} || ();
-		       },
-
-		       'type' =>
-		       sub {
-			   my $self   = shift;
-			   my $type   = $_[0];
-			   return 
-			       grep ($self->is_subclass ($_->[TYPE], $type),
-				     values %{$self->{assertions}});
-		       },
-
-		       'iplayer' =>
-		       sub {
-			   my $self   = shift;
-			   my $ip     = $_[0];
-			   return 
-			       grep ($self->is_player ($_, $ip), 
-				     values %{$self->{assertions}});
-		       },
-
-		       'iplayer.type' =>
-		       sub {
-			   my $self      = shift;
-			   my ($ip, $ty) = @_;
-			   return 
-			       grep ($self->is_player ($_, $ip)          &&
-				     $self->is_subclass ($_->[TYPE], $ty),
-				     values %{$self->{assertions}});
-		       },
-
-		       'iplayer.irole' =>
-		       sub {
-			   my $self      = shift;
-			   my ($ip, $ir) = @_;
-			   return 
-			       grep ($self->is_player ($_, $ip, $ir), 
-				     values %{$self->{assertions}});
-		       },
-
-		       'iplayer.irole.type' =>
-		       sub {
-			   my $self           = shift;
-			   my ($ip, $ir, $ty) = @_;
-			   return 
-			       grep ($self->is_subclass ($_->[TYPE], $ty) && 
-				     $self->is_player ($_, $ip, $ir), 
-				     values %{$self->{assertions}});
-		       },
-
-		       'irole.type' =>
-		       sub {
-			   my $self      = shift;
-                           my ($ir, $ty) = @_;
-			   return
-			       grep ($self->is_role ($_, $ir)             &&
-				     $self->is_subclass ($_->[TYPE], $ty),
-				     values %{$self->{assertions}});
-		       },
-
-		       'irole' =>
-		       sub {
-			   my $self      = shift;
-                           my ($ir)      = @_;
-			   return
-			       grep ($self->is_role ($_, $ir),
-				     values %{$self->{assertions}});
-		       },
-
-		       'aplayer.arole.brole.type' =>
-		       sub {
-			   my $self   = shift;
-                           my ($ap, $ar, $br, $ty) = @_;
-			   return
-			       grep ( $self->is_role     ($_, $br),
-			       grep ( $self->is_player   ($_, $ap, $ar),
-			       grep ( $self->is_subclass ($_->[TYPE], $ty),
-				      values %{$self->{assertions}})));
-		       },
-
-		       'aplayer.arole.bplayer.brole.type' =>
-		       sub {
-			   my $self  = shift;
-                           my ($ap, $ar, $bp, $br, $ty) = @_;
-			   return
-			       grep ( $self->is_player ($_, $bp, $br),
-			       grep ( $self->is_player ($_, $ap, $ar),
-			       grep ( $self->is_subclass ($_->[TYPE], $ty),
-				      values %{$self->{assertions}})));
-		       },
-
-		       'anyid' =>
-		       sub {
-			   my $self   = shift;
-                           my $lid    = shift;
-			   return
-			       grep (
-##				     $self->is_subclass ($_->[TYPE], $lid) ||   # probably not a good idea
-				     $_->[TYPE]  eq         $lid            ||   # this seems a bit safer
-				     $_->[SCOPE] eq         $lid            ||
-				     $self->is_player ($_, $lid)           ||
-				     $self->is_role   ($_, $lid)           ,
-				     values %{$self->{assertions}});
-		       },
-
-
-		      );
-
-sub _allinone {
-    my $self     = shift;
-    my $exists   = shift;
-    my $template = Assertion->new (@_);                              # we create an assertion on the fly
-#warn "allinone ".Dumper $template;
-#			   $self->absolutize   ($template);  
-#warn "allinone2".Dumper $template;
-    $self->canonicalize ($template);                                # of course, need to be canonicalized
-#warn "allinone3".Dumper $template;
-
-#warn "in store match template ".Dumper $template;
-    my @mads;
-  ASSERTION:
-    foreach my $m (values %{$self->{assertions}}) {                 # arbitrary AsTMa! queries TBD, can be faster as well
-	
-	next if defined $template->[KIND]  && $m->[KIND]  ne $template->[KIND];         # does kind match?
-#warn "after kind";
-	next if defined $template->[SCOPE] && $m->[SCOPE] ne $template->[SCOPE];        # does scope match?
-#warn "after scope";
-	next if defined $template->[TYPE]  && !$self->is_subclass ($m->[TYPE], $template->[TYPE]);         # does type match?
-#warn "after type";
-			       
-	my ($rm, $rc) = ($m->[ROLES],   $template->[ROLES]);
-	push @mads, $m and next ASSERTION             if ! @$rc;     # match ok, if we have no roles
-#warn "after push roles";
-	next if @$rm != @$rc;                                        # quick check: roles must be of equal length
-#warn "after roles";
-	my ($pm, $pc) = ($m->[PLAYERS], $template->[PLAYERS]);
-	push @mads, $m and next ASSERTION             if ! @$pc;     # match ok, if we have no players
-	next if @$pm != @$pc;                                        # quick check: roles and players must be of equal length
-#warn "after players";
-	for (my $i = 0; $i < @{$rm}; $i++) {                         # order is canonicalized, would not want to test all permutations
-#warn "before role tests : is $rm->[$i] subclass of $rc->[$i]?";
-	    next ASSERTION if defined $rc->[$i] && !$self->is_subclass ($rm->[$i], $rc->[$i]);              # go to next assertion if that does not match
-#warn "after role ok";
-	    next ASSERTION if defined $pc->[$i] && $pm->[$i] ne $pc->[$i];
-	}
-#warn "after players  roles";
-	return (1) if $exists;                                       # with exists that's it
-	push @mads, $m;                                              # with forall we do continue to collect
-    }
-#warn "we return ".Dumper \@mads;
-    return @mads;                                                    # and return what we got
-}
-
-
-sub match_forall {
-    my $self   = shift;
-    my %query  = @_;
-#warn "forall ".Dumper \%query;
-
-    my @skeys = sort keys %query;                                                           # all fields make up the key
-    my $skeys = join ('.', @skeys);
-    my @svals = map { $query{$_} } @skeys;
-
-#     if (my $index = $self->{indices}->{match}) {                                            # there exists a dedicated index
-# 	my $key   = "$skeys:" . join ('.', @svals);
-# 	if (my $lids  = $index->is_cached ($key)) {                                         # if result was cached, lets take the list of lids
-# 	    return map { $self->{assertions}->{$_} } @$lids;                                # and return fully fledged
-# 	} else {                                                                            # not defined means not cache => recompute
-# 	    my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                     # do it the hard way
-# 	    $index->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later
-# 	    return @as;
-# 	}
-#     } else {                                                                                # no cache, let's do the ochsentour
-# 	return _dispatch_forall ($self, \%query, $skeys, @svals);
-#     }
-
-    if (my $idxs = $self->{indices}) {                                                      # there are indices to help me
-	my $key   = "$skeys:" . join ('.', @svals);
-	foreach my $idx (@$idxs) {
-	    if (my $lids  = $idx->is_cached ($key)) {                                       # if result was cached, lets take the list of lids
-#		warn "using cached for $key". Dumper $lids;
-		return map { $self->{assertions}->{$_} } @$lids;                            # and return fully fledged
-	    }
-	}
-	# obviously we have not found it                                                    # not defined means not cache => recompute
-	my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                         # do it the hard way
-	$idxs->[0]->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later, simply use the first [0]
-	return @as;
-    } else {                                                                                # no cache, let's do the ochsentour
-#	warn "ochsen";
-	return _dispatch_forall ($self, \%query, $skeys, @svals);
-    }
-
-sub _dispatch_forall {
-    my $self  = shift;
-    my $query = shift;
-    my $skeys = shift;
-
-#warn "keys for this $skeys";
-    if (my $handler = $forall_handlers{$skeys}) {                                           # there is a constraint and we have a handler
-	return &{$handler} ($self, @_); 
-    } else {                                                                                # otherwise
-	return _allinone ($self, 0, %$query);                                               # we use a generic handler, slow but should do the trick
-    }
-}
-
-}
-
-sub match_exists {
-    my $self   = shift;
-    my %query  = @_;
-
-#warn "exists ".Dumper $query;
-
-    my @skeys = sort keys %query;                                                           # all fields make up the key
-    my $skeys = join ('.', @skeys);
-
-#warn "keys for this $skeys";
-    if (my $handler = $exists_handlers{$skeys}) {                                           # there is a constraint and we have a handler
-	return &{$handler} ($self, map { $query{$_} } @skeys); 
-    } else {                                                                                # otherwise
-	return _allinone ($self, 1, %query);                                                # we use a generic handler, slow but should do the trick
-    }
-}
-
-sub match {
-    my $self   = shift;
-    my $exists = shift; # FORALL or EXIST, DOES NOT work yet
-
-    return $exists ? match_exists ($self, @_) : match_forall ($self, @_);
-}
-
-
-=pod
-
-=back
-
-
-=head2 Midlets
-
-Midlets are light-weight topics in that their information is quite minimal. One midlet is
-represented by an array with two fields:
-
-=over
-
-=item C<ADDRESS>
-
-It contains the B<subject locator> URI, if known, otherwise C<undef>.
-
-=item C<INDICATORS>
-
-This is a reference to a list containing B<subject identifiers>. The list can be empty, no duplicate
-removal is attempted.
-
-=back
-
-=cut
-
-use constant {
-    ADDRESS    => 0,
-    INDICATORS => 1
-};
-
-=pod
-
-=head2 Midlet Methods
-
-=over
-
-=item B<internalize>
-
-I<$iid>  = I<$tm>->internalize (I<$some_id>)
-
-I<$iid>  = I<$tm>->internalize (I<$some_id> => I<$some_id>)
-
-I<@iids> = I<$tm>->internalize (I<$some_id> => I<$some_id>, ...)
-
-This method does some trickery when a new topic should be added to the map, depending on how
-parameters are passed into it. The general scheme is that pairs of identifiers are passed in.  The
-first is usually the internal identifier, the second the subject identifier or the subject
-locator. The convention is that subject identifier URIs are passed in as string reference, whereas
-subject locator URIs are passed in as strings.
-
-The following cases are covered:
-
-=over
-
-=item C<ID =E<gt> undef>
-
-If the ID is already an absolute URI and contains the C<baseuri> of the map as prefix, then this URI
-is used. If the ID is some other URI, then a topic with that URI as subject locator is search in the
-map. If such a topic already exists, then nothing special needs to happen.  If no such topic
-existed, a new URI, based on the C<baseuri> and a random number will be created.
-
-=item C<ID =E<gt> URI>
-
-Like above, only that the URI is used as subject locator.
-
-=item C<ID =E<gt> \ URI> (reference to string)
-
-Like above, only that the URI is used as another subject identifier.
-
-=item C<undef =E<gt> URI>
-
-Like above, only that the internal identifier has to be (maybe) created.
-
-=item C<undef =E<gt> \ URI>
-
-Like above, only that the internal identifier has to be (maybe) created and the URI us used as
-subject identifier.
-
-=item C<undef =E<gt> undef>
-
-A topic with a generated ID will be inserted. Not sure what this is good for.
-
-=back
-
-In any case, the internal identifier(s) of all inserted (or existing) topics are returned.
-
-=cut
-
-my $toplet_ctr = 0;
-
-sub internalize {
-    my $self    = shift;
-    my $baseuri = $self->{baseuri};
-
-#warn "internalize base: $baseuri";
-
-    my @mids;
-    my $mid2iid = $self->{mid2iid};
-    while (@_) {
-	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
-#warn "internalize $k, $v";
-	# make sure that $k contains a mid
-
-	if (defined $k) {
-	    if ($k =~ /^$baseuri/) {                               # ha, perfect
-		# null                                             # keep it as it is
-	    } elsif ($k =~ /^\w+:/) {                              # some other absURL
-		if (my $k2 = $self->mids ($k)) {                   # we already had it
-		    ($k, $v) = ($k2, $k);
-		} else {                                           # it is unknown so far
-		    ($k, $v) = ($baseuri.sprintf ("uuid-%010d", $toplet_ctr++), $k);
-		}
-	    } elsif (my $k2 = $self->mids ($k)) {
-		$k = $k2;                                          # then we already have it, maybe under a different mid, take that
-
-	    } else {                                              # this means we have a absURI and it is not from that map
-		$k = $baseuri.$k;                                 # but now it is
-	    }
-
-	} elsif (my $k2 = $self->mids ($v)) {                      # k is not defined, lets look at v; we already had it
-	    $k = $k2;                                              # this will be k then
-	} else {                                                   # it is unknown so far
-	    $k = $baseuri.sprintf ("uuid-%010d", $toplet_ctr++);   # generate a new one
-	}
-
-#warn "really internalizing '$k' '$v'";
-
-	push @mids, $k;
-
-	# now see that we have an entry in the mid2iid table
-	$mid2iid->{$k} ||= [ undef, [] ];
-	my $kentry = $mid2iid->{$k};                               # keep this as a shortcut
-
-	if ($v) {
-	    if (ref($v)) {                                         # being a reference means that we have a subject indication
-		push @{$kentry->[TM->INDICATORS]}, $$v;                # append it to the list
-	    } elsif ($kentry->[TM->ADDRESS]) {                         # this is a subject address and, oh, there is already a subject address, not good
-		$log->logdie ("duplicate subject address '$v' for '$k'") unless $v eq $kentry->[TM->ADDRESS];
-	    } else {                                               # everything is fine, we can set it
-		$kentry->[TM->ADDRESS] = $v;                 
-	    }
-	}
-    }
-    $self->{mid2iid}  = $mid2iid; #!! needed for Berkeley DBM recognize changes on deeper levels
-    $self->{last_mod} = Time::HiRes::time;
-    return wantarray ? @mids : $mids[0];
-}
-
-=pod
-
-=item B<mids>
-
-I<$mid>  = I<$tm>->mids (I<$some_id>)
-
-I<@mids> = I<$tm>->mids (I<$some_id>, ...)
-
-This function tries to build absolute versions of the identifiers passed in. C<undef> will be
-returned if no such can be found. Can be used in scalar and list context.
-
-=over
-
-=item
-
-If the passed in identifier is a relative URI, so it is made absolute by prefixing it with the map
-C<baseuri> and then we look for a topic with that internal identifier.
-
-=item
-
-If the passed in identifier is an absolute URI, where the C<baseuri> is a prefix, then that URI will
-be used as internal identifier to look for a topic.
-
-=item
-
-If the passed in identifier is an absolute URI, where the C<baseuri> is B<NOT> a prefix, then that
-URI will be used as subject locator and such a topic will be looked for.
-
-=item
-
-If the passed in identifier is a reference to an absolute URI, then that URI will be used as subject
-identifier and such a topic will be looked for.
-
-=back
-
-=cut
-
-sub mids {
-    my $self    = shift;
-    my $baseuri = $self->{baseuri};
-    my @ks;
-    my $mid2iid = $self->{mid2iid};
-
-#    warn "mids ".Dumper \@_;
-  MID:
-    foreach my $k (@_) {
-	if (! defined $k) {                                            # someone put in undef
-	    push @ks, undef;
-	} elsif (ref ($k)) {                                           # would be subject indicator ref
-	    my $kk = $$k;
-
-	    foreach my $k2 (keys %{$mid2iid}) {
-		if (grep ($_ eq $kk, 
-			  @{$mid2iid->{$k2}->[TM->INDICATORS]}
-			  )) {
-		    push @ks, $k2;
-		    next MID;
-		}
-	    }
-	    push @ks, undef;
-
-	} elsif ($k =~ /^$baseuri/) {                                  # we already have something which looks like a mid
-	    push @ks, $mid2iid->{$k} ? $k : undef;
-
-	} elsif ($k =~ /^\w+:/) {                                      # must be some other uri, must be subject address
-	    no warnings;
-	    my @k2 = grep ($mid2iid->{$_}->[TM->ADDRESS] eq $k, keys %{$mid2iid});
-	    push @ks,  @k2 ? $k2[0] : undef;
-
-	} else {                                                       # only a string, like 'aaa'
-	    my $k2 = $baseuri.$k;                                      # make it absolute, and...
-	    push @ks, $mid2iid->{$k2} ? $k2 : undef;                   # see whether there is something
-	}
-    }
-#warn "mids ".Dumper (\@_)." returning ".Dumper (\@ks);
-    return wantarray ? @ks : $ks[0];
-}
-
-=pod
-
-=item B<externalize>
-
-I<$tm>->externalize (I<$some_id>, ...)
-
-This function simply deletes the topic entry for a given internal identifier(s). See C<mids> to find
-these. The function returns all deleted topic entries.
-
-B<NOTE>: Assertions in which this topic is involved will not be removed. Use C<consolidate> to clean
-up all assertion where non-existing topics still exist.
-
-=cut
-
-sub externalize {
+sub canonicalize {
     my $self = shift;
+    my $s    = shift;
+#warn "in canon ".Dumper $s;
+#warn "using LIDs ".Dumper $LIDs;
 
-    my $mid2iid = $self->{mid2iid};
-    my @doomed = map { delete $mid2iid->{$_} } @_;
-    $self->{mid2iid} = $mid2iid; ## !! needed for Berkeley DBM recognize changes on deeper levels
-    $self->{last_mod} = Time::HiRes::time;
-    return @doomed;
+    return $s if $s->[CANON];                                  # skip it if we are already canonicalized
+
+# reorder role/players canonically
+    my $rs = $s->[ROLES];
+    my $ps = $s->[PLAYERS];
+    my @reorder = (0..$#$ps);                                  # create 0, 1, 2, ..., how many roles
+#warn @reorder;
+    # sort according to roles (alphanum) and at ties according to players on position $a, $b
+    @reorder = sort { $rs->[$a] cmp $rs->[$b] || $ps->[$a] cmp $ps->[$b] } @reorder;
+#warn @reorder;
+    $s->[ROLES]   = [ map { $rs->[$_] } @reorder ];
+    $s->[PLAYERS] = [ map { $ps->[$_] } @reorder ];
+# we are done (almost)
+    $s->[CANON]   = 1;
+
+#warn "in canon return ".Dumper $s;
+    return $s;
 }
 
-=pod
+# =pod
 
-=item B<midlets>
+# =item B<mklabel>
 
-I<@mids> = I<$tm>->midlets
+# I<$hash> = mklabel (I<$assertion>);
 
-I<@mids> = I<$tm>->midlets (I<@list-of-ids>)
+# For internal optimization all characteristics have an additional HASH component which can be used to
+# maintain indices. This function takes a assertion and computes an MD5 hash and sets the C<HASH>
+# component if that is not yet defined.
 
-I<@mids> = I<$tm>->midlets (I<$selection-spec>)
+# Such a hash only makes sense if the assertion is canonicalized, otherwise an exception is raised.
 
-This function returns things - actually their absolutized ids - from the map.
+# Example:
 
-If no parameter is used, all I<things> are returned. This includes really everything also
-infrastructure topics and all associations, occurrences, etc.
+#     my $a = Assertion->new (lid => 'urn:x-rho:important');
+#     print "this uniquely (well) identifies the assertion ". mklabel ($a);
 
-If an explicit list is used, the only exciting thing which will happen is that these
-IDs are absolutized.
+# =cut
 
-If a search specification is used, it has to be passed in as string reference. That string contains
-the selection specification using the following simple language:
-
-    specification -> { ( '+' | '-' ) group }
-
-whereby I<group> is one of the following:
-
-=over
-
-=item C<all>
-
-refers to B<all> topics in the map. This includes those supplied by the application, but also all
-associations, names and occurrences. The list also includes all infrastructure topics which the
-software maintains for completeness.
-
-=item C<associations>
-
-refers to all topics which are actually associations
-
-=item C<names>
-
-refers to all topics which are actually name characteristics
-
-=item C<occurrences>
-
-refers to all topics which are actually occurrences
-
-=item C<infrastructure>
-
-refers to all topics the infrastructure has provided. This implies that
-
-   all - infrastructure
-
-is everything the user (application) has supplied.
-
-=back
-
-Examples:
-
-     # all midlets except those from TM::PSI
-     $tm->midlets (\ '+all -infrastructure')
-
-     # like above, without assocs, so with names and occurrences
-     $tm->midlets (\ '+all -assocs')
-
-=cut
-
-sub midlets {
-    my $self = shift;
-
-    if ($_[0]) {                                     # if there is some parameter
-	if (ref ($_[0]) ) {                          # whoohie, a search spec
-	    my $spec = ${$_[0]};
-	    my $l = []; # will be list
-	    while ($spec =~ s/([+-])(\w+)//) {
-#warn "working on $1   $2";
-		if ($2 eq 'all') {
-		    $l = _mod_list ($1 eq '+', $l, keys %{$self->{mid2iid}});
-		} elsif ($2 eq 'associations') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->ASSOC, values %{$self->{assertions}}));
-		} elsif ($2 eq 'names') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->NAME,  values %{$self->{assertions}}));
-		} elsif ($2 eq 'occurrences') {
-		    $l = _mod_list ($1 eq '+', $l, map { $_->[TM->LID] } grep ($_->[TM->KIND] == TM->OCC,   values %{$self->{assertions}}));
-		} elsif ($2 eq 'infrastructure') {
-		    $l = _mod_list ($1 eq '+', $l, $self->mids (keys %{$TM::PSI::topicmaps->{mid2iid}}));
-		} else {
-		    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
-		}
-	    }
-	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-	    return _mk_uniq (@$l);
-	} else {
-	    return $self->mids (@_);                    # make all these fu**ing identifiers map-absolute
-	}
-    } else {                                         # if the list was empty, we assume every thing in the map
-	return keys %{$self->{mid2iid}};
-    }
-sub _mod_list {
-    my $pm = shift; # non-zero for +
-    my $l  = shift;
-    if ($pm) {
-	return [ @$l, @_ ];
-    } else {
-	my %minus;
-	@minus{ @_ } = (1) x @_;
-        return [ grep (!$minus{$_}, @$l) ];
-    }
-}
-sub _mk_uniq {
-    my %uniq;
-    @uniq {@_} = (1) x @_;
-    return keys %uniq;
-}
-
-}
-
-=pod
-
-=item B<midlet>
-
-I<$t>  = I<$tm>->midlet (I<$mid>)
-
-I<@ts> = I<$tm>->midlet (I<$mid>, ....)
-
-This function returns a reference to a midlet structure. That includes a subject address, if
-available and a list (reference) for the optional subject indicators.
-
-Can be used in scalar and list context.
-
-=cut
-
-sub midlet {
-    my $self = shift;
-    my $mid2iid = $self->{mid2iid};
-
-    if (wantarray) {
-	return (map { defined $_ ? $mid2iid->{$_} : $_ } @_);
-    } else {
-	return $mid2iid->{$_[0]};
-    }
+sub mklabel {
+  my $a = shift;
+  $log->logdie ("refuse to hash non canonicalized assertion") unless $a->[CANON];
+  use Digest::MD5 qw(md5_hex);
+  return md5_hex ($a->[SCOPE], $a->[TYPE], @{$a->[ROLES]}, map { ref ($_) ? join ("", @$_) : $_ } @{$a->[PLAYERS]});  # recompute the hash if necessary
+#                                                                           ^^^^^^^^^^^^^^                            # this is a literal value
+#                                                                                            ^^                       # this is for a normal identifier
 }
 
 =pod
 
 =back
 
-=head2 Taxonomics and Subsumption
+=head1 TAXONOMICS AND SUBSUMPTION
 
 The following methods provide useful basic, ontological functionality around subclassing (also
 transitive) between classes and instance/type relationships.
@@ -2234,6 +2682,8 @@ representation of the a map. Saying this, the methods below are not optimized fo
 B<NOTE>: There are NO subclasses of the C<thing>. But everything is an instance of C<thing>.
 
 B<NOTE>: See L<TM::PSI> for predefined things.
+
+=head2 Boolean Methods
 
 =over
 
@@ -2258,7 +2708,7 @@ sub is_subclass {
     return 1 if $class eq $super;                                            # we always assume that A subclasses A
 
     my ($ISA, $US, $THING, $SUBCLASSES, $SUBCLASS, $SUPERCLASS, $INSTANCE, $CLASS) =
-	@{$self->{usual_suspects}}{'isa', 'us', 'thing', 'is-subclass-of', 'subclass', 'superclass', 'instance', 'class'};
+	('isa', 'us', 'thing', 'is-subclass-of', 'subclass', 'superclass', 'instance', 'class');
 
 #warn "is_subclass?: class $class   super $super , thing $THING, $SUBCLASSES, $SUPERCLASS";
     return 1 if $super eq $THING;                                            # everything is a topic
@@ -2304,7 +2754,7 @@ sub is_a {
     my $thingie = shift;
     my $type    = shift;                                                         # ok, what class are looking at?
 
-    my ($ISA, $CLASS, $THING) = @{$self->{usual_suspects}}{'isa', 'class', 'thing'};
+    my ($ISA, $CLASS, $THING) = ('isa', 'class', 'thing');
 
 #warn "isa thingie $thingie class $type";
 
@@ -2324,6 +2774,12 @@ sub is_a {
 
 =pod
 
+=back
+
+=head2 List Methods
+
+=over
+
 =item B<subclasses>, B<subclassesT>
 
 I<@lids> = I<$tm>->subclasses  (I<$lid>)
@@ -2340,7 +2796,7 @@ sub subclasses {
     my $self = shift;
     my $lid  = shift;
 
-    my ($SUBCLASSES) = @{$self->{usual_suspects}}{'is-subclass-of'};
+    my ($SUBCLASSES) = ('is-subclass-of');
     return map { $_->[PLAYERS]->[0] } $self->match_forall (type => $SUBCLASSES, superclass => $lid);
 }
 
@@ -2370,7 +2826,7 @@ transitive subclassing.
 sub superclasses {
     my $self = shift;
     my $lid  = shift;
-    my ($SUBCLASSES) = @{$self->{usual_suspects}}{'is-subclass-of'};
+    my ($SUBCLASSES) = ('is-subclass-of');
     return map { $_->[PLAYERS]->[1] } $self->match_forall (type => $SUBCLASSES, subclass => $lid);
 }
 
@@ -2403,7 +2859,7 @@ sub types {
     my $lid  = shift;
 
     if (my $a = $self->retrieve ($lid)) { return ($a->[TYPE]) };
-    my ($ISA) = @{$self->{usual_suspects}}{'isa'};
+    my ($ISA) = ('isa');
     return (map { $_->[PLAYERS]->[0] }  $self->match_forall (type => $ISA, instance => $lid));
 }
 
@@ -2434,12 +2890,14 @@ sub instances {
     my $self = shift;
     my $lid  = shift;
 
-    my ($ISA, $THING) = @{$self->{usual_suspects}}{'isa', 'thing'};
+    warn Dumper [ caller ] unless $lid;
 
-    return $self->midlets if $lid eq $THING;
+    my ($ISA, $THING) = ('isa', 'thing');
 
-    return  (map { $_->[LID ] }         $self->match_forall (type => $lid)),
-            (map { $_->[PLAYERS]->[1] } $self->match_forall (type => $ISA, class => $lid))
+    return map { $_->[TM->LID] } $self->toplets if $lid eq $THING;
+
+    return  (map { $_->[LID ] }         $self->match_forall (type => $lid)),                  # all assocs of this type
+            (map { $_->[PLAYERS]->[1] } $self->match_forall (type => $ISA, class => $lid))    # all topics which are direct instances
 	;
 }
 
@@ -2454,7 +2912,7 @@ sub instancesT {
 
 =back
 
-=head3 Filters
+=head2 Filters
 
 Quite often one needs to walk through a list of things to determine whether they are instances (or
 types, subtypes or supertypes) of some concept. This list of functions lets you do that: you pass in
@@ -2474,7 +2932,7 @@ sub are_instances {
     my $self  = shift;
     my $class = shift;                                                           # ok, what class are we looking at?
 
-    my ($THING, $ISA, $CLASS) = @{$self->{usual_suspects}}{'thing', 'isa', 'class'};
+    my ($THING, $ISA, $CLASS) = ('thing', 'isa', 'class');
 
     my @rs;
     foreach my $thing (@{$_[0]}) {                                               # we work through all the things we got
@@ -2546,52 +3004,62 @@ sub are_subtypes {
 
 =back
 
-=head2 Reification
+=head1 REIFICATION
 
 =over
 
-=item B<reified_by> (experimental)
+=item B<is_reified>
 
-Provided with an identifier, this method returns the subject locator. It returns C<undef> if there
-is no such topic or no locator.
+I<$tid> = I<$tm>->is_reified (I<$assertion>)
 
-TODO: list context
+I<$tid> = I<$tm>->is_reified (I<$url>)
 
-TODO: name sucks
+In the case that the handed-in assertion is internally reified in the map, this method will return
+the internal identifier of the reifying toplet. Or C<undef> if there is none.
 
-WARNING: this function may go away
+In the case that the handed-in URL is used as subject address of a toplet, this method will return
+the internal identifier of the externally reifying toplet. Or C<undef> if there is none.
 
 =cut
 
-sub reified_by {
+sub is_reified {
     my $self = shift;
-    my $mid  = shift;
+    my $a    = shift;
 
-    return $self->{mid2iid}->{$mid} ? $self->{mid2iid}->{$mid}->[TM->ADDRESS] : undef;
+    my $mid2iid = $self->{mid2iid};                                                               # shortcut
+    $a = $a->[TM->LID] if ref ($a) eq 'Assertion';                                                # for assertions we take the LID
+    return grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                           # brute force
+           grep { $mid2iid->{$_}->[TM->ADDRESS] }
+	   keys %{$mid2iid};
 }
 
 =pod
 
-=item B<reifies> (experimental)
+=item B<reifies>
 
-WARNING: this function may go away
+I<$url>       = I<$tm>->reifies (I<$tid>)
+
+I<$assertion> = I<$tm>->reifies (I<$tid>)
+
+Given a toplet identifier, this method returns either the internally reified assertion, an
+externally reified object via its URL, or C<undef> if that toplet does not reify at all.
 
 =cut
 
 sub reifies {
     my $self = shift;
-    my $url  = shift;
+    my $tid  = shift;
 
-    my $mid2iid = $self->{mid2iid};                                                               # shortcut
-    my $s;                                                                                        # temp
-    return grep (($s = $mid2iid->{$_}->[TM->ADDRESS]) && ($s eq $url), keys %{$mid2iid});
+    my $add = $self->{mid2iid}->{$tid}->[TM->ADDRESS] if $self->{mid2iid}->{$tid};
+    return undef unless $add;
+    return $add =~ /^[a-zA-Z0-9]{32}$/ ? $self->{assertions}->{$add} : $add;
 }
 
 =pod
 
 =back
 
-=head2 Variants (aka "The Warts")
+=head1 VARIANTS (aka "The Warts")
 
 No comment.
 
@@ -2654,11 +3122,11 @@ reasonable defaults, but an using application can access it, tweak it, or overwr
 
 =head1 SEE ALSO
 
-L<TM::PSI>
+L<TM::PSI>, L<Log::Log4perl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[1-7] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[1-8] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -2671,3 +3139,33 @@ our $REVISION = '$Id: TM.pm,v 1.45 2007/07/17 16:24:00 rho Exp $';
 1;
 
 __END__
+
+	    if (! $mid2iid->{$k2}) {                                           # we had no entry here => simply...
+		$mid2iid->{$k2} = $v;                                          # ...add what the other has
+	    } else {                                                           # same internal identifier? danger lurking...
+#warn Dumper $v, $mid2iid->{$k};
+		if (!$v->[TM->ADDRESS]) {                                      # new had undef there, leave what we have
+		} elsif (!$mid2iid->{$k2}->[TM->ADDRESS]) {                    # old had nothing, =>
+		    $mid2iid->{$k2}->[TM->ADDRESS] = $v->[TM->ADDRESS];        # copy it
+		} elsif ($mid2iid->{$k}->[TM->ADDRESS] eq $v->[TM->ADDRESS]) { # old had something and new has something and they are the same
+		    # leave it
+		} else {                                   # not good, subject addresses differ
+		    $log->logdie ("using the same internal identifier (including baseuri) '$k', but having different subject addresses (".$mid2iid->{$k}->[TM->ADDRESS].",".$v->[TM->ADDRESS].") is just weird");
+		}
+		push @{$mid2iid->{$k}->[TM->INDICATORS]}, 
+		     @{$v->[TM->INDICATORS]};              # simply add all the subject indication stuff
+	    }
+
+#     if (my $index = $self->{indices}->{match}) {                                            # there exists a dedicated index
+# 	my $key   = "$skeys:" . join ('.', @svals);
+# 	if (my $lids  = $index->is_cached ($key)) {                                         # if result was cached, lets take the list of lids
+# 	    return map { $self->{assertions}->{$_} } @$lids;                                # and return fully fledged
+# 	} else {                                                                            # not defined means not cache => recompute
+# 	    my @as = _dispatch_forall ($self, \%query, $skeys, @svals);                     # do it the hard way
+# 	    $index->do_cache ($key, [ map { $_->[LID] } @as ]);                             # save it for later
+# 	    return @as;
+# 	}
+#     } else {                                                                                # no cache, let's do the ochsentour
+# 	return _dispatch_forall ($self, \%query, $skeys, @svals);
+#     }
+

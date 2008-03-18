@@ -6,6 +6,8 @@ use TM::Literal;
 use constant LEFT  => 'http://psi.tm.bond.edu.au/astma/1.0/#psi-left';
 use constant RIGHT => 'http://psi.tm.bond.edu.au/astma/1.0/#psi-right';
 
+my $tracing = 0;
+
 %}
 
 %token ISA
@@ -22,6 +24,7 @@ use constant RIGHT => 'http://psi.tm.bond.edu.au/astma/1.0/#psi-right';
 %token ISINDICATEDBY
 %token LOG
 %token CANCEL
+%token TRACE
 %token ENCODING
 %token COLON
 %token LPAREN
@@ -38,6 +41,7 @@ maplet_definitions : #empty
                    | maplet_definitions COMMENT EOL
                    | maplet_definitions LOG EOL             { warn "Logging $_[2]"; }
                    | maplet_definitions CANCEL EOL          { die  "Cancelled"; }
+                   | maplet_definitions TRACE EOL           { $tracing = $_[2]; warn "# start tracing: level $tracing"; }
                    | maplet_definitions ENCODING EOL        {
 		                                              use Encode;
 							      Encode::from_to ($_[0]->YYData->{INPUT}, "iso-8859-1", $_[2]);
@@ -66,128 +70,123 @@ topic_definition  : ID types reification_indication inline_assocs EOL
 			}
 			# assert instance/class
                         if (@{$_[2]}) {
-			    $_[0]->{USER}->{store}->assert ( map {
-							  [ undef, 
-							    undef, 
-							    'isa', 
-							    undef,
-							    [ 'class', 'instance' ], 
-                                                            [ $_, $_[1] ], 
-							    ]}  
+			    $_[0]->{USER}->{store}->assert ( map { bless
+								       [ undef, 
+									 undef, 
+									 'isa', 
+									 undef,
+									 [ 'class', 'instance' ], 
+									 [ $_, $_[1] ], 
+									 ], 'Assertion' }  
 							     @{$_[2]} );
 			}
-			{                                                                  # memorize that the types should be a 'topic' at the end (see end of parse)
+			{                                                                     # memorize the types should be a 'topic'
+                                                                                              # at the end (see end of parse)
 			    my $implicits = $_[0]->{USER}->{implicits};
-#			    my $s         = $_[0]->{USER}->{store};
 			    map { $implicits->{'isa-thing'}->{$_}++ } 
-			             (@{$_[2]}, $_[1]);                                    # the types and the ID are declared implicitely
+			             (@{$_[2]}, $_[1]);                                       # the types and the ID are declared implicitely
 			}
 			
-			if (ref $_[4]) {                                                   # there are inline assocs
-#warn "test for inlines";
+			if (ref $_[4]) {                                                      # there are inline assocs
 			    foreach (@{$_[4]}) {
 				my $type      = $_->[0];
 				my $player    = $_->[1];
 				my $store     = $_[0]->{USER}->{store};
 				my $templates = $_[0]->{USER}->{templates};
-#warn "found type $type $player";
 				if ($type eq 'is-subclass-of' || $type eq 'subclasses') {
-				    $store->assert ([ undef,                          # LID
-						      undef,                          # SCOPE
-						      'is-subclass-of',               # TYPE
-						      TM->ASSOC,               # KIND
-						      [ 'subclass',  'superclass' ],  # ROLES
-						      [ $_[1],       $player ],       # PLAYERS
-						      undef ] );
+				    $store->assert (bless [ undef,                            # LID
+							    undef,                            # SCOPE
+							    'is-subclass-of',                 # TYPE
+							    TM->ASSOC,                        # KIND
+							    [ 'subclass',  'superclass' ],    # ROLES
+							    [ $_[1],       $player ],         # PLAYERS
+							    undef ], 'Assertion' );
 				} elsif ($type eq 'is-a') {
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      'isa',                  	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [ 'instance', 'class' ], 	      # ROLES
-						      [ $_[1],       $player ],	      # PLAYERS
-						      undef ] );
-				} elsif ($type eq 'has-a') {                          # same, but other way round
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      'isa',               	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [ 'instance', 'class' ], 	      # ROLES
-						      [ $player,     $_[1] ],	      # PLAYERS
-						      undef ] );
-				} elsif ($templates->mids ( $type ) &&
-					 (my @ts    = $templates->match (TM->FORALL, type => $templates->mids ( $type )  ))) {
-#warn "found templates for $type";
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    'isa',                  	      # TYPE
+							    TM->ASSOC,        	              # KIND
+							    [ 'instance', 'class' ], 	      # ROLES
+							    [ $_[1],       $player ],	      # PLAYERS
+							    undef ], 'Assertion' );
+				} elsif ($type eq 'has-a') {                                  # same, but other way round
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    'isa',               	      # TYPE
+							    TM->ASSOC,        	              # KIND
+							    [ 'instance', 'class' ], 	      # ROLES
+							    [ $player,     $_[1] ],	      # PLAYERS
+							    undef ], 'Assertion' );
+				} elsif ($templates->tids ( $type ) &&
+					 (my @ts    = $templates->match (TM->FORALL, type => $templates->tids ( $type )  ))) {
 				    warn "duplicate template for '$type' found (maybe typo?), taking one" if @ts > 1;
-#warn Dumper $templates if @ts > 1;
-				    my $t = $ts[0];                                   # I choose one
-#warn "YYY cloning ($type)";
-				    
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      $type,               	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [  	                      # ROLES
-							map {
-							    my $l = $templates->reified_by ($_);
-							    ($l && $l eq LEFT ?
-							           $_[1]
-							     :
+				    my $t = $ts[0];                                           # I choose one
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    $type,               	      # TYPE
+							    TM->ASSOC,              	      # KIND
+							    [  	                              # ROLES
+							      map {
+								  my $l = $templates->toplet ($_)->[TM->ADDRESS];
+								  ($l && $l eq LEFT ?
+							                 $_[1]
+								   :
 							           ($l && $l eq RIGHT ?
-                                                                          $player
-                                                                    :
-								          $_)
-							     )
-							    } @{$t->[TM->ROLES]} 
-						      ],
-						      [                       	      # PLAYERS
-							map {
-							    my $l = $templates->reified_by ($_);
-							    ($l && $l eq LEFT ?
-							           $_[1]
-							     :
-							           ($l && $l eq RIGHT ?
-                                                                          $player
-                                                                    :
-								          $_)
-							     )
-							    } @{$t->[TM->PLAYERS]} 
-						      ],
-						      undef ] );
+                                                                         $player
+                                                                   :
+								         $_)
+							          )
+							          } @{$t->[TM->ROLES]} 
+						            ],
+						            [                       	      # PLAYERS
+							      map {
+							         my $l = $templates->toplet ($_)->[TM->ADDRESS];
+							         ($l && $l eq LEFT ?
+							                $_[1]
+							          :
+							          ($l && $l eq RIGHT ?
+                                                                        $player
+                                                                  :
+								        $_)
+							          )
+							          } @{$t->[TM->PLAYERS]} 
+						           ],
+							    undef ], 'Assertion' );
 				} else {
 				    die "unknown association type '$type' in inlined association";
 				}
 			    }
 			}
+			warn "added toplet $_[1]" if $tracing;
 		     }
                        characteristics_indication
                         {
 #warn "char/ind in topic: ".Dumper $_[7];
-                         my $id = $_[1];
-                         # add assertions for every characteristic
-                         $_[0]->{USER}->{store}->assert ( map {[ undef,                                         # LID
-                                                                 $_->[1],                                       # SCOPE
-                                                                 $_->[2] ||                                     # TYPE
-                                                                    ($_->[0] == TM->NAME ? 'name' : 'occurrence'),
-                                                                 $_->[0],                                       # KIND
-                                                                 [ 'thing', 'value' ],                          # ROLES
-                                                                 [ $id,             $_->[3] ],                  # PLAYERS
-                                                                 undef ] }
-                                                               @{$_[7]->[0]} );
+                        my $id = $_[1];
+                        # add assertions for every characteristic
+                        $_[0]->{USER}->{store}->assert ( map {bless [ undef,                                          # LID
+								       $_->[1],                                       # SCOPE
+								       $_->[2] ||                                     # TYPE
+								       ($_->[0] == TM->NAME ? 'name' : 'occurrence'),
+								       $_->[0],                                       # KIND
+								       [ 'thing', 'value' ],                          # ROLES
+								       [ $id,             $_->[3] ],                  # PLAYERS
+								       undef ], 'Assertion' }
+							  @{$_[7]->[0]} );
 
-                         map { $store->internalize ($id => \ $_ ) } @{$_[7]->[1]};       # add the subject indicators
+                        map { $store->internalize ($id => \ $_ ) } @{$_[7]->[1]};       # add the subject indicators
 
-			 {                                                               # memorize basename types and scopes as implicitely defined
-			     my $implicits = $_[0]->{USER}->{implicits};
-			     map { $implicits->{'isa-scope'}->{$_}++ }
-                                   map { $_->[1] } grep ($_->[1], @{$_[7]->[0]});                # get the bloody scopes and tuck them away
+			{                                                               # memorize basename types and scopes as implicitely defined
+			    my $implicits = $_[0]->{USER}->{implicits};
+			    map { $implicits->{'isa-scope'}->{$_}++ }
+                            map { $_->[1] }
+                            grep ($_->[1], @{$_[7]->[0]});                              # get the bloody scopes and tuck them away
 
-			     map { $implicits->{'subclasses'}->{ $_->[0] == TM->NAME ? 'name' : 'occurrence' }->{$_->[2]}++ }
-                                   grep ($_->[2], @{$_[7]->[0]});                                # get all the characteristics with types
-
-#warn "implicits then ".Dumper $implicits;
-			 }
-		         }
+			    map { $implicits->{'subclasses'}->{ $_->[0] == TM->NAME ? 'name' : 'occurrence' }->{$_->[2]}++ }
+                            grep ($_->[2], @{$_[7]->[0]});                              # get all the characteristics with types
+			}
+			warn "added ".(scalar @{$_[7]->[0]})."characteristics for $_[1]" if $tracing > 1;
+		    }
 ;
 
 reification_indication     : # empty
@@ -279,7 +278,7 @@ association_definition     : LPAREN ID RPAREN scope reification_indication EOL
 				       push @players, $player;
 				   }
 			       }
-			       my ($a) = $_[0]->{USER}->{store}->assert ( [ undef, $_[4], $_[2], TM->ASSOC, \@roles, \@players, undef ] );
+			       my ($a) = $_[0]->{USER}->{store}->assert (bless [ undef, $_[4], $_[2], TM->ASSOC, \@roles, \@players, undef ], 'Assertion');
 ##warn "templates" .Dumper $_[0]->{USER}->{store};
                               { # reification
 				  my $ms = $_[0]->{USER}->{store};
@@ -295,7 +294,7 @@ association_definition     : LPAREN ID RPAREN scope reification_indication EOL
 					  #     1) assoc is added as thing (is done already)
 					  #     2) the local identifier is added as thing with the abs URL of the assoc as subject address
 					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^\w+$/;
-					  $ms->internalize ($_[5]->[1] => $a->[TM::LID]);
+					  $ms->internalize ($_[5]->[1] => $a);
 				      } else { # this would be 'indication' but we do not want that here
 					  die "indication for association are undefined";
 				      }
@@ -308,6 +307,7 @@ association_definition     : LPAREN ID RPAREN scope reification_indication EOL
 # implicit			   $implicits->{'subclasses'}->{'association'}->{$_[2]}++;
 				   $_[0]->{USER}->{implicits}->{'isa-scope'}->{$_[4]}++ if $_[4];
 			       }
+			       warn "added assertion $_[2]" if $tracing;
 			   }
 ;
 
@@ -398,6 +398,7 @@ sub _Lexer {
 
     $$refINPUT =~ s/^%log\s+(.*?)(?=\n)//so           and return ('LOG',       $1); # positive look-ahead
     $$refINPUT =~ s/^%cancel(?=\n)//so                and return ('CANCEL',    $1); # positive look-ahead
+    $$refINPUT =~ s/^%trace\s+(.*?)(?=\n)//so         and return ('TRACE',     $1); # positive look-ahead
     $$refINPUT =~ s/^%encoding\s+(.*?)(?=\n)//so      and return ('ENCODING',  $1); # positive look-ahead
 
     $$refINPUT =~ s/^\*//o                            and return ('ID',        sprintf "uuid-%010d", $TM::toplet_ctr++); ## $parser->{USER}->{topic_count}++);
@@ -414,6 +415,7 @@ sub parse {
     $self->YYData->{INPUT} = shift;
 
 #warn "parse";
+    $self->YYData->{INPUT} =~ s/\r\n/\n/sg;
     $self->YYData->{INPUT} =~ s/\r/\n/sg;
     $self->YYData->{INPUT} =~ s/(?<!\\)\\\n//sg;   # a \, but not a \\
     $self->YYData->{INPUT} =~ s/ \~ /\n/g;         # replace _~_ with \n
@@ -451,7 +453,7 @@ sub parse {
 	{ # all super/subclasses
 	    foreach my $superclass (keys %{$implicits->{'subclasses'}}) {
 		$store->assert ( map {
-		    [ undef, undef, 'is-subclass-of', TM->ASSOC, [ 'superclass', 'subclass' ], [ $superclass, $_ ] ] 
+		    bless [ undef, undef, 'is-subclass-of', TM->ASSOC, [ 'superclass', 'subclass' ], [ $superclass, $_ ] ], 'Assertion' 
 		    }  keys %{$implicits->{'subclasses'}->{$superclass}});
 	    }
 #warn "done with subclasses";
@@ -462,7 +464,7 @@ sub parse {
 	}
 	{ # establishing the scoping topics
 	    $store->assert (map {
-                                 [ undef, undef, 'isa', TM->ASSOC, [ 'class', 'instance' ], [ 'scope', $_ ] ] 
+                                 bless [ undef, undef, 'isa', TM->ASSOC, [ 'class', 'instance' ], [ 'scope', $_ ] ], 'Assertion' 
 				 } keys %{$implicits->{'isa-scope'}});
 	}
     }

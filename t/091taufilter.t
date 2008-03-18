@@ -134,13 +134,13 @@ eval {
     Class::Trait->apply ($tm, 'TM::Analysis');
     my $stats = $tm->statistics ;                   # has to be here, as this is the time after parsing AsTMa
 
-    ok (eq_set ([ $f->instances ($f->mids ('metric')) ],
+    ok (eq_set ([ $f->instances ($f->tids ('metric')) ],
 		[ map { $bu . $_ } keys %$stats ]),                    'got all metrics');
 
-    foreach my $t ( $f->instances ($f->mids ('metric')) ) {
+    foreach my $t ( $f->instances ($f->tids ('metric')) ) {
 	my ($v) = map { $_->[0] }
-                       map { TM::get_players ($f, $_, $f->mids ('value')) }
-                 	   $f->match_forall (type => $f->mids ('occurrence'), iplayer => $t);
+                       map { TM::get_players ($f, $_, $f->tids ('value')) }
+                 	   $f->match_forall (type => $f->tids ('occurrence'), iplayer => $t);
 	(my $k = $t) =~ s/^$bu//;
 	is ($v, $stats->{$k}, "metric value: $t")
     }

@@ -84,7 +84,7 @@ sub populate {
 
     my $indices = delete $map->{indices}; # detach temporarily
 
-    my @mids = $map->midlets;
+    my @mids = map { $_->[TM->LID] } $map->toplets;
     foreach my $halfkey (@halfkeys) {
 	my @keys = split /\./, $halfkey;
 #warn "keys ".(join "    ", @keys);

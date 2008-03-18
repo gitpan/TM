@@ -66,8 +66,8 @@ sub new {
 
     my %self;                                                                       # forget about the object itself, make a new one
 
+#warn "file exists $file?";
     if (-e $file) {                                                                 # file does exist already
-#warn "file exists $file!";
 	tie %self, 'MLDBM', -Filename => $file
 	    or TM::log->logdie ( "Cannot create DBM file '$file: $!");
                                                                                     # oh, we are done now

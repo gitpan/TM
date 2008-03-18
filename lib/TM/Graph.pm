@@ -86,12 +86,12 @@ sub clusters {
     $opts{use_lid} = 1 unless defined $opts{use_lid}; #   always use maplet ID
 
     my $i = 0;
-    my $clusters = { map { $_ => $i++ } $tm->midlets };   # we store every toplet into its own cluster
+    my $clusters = { map { $_ => $i++ } map { $_->[TM->LID] } $tm->toplets };   # we store every toplet into its own cluster
 
     foreach my $m ($tm->match (TM->FORALL, nochar => 1)) {
 
 	my   @candidates;
-	push @candidates, $m->[TM->LID]         if $opts{use_lid};
+#	push @candidates, $m->[TM->LID]         if $opts{use_lid};
 	push @candidates, $m->[TM->TYPE]        if $opts{use_type};
 	push @candidates, $m->[TM->SCOPE]       if $opts{use_scope};
 	push @candidates, @ { $m->[TM->ROLES] } if $opts{use_roles};

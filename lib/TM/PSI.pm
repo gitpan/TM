@@ -4,7 +4,7 @@ package TM::PSI;
 
 =head1 NAME
 
-  TM::PSI - Topic Maps - PSI (published subject identifiers)
+TM::PSI - Topic Maps - PSI (published subject identifiers)
 
 =head1 DESCRIPTION
 
@@ -126,9 +126,6 @@ our $topicmaps_inc = {
 		   [ 'is-subclass-of', [ 'subclass', 'superclass' ], [ 'occurrence',            'characteristic' ] ],
 		   [ 'is-subclass-of', [ 'subclass', 'superclass' ], [ 'unique-characteristic', 'characteristic' ] ],
 		   [ 'is-subclass-of', [ 'subclass', 'superclass' ], [ 'name',                  'characteristic' ] ],
-		   
-#		   [ 'is-subclass-of', [ 'subclass', 'superclass' ], [ 'has-data-occurrence',   'occurrence' ] ],
-#		   [ 'is-subclass-of', [ 'subclass', 'superclass' ], [ 'has-uri-occurrence',    'occurrence' ] ],
 		   ],
 };
 
@@ -159,33 +156,20 @@ our $tmql_inc = {
 =head2 Infrastructure Concepts
 
 To make the whole machinery work, every topic map must contain infrastructure topics such as
-C<name>, C<occurrence> etc. They are topics like the topics a user may put into the map. While this
-is the right thing to do, in practical situation you often will want to filter out these I<infrastructure topics>.
-You can always get a list of these via
+C<name>, C<occurrence> etc. They are topics like the topics a user may put into the map. While
+this is the right thing to do, in practical situation you often will want to filter out these
+I<infrastructure topics>.  You can always get a list of these via
+
+
+@@@ fix docu @@@@@
 
     $tm->mids (keys %{$TM::PSI::topicmaps->{mid2iid}});
 
 =cut
 
-
-our $topicmaps;              # default set = core + topicmaps_inc + astma_inc
-%{$topicmaps->{mid2iid}}    = (%{$core         ->{mid2iid}},    
-			       %{$topicmaps_inc->{mid2iid}},
-			       %{$tmql_inc     ->{mid2iid}},
-			       %{$astma_inc    ->{mid2iid}}
-			       );
-@{$topicmaps->{assertions}} = (@{$core         ->{assertions}},
-			       @{$topicmaps_inc->{assertions}},
-			       @{$tmql_inc     ->{assertions}},
-			       @{$astma_inc    ->{assertions}}
-			       );
-
-
-
-our @Usual_Suspects = ('thing', 'is-subclass-of', 'subclass', 'superclass', 'isa', 'instance', 'class', 'us', 'name', 'value');
-
 use constant {
-    TOPICMAP => 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap'
+    TOPICMAP => 'http://psi.tm.bond.edu.au/pxtm/1.0/#psi-topicmap',
+    US => 'us'
 };
 
 =pod
@@ -196,7 +180,7 @@ L<TM>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[1-6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 200[1-68], Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -205,12 +189,20 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = '0.16';
+our $VERSION  = '0.18';
 our $REVISION = '$Id: PSI.pm,v 1.28 2006/11/29 10:31:15 rho Exp $';
 
 1;
 
 __END__
+
+
+
+
+
+
+
+
 
 use constant ONTOLOGY => '
 tau-object

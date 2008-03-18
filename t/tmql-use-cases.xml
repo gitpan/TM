@@ -849,7 +849,7 @@ sss << superclasses << superclasses
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[d6d34dc2d74e8dcd3c022a48cd541cea]
+[d2c44b6f1b8d2fae7a85855e29d359f0]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -885,13 +885,13 @@ bbb <- r4 -> r4 === bbb
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[e36181ad953ed4db60bfdbd5c3d88946]
-[dae2dd9316eceaf1e463eddc3af415ac]
-[187dfe2be3ad3363818854477e99177f]
-[542d25b7dbcf9aa933fb2cb66a4a8447]
-[06dce4b4dd20c95677b8af59ed3dc80b]
-[a7de8027d9b624d3f37dbf44383f04db]
-[d58d49c7ee507c51937a9667d7f4ab33]
+[4680378be83a353707df9b86e317b868]
+[cae2cf3b2444b4066285832c284229f1]
+[3cb5e893d6c7182c0e2cf43ec975fa8a]
+[df94fa8c38a599e199b9525d8810f801]
+[38c54f7568764f5f73b82aa9566b97fc]
+[3e855fd3acec56043b9e98e613c7db40]
+[109e8bdef3ec720de7c1e7ae316f7133]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -950,7 +950,7 @@ bbb >> characteristics homepage >> atomify
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[a7de8027d9b624d3f37dbf44383f04db]
+[3cb5e893d6c7182c0e2cf43ec975fa8a]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -965,7 +965,7 @@ bbb >> characteristics homepage >> atomify << atomify
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[542d25b7dbcf9aa933fb2cb66a4a8447]
+[4680378be83a353707df9b86e317b868]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1191,7 +1191,7 @@ bbb >> reifier << reifier
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[acbc8250f83cb062295d3c45c637b538]
+[3cb9a89cb1f5580114d02497e5210ee5]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1340,8 +1340,8 @@ bbb / name [ @ sss ]
 	     <param name="%_" type="map"    mutable="no"></param>
 	   </input>
 	   <output type="set">
-[542d25b7dbcf9aa933fb2cb66a4a8447]
-[d58d49c7ee507c51937a9667d7f4ab33]
+[4680378be83a353707df9b86e317b868]
+[cae2cf3b2444b4066285832c284229f1]
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">

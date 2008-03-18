@@ -51,7 +51,7 @@ END { unlink (@tmp, '/tmp/xxx') || warn "cannot unlink tmp files '@tmp'"; }
 
 	ok ($tm->is_mounted ('/xxx/'),                    'found child mounted');
 	ok ($tm->mids ('xxx'),                            'found child map topic');
-	ok (eq_set ([ $tm->instances  ('tm://nirvana/topicmap') ],
+	ok (eq_set ([ $tm->instances  ('topicmap') ],
 		    [ 'tm://nirvana/xxx' ]),              'regained map instance');
     }    
     { # is the map still there?

@@ -162,42 +162,44 @@ bn @ s2: CCCS
     {
 	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ]);
 #warn Dumper $names;
-	ok ($names->{'tm:aaa'} eq 'AAAS'  || 
-	    $names->{'tm:aaa'} eq 'AAAS2' || 
-	    $names->{'tm:aaa'} eq 'AAA',  'basenames: empty scope (any)');
-	ok ($names->{'tm:ccc'} eq 'CCCS', 'basenames: empty scope (any)');
+	ok ($names->{'tm:aaa@tm:s1'} && $names->{'tm:aaa@tm:s1'} eq 'AAAS'  || 
+	    $names->{'tm:aaa@tm:s2'} && $names->{'tm:aaa@tm:s2'} eq 'AAAS2' || 
+	    $names->{'tm:aaa@us'}    && $names->{'tm:aaa@us'}    eq 'AAA',  'basenames: empty scope (any)');
+	ok ($names->{'tm:ccc@tm:s2'} eq 'CCCS', 'basenames: empty scope (any)');
 	is (scalar keys %$names, 2,    'basenames: empty scope (any)');
     }
     {
 	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ '*' ]);
 #warn Dumper $names;
-	ok ($names->{'tm:aaa'} eq 'AAAS'  || 
-	    $names->{'tm:aaa'} eq 'AAAS2' || 
-	    $names->{'tm:aaa'} eq 'AAA',  'basenames: any scope');
-	ok ($names->{'tm:ccc'} eq 'CCCS', 'basenames: any scope');
+	ok ($names->{'tm:aaa@tm:s1'} && $names->{'tm:aaa@tm:s1'} eq 'AAAS'  || 
+	    $names->{'tm:aaa@tm:s2'} && $names->{'tm:aaa@tm:s2'} eq 'AAAS2' || 
+	    $names->{'tm:aaa@us'}    && $names->{'tm:aaa@us'}    eq 'AAA',  'basenames: any scope');
+	ok ($names->{'tm:ccc@tm:s2'} eq 'CCCS', 'basenames: any scope');
 	is (scalar keys %$names, 2,    'basenames: any scope');
     }
     {
 	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ 's1' ]);
 #warn Dumper $names;
-	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: one scope');
-	ok (! defined $names->{'tm:ccc'}, 'basenames: one scope');
+	ok ($names->{'tm:aaa@tm:s1'} eq 'AAAS', 'basenames: one scope');
+	ok (! defined $names->{'tm:ccc@tm:s1'}, 'basenames: one scope');
+	ok (! defined $names->{'tm:ccc@tm:s2'}, 'basenames: one scope');
+	ok (! defined $names->{'tm:ccc@us'},    'basenames: one scope');
 	is (scalar keys %$names, 2,    'basenames: one scope');
     }
     {
 	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ], [ 's1', 's2' ]);
 #warn Dumper $names;
-	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: several scope');
-	ok ($names->{'tm:ccc'} eq 'CCCS', 'basenames: several scope');
+	ok ($names->{'tm:aaa@tm:s1'} eq 'AAAS', 'basenames: several scope');
+	ok ($names->{'tm:ccc@tm:s2'} eq 'CCCS', 'basenames: several scope');
 	is (scalar keys %$names, 2,    'basenames: several scope');
     }
     {
 	my $names = $tm->names ([ 'ccc', 'bbb', 'aaa' ], [ 's1', 's3', '*' ]);
 #warn Dumper $names;
-	ok ($names->{'tm:aaa'} eq 'AAAS', 'basenames: several scope plus *');
-	ok ($names->{'tm:bbb'} eq 'BBBS' ||
-	    $names->{'tm:bbb'} eq 'BBB',  'basenames: several scope plus *');
-	ok ($names->{'tm:ccc'} eq 'CCCS', 'basenames: several scope plus *');
+	ok ($names->{'tm:aaa@tm:s1'} eq 'AAAS', 'basenames: several scope plus *');
+	ok ($names->{'tm:bbb@tm:s2'} && $names->{'tm:bbb@tm:s2'} eq 'BBBS' ||
+	    $names->{'tm:bbb@us'}    && $names->{'tm:bbb@us'}    eq 'BBB',  'basenames: several scope plus *');
+	ok ($names->{'tm:ccc@tm:s2'} eq 'CCCS', 'basenames: several scope plus *');
 	is (scalar keys %$names, 3,    'basenames: several scope plus *');
     }
 }

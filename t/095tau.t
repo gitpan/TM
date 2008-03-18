@@ -169,7 +169,7 @@ eval { # error
 }
 
 { # complex structure
-    my $tm = new TM::Tau ('(null: * null: + null:) > (null:) > (null:)', sync_in => 0, sync_out => 0);
+    my $tm = new TM::Tau ('(null: * null: + null:) * (null:) > (null:)', sync_in => 0, sync_out => 0);
 
     ok ($tm->isa ('TM::Tau'),                                          'top level');
     ok ($tm->does ('TM::Serializable::Dumper'),                        'top level does');
@@ -314,7 +314,7 @@ foreach my $tau ('io:stdin > io:stdout', 'io:stdin > -', '- > -', '- > io:stdout
 	my $tm;
 	eval $s; # Perl is so sick :-)
 	ok ($tm->isa ('TM'), "$tau: map found");
-	ok ($tm->mids ('thing'), "map has things");
+	ok ($tm->tids ('thing'), "map has things");
     }
 }
 

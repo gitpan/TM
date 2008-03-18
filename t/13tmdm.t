@@ -34,6 +34,12 @@ in: the first will be the last
 in @ en (opinion): he is highly overrated
 oc (homepage): http://oldtesta.ment/~adam/
 
+eve
+bn: Eve
+bn @ en: Eva
+in: the first lady
+oc: urn:x-biblical:hell
+
 
 (begets)
 parent: adam eve
@@ -92,7 +98,7 @@ eval {
 
     my $tm = $tmdm->topicmap;
 
-    is (scalar $tm->topics,       scalar $atm->midlets, 'all topics there');
+    is (scalar $tm->topics,       scalar $atm->toplets, 'all topics there');
     is (scalar $tm->associations, scalar $atm->match (TM->FORALL, nochar => 1),   'all assocs there');
 
     is ($tm->reifier,             undef,                'no reifier');
@@ -141,6 +147,8 @@ eval {
     my $tm = $tmdm->topicmap;
     my @as = $tm->associations (iplayer => 'adam');
 
+#warn Dumper \@as;
+
     is (scalar @as, 4,                                                'all adam involvements');
 
     ok (! grep ($_ ne 'tm:rumsti#', map { $_->parent->id } @as ),     'assocs parent');
@@ -157,9 +165,9 @@ eval {
 	ok (1, 'adam and eve play parents, makes creepy sense');
     }
 
-    is (scalar grep ($_ ne 'tm:rumsti#us', map { $_->scope->id }
+    is (scalar grep ($_ ne 'us', map { $_->scope->id }
                $tm->associations ), 1,                                'others are us scoped assocs');
-    @as = grep ($_->scope->id ne 'tm:rumsti#us',
+    @as = grep ($_->scope->id ne 'us',
 		$tm->associations (anyid => 'tm:rumsti#old_testament'));
     is (scalar @as, 1,                                                'one scoped assoc');
 
@@ -179,20 +187,19 @@ eval {
 		 [
 		  'Adam Adamovich',
 		  'Adam Adamovichev'
-		  ]),                             'names (again)');
+		  ]),                                                 'names (again)');
 
-    ok (! grep ($_ ne 'tm:rumsti#name', map { $_->type->id } @ns ),     'name type');
+    ok (! grep ($_ ne 'name', map { $_->type->id } @ns ),             'name type');
 
-    @ns = grep ($_->scope->id ne 'tm:rumsti#us', $to->names);
+    @ns = grep ($_->scope->id ne 'us', $to->names);
     is (scalar @ns, 1,                                                'one scoped name');
     is ($ns[0]->scope->id, 'tm:rumsti#en',                            'name scope');
 
-    $atm->internalize ('adamnamer' => $ns[0]->id);
+    $atm->internalize ('adamnamer' => $atm->retrieve ($ns[0]->id));
     is ($ns[0]->reifier->id, 'tm:rumsti#adamnamer',                   'reified name');
 
     is ($ns[0]->parent->id, $to->id,                                  'name parent')
 }
-
 
 { # occurrence
     my $tmdm = new TM::DM (map => $atm);
@@ -208,20 +215,20 @@ eval {
 		 [
 		  'http://adam.akest.hewor.ldgorou.nd/',
 		  'http://www.w3.org/2001/XMLSchema#anyURI',
-		  'tm:rumsti#occurrence',
-		  'tm:rumsti#us'
+		  'occurrence',
+		  'us'
 		  ],
 		 [
 		  'http://oldtesta.ment/~adam/',
 		  'http://www.w3.org/2001/XMLSchema#anyURI',
 		  'tm:rumsti#homepage',
-		  'tm:rumsti#us'
+		  'us'
 		  ],
 		 [
 		  'the first will be the last',
 		  'http://www.w3.org/2001/XMLSchema#string',
-		  'tm:rumsti#occurrence',
-		  'tm:rumsti#us'
+		  'occurrence',
+		  'us'
 		  ],
 		 [
 		  'he is highly overrated',
@@ -231,7 +238,7 @@ eval {
 		  ],
 		 ],                                                   'occurrences (again)');
 
-    $atm->internalize ('adamnamer2' => $oc[0]->id);
+    $atm->internalize ('adamnamer2' => $atm->retrieve ($oc[0]->id));
     is ($oc[0]->reifier->id, 'tm:rumsti#adamnamer2',                  'reified occur');
 
     ok (! grep ($_ ne 'tm:rumsti#adam', map { $_->parent->id } @oc ), 'occur parent');
@@ -268,42 +275,9 @@ eval {
     my $tmdm = new TM::DM (map => $atm);
     my $tm = $tmdm->topicmap;
 
-    eval {
-	$tm->topics (\ 'rumsti');
-    }; like ($@, qr/unhandled/i, _chomp($@));
+    is (scalar $tm->topics,            scalar $atm->toplets, 'spec: empty, all topics there');
+    is (scalar $tm->topics (\ '+all'), scalar $atm->toplets, 'spec: expl, all topics there');
 
-    eval {
-	$tm->topics (\ '+rumsti');
-    }; like ($@, qr/unknown/i, _chomp($@));
-
-
-    is (scalar $tm->topics,            scalar $atm->midlets, 'spec: empty, all topics there');
-    is (scalar $tm->topics (\ '+all'), scalar $atm->midlets, 'spec: expl, all topics there');
-    ok (eq_set ([ grep (!/[0-9a-f]{32}/, $atm->midlets) ],
-		[ map { $_->id } $tm->topics (\ '+all -associations -names -occurrences') ]),
-                                                              'spec: expl, all non assertion topics there');
-    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all +all') ],
-		[ map { $_->id } $tm->topics (\ '+all') ]),                  'spec: expl, no duplicates');
-
-#warn Dumper scalar map { $_->id } $tm->topics (\ '+all +all') ; exit;
-#    warn Dumper [ map { $_->id } $tm->topics (\ '+all -names +names') ]; exit;
-
-    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names +names') ],
-		[ map { $_->id } $tm->topics (\ '+all +names') ]),          'spec: expl, no duplicates');
-
-    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names +names') ],
-		[ map { $_->id } $tm->topics (\ '+all') ]),                 'spec: expl, no duplicates');
-
-    ok (eq_set ([ map { $_->id } $tm->topics (\ '+all -names -names') ],
-		[ map { $_->id } $tm->topics (\ '+all -names') ]),          'spec: expl, no duplicates');
-
-    ok (eq_set ([ map { $_->id } $tm->topics (\ '+names +occurrences') ],
-		[ map { $_->id } $tm->topics (\ '+occurrences +names') ]),  'spec: expl, commutative');
-
-#    warn Dumper [map {$_->{mid} } $tm->topics (\ '+all -infrastructure -associations -names -occurrences') ];
-    is (scalar $tm->topics (\ '+all -infrastructure -associations -names -occurrences'),
-	                               22,
-                                                             'spec: expl, all user, non assertion topics there');
 }
 
 __END__

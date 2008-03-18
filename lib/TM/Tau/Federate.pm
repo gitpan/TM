@@ -44,11 +44,29 @@ sub source_in {
 
     $self->{left}->source_in;
     $self->{right}->source_in;
-# here decide whether to materialize or not
-#    $self->melt ($self->{left});
-#    $self->add  ($self->{right});
-#    $self->{melted} = 1;                                       # this indicates to later that local map is of significance
-#    $self->consolidate;
+# TODO: here decide whether to materialize or not
+
+# this below is if both maps are materializable/materialized
+    $self->melt ($self->{left});                               # now this map is like the left, including the baseuri
+
+#    my $m = $self->insane;
+#    $TM::log->logdie ("CORRRUPT $m") if $m;
+
+#    my $m = $self->{right}->insane;
+#    $TM::log->logdie ("CORRRUPT $m") if $m;
+
+    $self->add  ($self->{right});                              # more or less, a copy-over of topics and assocs
+    my $m = $self->insane;
+    $TM::log->logdie ("CORRRUPT $m") if $m;
+
+    $self->{melted} = 1;                                       # this indicates to later that local map is of significance
+
+    $m = $self->insane;
+    $TM::log->logdie ("before consolidate CORRRUPT $m") if $m;
+    $self->consolidate;
+    $m = $self->insane;
+    $TM::log->logdie ("after consolidate CORRRUPT $m") if $m;
+#warn "after federated merge ".Dumper $self;
 }
 
 sub sync_out {
@@ -56,13 +74,6 @@ sub sync_out {
 # will depend on ...
     $self->source_out; # do not think twice, just do it
 }
-
-
-#sub melt {
-#    my $self = shift;#
-#
-#    die "not yet implemented";
-#}
 
 sub consolidate {
   my $self = shift;
@@ -75,11 +86,11 @@ sub consolidate {
   }
 }
 
-sub midlets {
+sub toplets {
   my $self = shift;
   die;
   if ($self->{melted}) {
-      return $self->midlets (@_);
+      return $self->toplets (@_);
   } else { # no materialized sync_in has happened
       return _consolidate ($self->{left}->midlets (@_), $self->{right}->midlets (@_)); # TODO: merging on the fly? what is the basis?
   }

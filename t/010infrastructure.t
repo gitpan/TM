@@ -16,19 +16,59 @@ use TM::PSI;
 
 #== TESTS =====================================================================
 
+require_ok ('TM::PSI');
 require_ok ('TM');
 
+&TM::_prime_infrastructure;
+##warn Dumper $TM::infrastructure;
+
+{
+    ok (keys %{ $TM::infrastructure->{mid2iid} },    'toplets infrastructure created');
+    ok (keys %{ $TM::infrastructure->{assertions} }, 'asserts infrastructure created');
+
+    is (scalar keys %{ $TM::infrastructure->{mid2iid} },
+	  scalar (keys %{$TM::PSI::core->{mid2iid}})
+	+ scalar (keys %{$TM::PSI::topicmaps_inc->{mid2iid}})
+	+ scalar (keys %{$TM::PSI::tmql_inc->{mid2iid}})
+	+ scalar (keys %{$TM::PSI::astma_inc->{mid2iid}})
+	, 
+	'predefined concepts in map');
+}
+
+{
+    my $tm = new TM;
+    ok (eq_set ([ $tm->toplets (\ '+infrastructure') ],
+		[ values %{ $TM::infrastructure->{mid2iid} } ]), 
+	'infrastructure toplets in map');
+
+    is (grep (!defined $_, $tm->tids (keys %{$TM::PSI::core->{mid2iid}})), 0, 'no undefined iid (core)');
+    ok (eq_array ([
+		   $tm->tids (qw(thing is-subclass-of isa us))
+		   ], 
+		  [
+		   'thing',
+		   'is-subclass-of',
+		   'isa',
+		   'us',
+		   ]
+		  ), 'found predefined');
+    ok (eq_array ([
+		   $tm->mids (\ 'http://psi.topicmaps.org/sam/1.0/#type-instance',
+			      \ 'http://www.topicmaps.org/xtm/#psi-superclass-subclass')
+		   ], 
+		  [
+		   'isa',
+		   'is-subclass-of',
+		   ]
+		  ), 'found predefined 2');
+    is (scalar $tm->match (TM->FORALL, type => 'isa', iplayer => 'assertion-type'),    2, 'assertion-type: all instances');
+}
 
 {
     my $tm = new TM;
     ok ($tm->isa ('TM'), 'class');
-
-
     is ($tm->baseuri, 'tm://nirvana/', 'baseuri default');
-
-    ok (!$tm->{psis}, 'no junk left');
     ok ($tm->{created}, 'created there');
-    ok ($tm->{usual_suspects}, 'usual suspects there');
 }
 
 { # baseuri
@@ -53,61 +93,5 @@ require_ok ('TM');
     ok (eq_set([ $tm->consistency ],
 	       [ TM->Indicator_based_Merging ] ), 'changed consistency');
 }
-
-
-require_ok ('TM::PSI');
-
-{
-    is (  scalar (keys %{$TM::PSI::core->{mid2iid}})
-	+ scalar (keys %{$TM::PSI::topicmaps_inc->{mid2iid}})
-	+ scalar (keys %{$TM::PSI::astma_inc->{mid2iid}})
-	, 
-	scalar  keys %{$TM::PSI::topicmaps->{mid2iid}}, 'merging topicmaps');
-}
-
-{
-  my $tm = new TM (psis => {});
-
-  is (0, 
-      grep (defined $_, $tm->mids ( keys %{$TM::PSI::topicmaps->{mid2iid}} ))
-      ,  'psis: nothing defined');
-}
-
-__END__
-{ # check predefined
-    my $tm = new TM;
-#warn Dumper $tm;
-    is (grep (!defined $_, $tm->mids (keys %{$TM::PSI::core->{mid2iid}})), 0, 'no undefined iid (core)');
-    ok (eq_array ([
-		   $tm->mids (qw(thing is-subclass-of isa us))
-		   ], 
-		  [
-		   'tm://nirvana/thing',
-		   'tm://nirvana/is-subclass-of',
-		   'tm://nirvana/isa',
-		   'tm://nirvana/us',
-		   ]
-		  ), 'found predefined');
-
-    ok (eq_array ([
-		   $tm->mids (\ 'http://psi.topicmaps.org/sam/1.0/#type-instance',
-			      \ 'http://www.topicmaps.org/xtm/#psi-superclass-subclass')
-		   ], 
-		  [
-		   'tm://nirvana/isa',
-		   'tm://nirvana/is-subclass-of',
-		   ]
-		  ), 'found predefined 2');
-
-    is (scalar $tm->match (TM->FORALL, type => $tm->mids('isa'), iplayer => $tm->mids('assertion-type')),    2, 'assertion-type: all instances');
-}
-
-{
-    my $tm = new TM (psis => $TM::PSI::topicmaps);
-#warn Dumper $tm;
-    is (grep (!defined $_, $tm->mids (keys %{$TM::PSI::topicmaps->{mid2iid}})), 0, 'no undefined iid (topicmaps)');
-    is (scalar $tm->match(), scalar @{$TM::PSI::topicmaps->{assertions}}, 'same number of assertions (topicmaps)');
-}
-
 
 __END__

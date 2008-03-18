@@ -59,11 +59,11 @@ I<tau> expressions serve several purposes:
 
 =over
 
-=item
+=item *
 
 First, they allow to address whole maps via a URI.
 
-=item
+=item *
 
 Then they allow to connect (real or virtual) topic maps together forming bigger maps. In
 
@@ -74,7 +74,7 @@ we use the C<+> operator to I<merge> two maps into one.
 
 B<NOTE>: Future versions of this package will use the C<+> operator also between maps and ontologies.
 
-=item
+=item *
 
 Tau expressions are then generalized to filter maps.  Ontologies serve as filters as they are
 interpreted as constraints. Only those parts of the original map which conform to the ontology
@@ -85,19 +85,19 @@ survive the filter process.
 
 The C<*> operator symbolizes the filtering operation.
 
-=item
+=item *
 
 Tau expressions are also used to completely transform maps into other maps (ontological
 transformation).
 
    file:music.atm * beatles.atq
    file:music.atm * elvis.atq
- 
-Here C<*> symbolizes the transformation.
+
+Here C<*> symbolizes the transformation and it can be any filter program or a TMQL query.
 
 =back
 
-B<NOTE>: Some of this filter functionality may not be yet implemented.
+B<NOTE>: Some of this filter functionality may not be yet implemented. This is bleeding edge.
 
 =head2 Map Source URLs
 
@@ -152,7 +152,7 @@ During parsing of a Tau expression, two cases are distinguised:
 
 =over
 
-=item 
+=item *
 
 If the URI specifies a I<source>, then this URI will be matched against the regexps in the
 C<TM::Tau::sources> hash. The value of that entry will be used as class name to instantiate an
@@ -162,10 +162,10 @@ I<$this_class_name>->new (uri => I<$this_uri>, baseuri => I<$this_uri>)
 
 This class should be a subclass of L<TM>.
 
-=item
+=item *
 
-If te URI specifies a I<filter>, then you have two options: Either you use as entry the name of a
-subclass of L<TM::Tau::Filter>. Then an object is create like above. Alternatively, the entry is a
+If the URI specifies a I<filter>, then you have two options: Either you use as entry the name of a
+subclass of L<TM::Tau::Filter>. Then an object is created like above. Alternatively, the entry is a
 list reference containing names of traits. Then a generic L<TM::Tau::Filter> node is generated first
 and each of the traits are applied like this:
 
@@ -231,14 +231,14 @@ such a driver).
 
 The Tau expression language supports two binary operators, C<+> and C<*>. The C<+> operator
 intuitively puts things together, the C<*> applies the right-hand operand to the left-hand operand
-and behave as a transformer or a filter. The exact semantics depends on the operands. In any case,
+and behaves as a transformer or a filter. The exact semantics depends on the operands. In any case,
 the C<*> binds stronger than the C<+>.
 
 The parser understands the following syntax for Tau expression:
 
    tau_expr    -> mul_expr
 
-   mul_expr    -> source { '*' filter }
+   mul_expr    -> source { ('>' | '*') filter }
 
    source      -> '(' add_expr ')' | primitive
 
@@ -339,9 +339,9 @@ our $tau_grammar = q{
    startrule    : { $sources = $arg[0]; $filters = $arg[1]; }                                            # collect parameters
                   tau_expr
 
-   tau_expr     : mul_expr                                { $return = _mk_tree ($item[1], 1); }         # a tau expr is a filter
+   tau_expr     : mul_expr                                { $return = _mk_tree ($item[1], 1); }          # a tau expr is a filter
 
-   mul_expr     : source ( '*' filter )(s?)               { $return = [ $item[1], @{$item[2]} ]; }
+   mul_expr     : source ( '*' filter )(s?)               { $return = [ $item[1], @{$item[2]} ]; }  
 
    source       : '(' add_expr ')'                        { $return = $item[2]; }
                 | primitive[$sources]
@@ -353,7 +353,7 @@ our $tau_grammar = q{
 
    primitive    : <rulevar: $schemes = $arg[0]>
 
-   primitive    : /[^\s()\*\{\}]+/ module(?)
+   primitive    : /[^\s()>\*\{\}]+/ module(?)
                 {
 #warn "using schemes ".Dumper ($schemes)." for $item[1]";
 		    my $uri = $item[1];
@@ -382,6 +382,9 @@ sub _parse {
     my $ms     = shift;
 
     use Parse::RecDescent;
+#    $::RD_TRACE = 1;
+#    $::RD_HINT = 1;
+#    $::RD_WARN = 1;
     $parser ||= new Parse::RecDescent ($tau_grammar)           or  $TM::log->logdie (scalar __PACKAGE__ . ": problem in tau grammar");
 
     my $f = $parser->startrule (\$tau,  1, \%sources,                  # predefined sources
@@ -453,43 +456,57 @@ Example:
 
    my $map = new TM::Tau ('test.xtm', sync_in => 0);
 
+Additionally, you can use > to symbolize a conversion process. The > is just a synonym for the C<*>,
+but it is more intuitive to write
+
+   something.atm > something.xtm
+
+than
+
+  ( something.atm ) * something.xtm
+
+Still, in both cases the expression on the right is a I<filter> in that it takes content from the
+left and produces something (even though the content itself is not modified).
+
+
+
 The (pre)parser supports the following shortcuts (I hate unnecessary typing):
 
 =over
 
-=item
+=item *
 
 "whatever" is interpreted as "(whatever) > -"
 
-=item
+=item *
 
 "whatever >" is interpreted as "(whatever) > -"
 
-=item
+=item *
 
 "> whatever" is interpreted as  "- > (whatever)"
 
-=item
+=item *
 
 "< whatever >" is interpreted as "whatever > whatever", sync_in => 0
 
-=item
+=item *
 
 "> whatever <" is interpreted as "whatever > whatever", sync_out => 0
 
-=item
+=item *
 
 "> whatever >" is interpreted as "whatever > whatever"
 
-=item
+=item *
 
 "< whatever <" is interpreted as "whatever > whatever", sync_in => 0, sync_out => 0
 
-=item
+=item *
 
 The URI C<-> as source is interpreted as STDIN (via the L<TM::Serializable::AsTMa> trait).
 
-=item
+=item *
 
 The URI C<-> as filter is interpreted as STDOUT (via the L<TM::Serializable::Dumper> trait).
 
@@ -516,47 +533,39 @@ sub new {
 
     # canonicalization, phase I: reduce the ><><>< crazyness to A > B
     if (/^<(.*)>$/) {
-	$_ = "($1) > ($1)";
+	$_ = "($1) * ($1)";
 	$opts{sync_in} = 0; $opts{sync_out} = 1;
     } elsif (/^>(.*)<$/) {
-	$_ = "($1) > ($1)";
+	$_ = "($1) * ($1)";
 	$opts{sync_in} = 1; $opts{sync_out} = 0;
     } elsif (/^>(.*)>$/) {
-	$_ = "($1) > ($1)";
+	$_ = "($1) * ($1)";
 	$opts{sync_in} =    $opts{sync_out} = 1;
     } elsif (/^<(.*)<$/) {
-	$_ = "($1) > ($1)";
+	$_ = "($1) * ($1)";
 	$opts{sync_in} =    $opts{sync_out} = 0;
 
     } elsif (/^(.*)>$/) {                                                               # > - default
-	$_ = "($1) > -";
+	$_ = "($1) * -";
     } elsif (/^>(.*)$/) {                                                               # - > default
-	$_ = "- > $1";
-    } elsif (/>/) {                                                                     # there is a > somewhere in between
-                                                                                        # we leave it as it is
+	$_ = "- * $1";
+    } elsif (/^(.*?)>(.*?)$/) {                                                         # there is a > somewhere in between
+	$_ = "( $1 ) * ( $2 )";
+
     } else {                                                                            # no > to be see anywhere
-	$_ = "($_) > -";
+	$_ = "($_) * -";
     }
 
 #warn "cano2 '$_'";
 
-    # canonicalization, phase III, removing >''s
-    s/>/\*/g;                                                                           # * operator does now the trick
-
-#warn "---- cano3 '$_'";
-
     my $self = _parse ($_);                                                             # DIRTY, but then not
 #warn "============> ". ref ($self->left) . " <-- left -- " . ref ($self);
+#warn "base of top ".$self->{baseuri}." xxx";
 
     $self->{sync_in}  = $opts{sync_in};                                                 # same here
     $self->{sync_out} = $opts{sync_out};
 
-#warn "sync start? ".time;
     $self->sync_in if $self->{sync_in};                                                 # if user wants to sync at constructor time, lets do it
-#warn "sync end ".time;
-
-#     _dmp ($self->{_map}, 1);
-#warn "cano3 after ".Dumper $self;
     return $self;
 }
 
@@ -568,7 +577,7 @@ L<TM>, L<TM::Tau::Filter>
 
 =head1 AUTHOR
 
-Copyright 200[0-6], Robert Barta E<lt>drrho@cpan.orgE<gt>, All rights reserved.
+Copyright 200[0-68], Robert Barta E<lt>drrho@cpan.orgE<gt>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
@@ -576,7 +585,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '1.13';
+our $VERSION  = '1.15';
 our $REVISION = '$Id: Tau.pm,v 1.13 2006/12/05 09:50:38 rho Exp $';
 
 1;

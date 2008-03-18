@@ -23,6 +23,8 @@ use TM::Literal;
 use constant LEFT  => 'http://psi.tm.bond.edu.au/astma/1.0/#psi-left';
 use constant RIGHT => 'http://psi.tm.bond.edu.au/astma/1.0/#psi-right';
 
+my $tracing = 0;
+
 
 
 sub new {
@@ -47,25 +49,26 @@ sub new {
 		ACTIONS => {
 			'' => 3,
 			'ID' => 2,
-			'LPAREN' => 4,
-			'LBRACKET' => 5,
-			'COMMENT' => 6,
-			'CANCEL' => 8,
-			'ENCODING' => 11,
-			'LOG' => 13,
-			'EOL' => 14
+			'TRACE' => 4,
+			'LPAREN' => 5,
+			'LBRACKET' => 6,
+			'COMMENT' => 7,
+			'CANCEL' => 9,
+			'ENCODING' => 13,
+			'LOG' => 14,
+			'EOL' => 15
 		},
 		GOTOS => {
-			'association_definition' => 12,
-			'maplet_definition' => 10,
-			'topic_definition' => 7,
-			'template_definition' => 9
+			'maplet_definition' => 12,
+			'association_definition' => 11,
+			'topic_definition' => 8,
+			'template_definition' => 10
 		}
 	},
 	{#State 2
-		DEFAULT => -17,
+		DEFAULT => -18,
 		GOTOS => {
-			'types' => 15
+			'types' => 16
 		}
 	},
 	{#State 3
@@ -73,108 +76,106 @@ sub new {
 	},
 	{#State 4
 		ACTIONS => {
-			'ID' => 16
+			'EOL' => 17
 		}
 	},
 	{#State 5
-		DEFAULT => -40,
-		GOTOS => {
-			'@4-1' => 17
+		ACTIONS => {
+			'ID' => 18
 		}
 	},
 	{#State 6
-		ACTIONS => {
-			'EOL' => 18
+		DEFAULT => -41,
+		GOTOS => {
+			'@4-1' => 19
 		}
 	},
 	{#State 7
-		DEFAULT => -8
-	},
-	{#State 8
-		ACTIONS => {
-			'EOL' => 19
-		}
-	},
-	{#State 9
 		ACTIONS => {
 			'EOL' => 20
 		}
 	},
-	{#State 10
-		DEFAULT => -2
+	{#State 8
+		DEFAULT => -9
 	},
-	{#State 11
+	{#State 9
 		ACTIONS => {
 			'EOL' => 21
 		}
 	},
-	{#State 12
-		DEFAULT => -9
-	},
-	{#State 13
+	{#State 10
 		ACTIONS => {
 			'EOL' => 22
 		}
 	},
-	{#State 14
+	{#State 11
 		DEFAULT => -10
 	},
-	{#State 15
+	{#State 12
+		DEFAULT => -2
+	},
+	{#State 13
 		ACTIONS => {
-			'ISREIFIED' => 24,
-			'ISINDICATEDBY' => 25,
-			'ISA' => 26,
-			'LPAREN' => 23,
-			'REIFIES' => 28
-		},
-		DEFAULT => -13,
-		GOTOS => {
-			'type' => 27,
-			'reification_indication' => 29
+			'EOL' => 23
 		}
+	},
+	{#State 14
+		ACTIONS => {
+			'EOL' => 24
+		}
+	},
+	{#State 15
+		DEFAULT => -11
 	},
 	{#State 16
 		ACTIONS => {
-			'RPAREN' => 30
+			'ISREIFIED' => 26,
+			'ISINDICATEDBY' => 27,
+			'ISA' => 28,
+			'LPAREN' => 25,
+			'REIFIES' => 30
+		},
+		DEFAULT => -14,
+		GOTOS => {
+			'type' => 29,
+			'reification_indication' => 31
 		}
 	},
 	{#State 17
-		ACTIONS => {
-			'LPAREN' => 4
-		},
-		GOTOS => {
-			'association_definition' => 31
-		}
-	},
-	{#State 18
-		DEFAULT => -4
-	},
-	{#State 19
-		DEFAULT => -6
-	},
-	{#State 20
-		DEFAULT => -3
-	},
-	{#State 21
 		DEFAULT => -7
 	},
+	{#State 18
+		ACTIONS => {
+			'RPAREN' => 32
+		}
+	},
+	{#State 19
+		ACTIONS => {
+			'LPAREN' => 5
+		},
+		GOTOS => {
+			'association_definition' => 33
+		}
+	},
+	{#State 20
+		DEFAULT => -4
+	},
+	{#State 21
+		DEFAULT => -6
+	},
 	{#State 22
-		DEFAULT => -5
+		DEFAULT => -3
 	},
 	{#State 23
-		DEFAULT => -49,
-		GOTOS => {
-			'ids' => 32
-		}
+		DEFAULT => -8
 	},
 	{#State 24
-		ACTIONS => {
-			'ID' => 33
-		}
+		DEFAULT => -5
 	},
 	{#State 25
-		ACTIONS => {
-			'ID' => 34
+		DEFAULT => -50,
+		GOTOS => {
+			'ids' => 34
 		}
 	},
 	{#State 26
@@ -183,290 +184,300 @@ sub new {
 		}
 	},
 	{#State 27
-		DEFAULT => -18
-	},
-	{#State 28
 		ACTIONS => {
 			'ID' => 36
 		}
 	},
-	{#State 29
-		DEFAULT => -37,
-		GOTOS => {
-			'inline_assocs' => 37
+	{#State 28
+		ACTIONS => {
+			'ID' => 37
 		}
+	},
+	{#State 29
+		DEFAULT => -19
 	},
 	{#State 30
 		ACTIONS => {
-			'AT' => 38
-		},
-		DEFAULT => -35,
-		GOTOS => {
-			'scope' => 39
+			'ID' => 38
 		}
 	},
 	{#State 31
-		DEFAULT => -41
+		DEFAULT => -38,
+		GOTOS => {
+			'inline_assocs' => 39
+		}
 	},
 	{#State 32
 		ACTIONS => {
-			'ID' => 40,
-			'RPAREN' => 41
+			'AT' => 40
+		},
+		DEFAULT => -36,
+		GOTOS => {
+			'scope' => 41
 		}
 	},
 	{#State 33
-		DEFAULT => -15
+		DEFAULT => -42
 	},
 	{#State 34
-		DEFAULT => -16
-	},
-	{#State 35
-		DEFAULT => -19
-	},
-	{#State 36
-		DEFAULT => -14
-	},
-	{#State 37
 		ACTIONS => {
 			'ID' => 42,
-			'EOL' => 44
-		},
-		GOTOS => {
-			'inline_assoc' => 43
+			'RPAREN' => 43
 		}
 	},
+	{#State 35
+		DEFAULT => -16
+	},
+	{#State 36
+		DEFAULT => -17
+	},
+	{#State 37
+		DEFAULT => -20
+	},
 	{#State 38
-		ACTIONS => {
-			'ID' => 45
-		}
+		DEFAULT => -15
 	},
 	{#State 39
 		ACTIONS => {
-			'ISREIFIED' => 24,
-			'ISINDICATEDBY' => 25,
-			'REIFIES' => 28
+			'ID' => 44,
+			'EOL' => 46
 		},
-		DEFAULT => -13,
 		GOTOS => {
-			'reification_indication' => 46
+			'inline_assoc' => 45
 		}
 	},
 	{#State 40
-		DEFAULT => -50
-	},
-	{#State 41
-		DEFAULT => -20
-	},
-	{#State 42
 		ACTIONS => {
 			'ID' => 47
 		}
 	},
+	{#State 41
+		ACTIONS => {
+			'ISREIFIED' => 26,
+			'ISINDICATEDBY' => 27,
+			'REIFIES' => 30
+		},
+		DEFAULT => -14,
+		GOTOS => {
+			'reification_indication' => 48
+		}
+	},
+	{#State 42
+		DEFAULT => -51
+	},
 	{#State 43
-		DEFAULT => -38
+		DEFAULT => -21
 	},
 	{#State 44
-		DEFAULT => -11,
-		GOTOS => {
-			'@1-5' => 48
+		ACTIONS => {
+			'ID' => 49
 		}
 	},
 	{#State 45
-		DEFAULT => -36
+		DEFAULT => -39
 	},
 	{#State 46
-		ACTIONS => {
-			'EOL' => 49
+		DEFAULT => -12,
+		GOTOS => {
+			'@1-5' => 50
 		}
 	},
 	{#State 47
-		DEFAULT => -39
+		DEFAULT => -37
 	},
 	{#State 48
-		DEFAULT => -21,
-		GOTOS => {
-			'characteristics_indication' => 50
+		ACTIONS => {
+			'EOL' => 51
 		}
 	},
 	{#State 49
-		ACTIONS => {
-			'ID' => 51
-		},
-		GOTOS => {
-			'member' => 52,
-			'association_members' => 53
-		}
+		DEFAULT => -40
 	},
 	{#State 50
-		ACTIONS => {
-			'OC' => 55,
-			'IN' => 56,
-			'BN' => 57,
-			'SIN' => 58
-		},
-		DEFAULT => -12,
+		DEFAULT => -22,
 		GOTOS => {
-			'characteristic_indication' => 54,
-			'indication' => 59,
-			'class' => 60,
-			'characteristic' => 61
+			'characteristics_indication' => 52
 		}
 	},
 	{#State 51
 		ACTIONS => {
-			'COLON' => 62
+			'ID' => 53
+		},
+		GOTOS => {
+			'member' => 54,
+			'association_members' => 55
 		}
 	},
 	{#State 52
-		DEFAULT => -43
+		ACTIONS => {
+			'OC' => 57,
+			'IN' => 58,
+			'BN' => 59,
+			'SIN' => 60
+		},
+		DEFAULT => -13,
+		GOTOS => {
+			'characteristic_indication' => 56,
+			'indication' => 61,
+			'class' => 62,
+			'characteristic' => 63
+		}
 	},
 	{#State 53
 		ACTIONS => {
-			'ID' => 51
-		},
-		DEFAULT => -42,
-		GOTOS => {
-			'member' => 63
+			'COLON' => 64
 		}
 	},
 	{#State 54
-		DEFAULT => -22
+		DEFAULT => -44
 	},
 	{#State 55
-		DEFAULT => -30
-	},
-	{#State 56
-		DEFAULT => -31
-	},
-	{#State 57
-		DEFAULT => -29
-	},
-	{#State 58
-		DEFAULT => -25,
+		ACTIONS => {
+			'ID' => 53
+		},
+		DEFAULT => -43,
 		GOTOS => {
-			'@2-1' => 64
+			'member' => 65
 		}
 	},
+	{#State 56
+		DEFAULT => -23
+	},
+	{#State 57
+		DEFAULT => -31
+	},
+	{#State 58
+		DEFAULT => -32
+	},
 	{#State 59
-		DEFAULT => -24
+		DEFAULT => -30
 	},
 	{#State 60
-		DEFAULT => -27,
+		DEFAULT => -26,
 		GOTOS => {
-			'@3-1' => 65
+			'@2-1' => 66
 		}
 	},
 	{#State 61
-		DEFAULT => -23
+		DEFAULT => -25
 	},
 	{#State 62
-		DEFAULT => -49,
+		DEFAULT => -28,
 		GOTOS => {
-			'ids' => 66,
-			'ids1' => 67
+			'@3-1' => 67
 		}
 	},
 	{#State 63
-		DEFAULT => -44
+		DEFAULT => -24
 	},
 	{#State 64
-		ACTIONS => {
-			'STRING' => 69
-		},
+		DEFAULT => -50,
 		GOTOS => {
-			'string' => 68
+			'ids' => 68,
+			'ids1' => 69
 		}
 	},
 	{#State 65
-		ACTIONS => {
-			'AT' => 38
-		},
-		DEFAULT => -35,
-		GOTOS => {
-			'scope' => 70
-		}
+		DEFAULT => -45
 	},
 	{#State 66
 		ACTIONS => {
-			'ID' => 71
+			'STRING' => 71
+		},
+		GOTOS => {
+			'string' => 70
 		}
 	},
 	{#State 67
 		ACTIONS => {
-			'RBRACKET' => 72,
-			'EOL' => 74
+			'AT' => 40
 		},
+		DEFAULT => -36,
 		GOTOS => {
-			'eom' => 73
+			'scope' => 72
 		}
 	},
 	{#State 68
-		DEFAULT => -26
+		ACTIONS => {
+			'ID' => 73
+		}
 	},
 	{#State 69
 		ACTIONS => {
-			'EOL' => 75
+			'RBRACKET' => 74,
+			'EOL' => 76
+		},
+		GOTOS => {
+			'eom' => 75
 		}
 	},
 	{#State 70
-		ACTIONS => {
-			'LPAREN' => 76
-		},
-		DEFAULT => -32,
-		GOTOS => {
-			'char_type' => 77,
-			'assoc_type' => 78
-		}
+		DEFAULT => -27
 	},
 	{#State 71
 		ACTIONS => {
-			'ID' => -50
-		},
-		DEFAULT => -48
+			'EOL' => 77
+		}
 	},
 	{#State 72
 		ACTIONS => {
-			'EOL' => 79
+			'LPAREN' => 78
+		},
+		DEFAULT => -33,
+		GOTOS => {
+			'char_type' => 79,
+			'assoc_type' => 80
 		}
 	},
 	{#State 73
-		DEFAULT => -45
+		ACTIONS => {
+			'ID' => -51
+		},
+		DEFAULT => -49
 	},
 	{#State 74
-		DEFAULT => -46
+		ACTIONS => {
+			'EOL' => 81
+		}
 	},
 	{#State 75
-		DEFAULT => -51
+		DEFAULT => -46
 	},
 	{#State 76
-		ACTIONS => {
-			'ID' => 80
-		}
-	},
-	{#State 77
-		ACTIONS => {
-			'STRING' => 69
-		},
-		GOTOS => {
-			'string' => 81
-		}
-	},
-	{#State 78
-		DEFAULT => -33
-	},
-	{#State 79
 		DEFAULT => -47
 	},
-	{#State 80
+	{#State 77
+		DEFAULT => -52
+	},
+	{#State 78
 		ACTIONS => {
-			'RPAREN' => 82
+			'ID' => 82
 		}
 	},
+	{#State 79
+		ACTIONS => {
+			'STRING' => 71
+		},
+		GOTOS => {
+			'string' => 83
+		}
+	},
+	{#State 80
+		DEFAULT => -34
+	},
 	{#State 81
-		DEFAULT => -28
+		DEFAULT => -48
 	},
 	{#State 82
-		DEFAULT => -34
+		ACTIONS => {
+			'RPAREN' => 84
+		}
+	},
+	{#State 83
+		DEFAULT => -29
+	},
+	{#State 84
+		DEFAULT => -35
 	}
 ],
 				   yyrules   =>
@@ -489,26 +500,29 @@ sub new {
 	[#Rule 5
 		 'maplet_definitions', 3,
 sub
-#line 39 "yapp/astma-fact.yp"
+#line 42 "yapp/astma-fact.yp"
 { warn "Logging $_[2]"; }
 	],
 	[#Rule 6
 		 'maplet_definitions', 3,
 sub
-#line 40 "yapp/astma-fact.yp"
+#line 43 "yapp/astma-fact.yp"
 { die  "Cancelled"; }
 	],
 	[#Rule 7
 		 'maplet_definitions', 3,
 sub
-#line 41 "yapp/astma-fact.yp"
+#line 44 "yapp/astma-fact.yp"
+{ $tracing = $_[2]; warn "# start tracing: level $tracing"; }
+	],
+	[#Rule 8
+		 'maplet_definitions', 3,
+sub
+#line 45 "yapp/astma-fact.yp"
 {
 		                                              use Encode;
 							      Encode::from_to ($_[0]->YYData->{INPUT}, "iso-8859-1", $_[2]);
 							     }
-	],
-	[#Rule 8
-		 'maplet_definition', 1, undef
 	],
 	[#Rule 9
 		 'maplet_definition', 1, undef
@@ -517,9 +531,12 @@ sub
 		 'maplet_definition', 1, undef
 	],
 	[#Rule 11
+		 'maplet_definition', 1, undef
+	],
+	[#Rule 12
 		 '@1-5', 0,
 sub
-#line 53 "yapp/astma-fact.yp"
+#line 57 "yapp/astma-fact.yp"
 {
 			$_[1] = $_[0]->{USER}->{store}->internalize ($_[1]);
 
@@ -536,215 +553,210 @@ sub
 			}
 			# assert instance/class
                         if (@{$_[2]}) {
-			    $_[0]->{USER}->{store}->assert ( map {
-							  [ undef, 
-							    undef, 
-							    'isa', 
-							    undef,
-							    [ 'class', 'instance' ], 
-                                                            [ $_, $_[1] ], 
-							    ]}  
+			    $_[0]->{USER}->{store}->assert ( map { bless
+								       [ undef, 
+									 undef, 
+									 'isa', 
+									 undef,
+									 [ 'class', 'instance' ], 
+									 [ $_, $_[1] ], 
+									 ], 'Assertion' }  
 							     @{$_[2]} );
 			}
-			{                                                                  # memorize that the types should be a 'topic' at the end (see end of parse)
+			{                                                                     # memorize the types should be a 'topic'
+                                                                                              # at the end (see end of parse)
 			    my $implicits = $_[0]->{USER}->{implicits};
-#			    my $s         = $_[0]->{USER}->{store};
 			    map { $implicits->{'isa-thing'}->{$_}++ } 
-			             (@{$_[2]}, $_[1]);                                    # the types and the ID are declared implicitely
+			             (@{$_[2]}, $_[1]);                                       # the types and the ID are declared implicitely
 			}
 			
-			if (ref $_[4]) {                                                   # there are inline assocs
-#warn "test for inlines";
+			if (ref $_[4]) {                                                      # there are inline assocs
 			    foreach (@{$_[4]}) {
 				my $type      = $_->[0];
 				my $player    = $_->[1];
 				my $store     = $_[0]->{USER}->{store};
 				my $templates = $_[0]->{USER}->{templates};
-#warn "found type $type $player";
 				if ($type eq 'is-subclass-of' || $type eq 'subclasses') {
-				    $store->assert ([ undef,                          # LID
-						      undef,                          # SCOPE
-						      'is-subclass-of',               # TYPE
-						      TM->ASSOC,               # KIND
-						      [ 'subclass',  'superclass' ],  # ROLES
-						      [ $_[1],       $player ],       # PLAYERS
-						      undef ] );
+				    $store->assert (bless [ undef,                            # LID
+							    undef,                            # SCOPE
+							    'is-subclass-of',                 # TYPE
+							    TM->ASSOC,                        # KIND
+							    [ 'subclass',  'superclass' ],    # ROLES
+							    [ $_[1],       $player ],         # PLAYERS
+							    undef ], 'Assertion' );
 				} elsif ($type eq 'is-a') {
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      'isa',                  	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [ 'instance', 'class' ], 	      # ROLES
-						      [ $_[1],       $player ],	      # PLAYERS
-						      undef ] );
-				} elsif ($type eq 'has-a') {                          # same, but other way round
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      'isa',               	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [ 'instance', 'class' ], 	      # ROLES
-						      [ $player,     $_[1] ],	      # PLAYERS
-						      undef ] );
-				} elsif ($templates->mids ( $type ) &&
-					 (my @ts    = $templates->match (TM->FORALL, type => $templates->mids ( $type )  ))) {
-#warn "found templates for $type";
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    'isa',                  	      # TYPE
+							    TM->ASSOC,        	              # KIND
+							    [ 'instance', 'class' ], 	      # ROLES
+							    [ $_[1],       $player ],	      # PLAYERS
+							    undef ], 'Assertion' );
+				} elsif ($type eq 'has-a') {                                  # same, but other way round
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    'isa',               	      # TYPE
+							    TM->ASSOC,        	              # KIND
+							    [ 'instance', 'class' ], 	      # ROLES
+							    [ $player,     $_[1] ],	      # PLAYERS
+							    undef ], 'Assertion' );
+				} elsif ($templates->tids ( $type ) &&
+					 (my @ts    = $templates->match (TM->FORALL, type => $templates->tids ( $type )  ))) {
 				    warn "duplicate template for '$type' found (maybe typo?), taking one" if @ts > 1;
-#warn Dumper $templates if @ts > 1;
-				    my $t = $ts[0];                                   # I choose one
-#warn "YYY cloning ($type)";
-				    
-				    $store->assert ([ undef,                   	      # LID
-						      undef,                   	      # SCOPE
-						      $type,               	      # TYPE
-						      TM->ASSOC,        	      # KIND
-						      [  	                      # ROLES
-							map {
-							    my $l = $templates->reified_by ($_);
-							    ($l && $l eq LEFT ?
-							           $_[1]
-							     :
+				    my $t = $ts[0];                                           # I choose one
+				    $store->assert (bless [ undef,                   	      # LID
+							    undef,                   	      # SCOPE
+							    $type,               	      # TYPE
+							    TM->ASSOC,              	      # KIND
+							    [  	                              # ROLES
+							      map {
+								  my $l = $templates->toplet ($_)->[TM->ADDRESS];
+								  ($l && $l eq LEFT ?
+							                 $_[1]
+								   :
 							           ($l && $l eq RIGHT ?
-                                                                          $player
-                                                                    :
-								          $_)
-							     )
-							    } @{$t->[TM->ROLES]} 
-						      ],
-						      [                       	      # PLAYERS
-							map {
-							    my $l = $templates->reified_by ($_);
-							    ($l && $l eq LEFT ?
-							           $_[1]
-							     :
-							           ($l && $l eq RIGHT ?
-                                                                          $player
-                                                                    :
-								          $_)
-							     )
-							    } @{$t->[TM->PLAYERS]} 
-						      ],
-						      undef ] );
+                                                                         $player
+                                                                   :
+								         $_)
+							          )
+							          } @{$t->[TM->ROLES]} 
+						            ],
+						            [                       	      # PLAYERS
+							      map {
+							         my $l = $templates->toplet ($_)->[TM->ADDRESS];
+							         ($l && $l eq LEFT ?
+							                $_[1]
+							          :
+							          ($l && $l eq RIGHT ?
+                                                                        $player
+                                                                  :
+								        $_)
+							          )
+							          } @{$t->[TM->PLAYERS]} 
+						           ],
+							    undef ], 'Assertion' );
 				} else {
 				    die "unknown association type '$type' in inlined association";
 				}
 			    }
 			}
+			warn "added toplet $_[1]" if $tracing;
 		     }
 	],
-	[#Rule 12
+	[#Rule 13
 		 'topic_definition', 7,
 sub
-#line 164 "yapp/astma-fact.yp"
+#line 163 "yapp/astma-fact.yp"
 {
 #warn "char/ind in topic: ".Dumper $_[7];
-                         my $id = $_[1];
-                         # add assertions for every characteristic
-                         $_[0]->{USER}->{store}->assert ( map {[ undef,                                         # LID
-                                                                 $_->[1],                                       # SCOPE
-                                                                 $_->[2] ||                                     # TYPE
-                                                                    ($_->[0] == TM->NAME ? 'name' : 'occurrence'),
-                                                                 $_->[0],                                       # KIND
-                                                                 [ 'thing', 'value' ],                          # ROLES
-                                                                 [ $id,             $_->[3] ],                  # PLAYERS
-                                                                 undef ] }
-                                                               @{$_[7]->[0]} );
+                        my $id = $_[1];
+                        # add assertions for every characteristic
+                        $_[0]->{USER}->{store}->assert ( map {bless [ undef,                                          # LID
+								       $_->[1],                                       # SCOPE
+								       $_->[2] ||                                     # TYPE
+								       ($_->[0] == TM->NAME ? 'name' : 'occurrence'),
+								       $_->[0],                                       # KIND
+								       [ 'thing', 'value' ],                          # ROLES
+								       [ $id,             $_->[3] ],                  # PLAYERS
+								       undef ], 'Assertion' }
+							  @{$_[7]->[0]} );
 
-                         map { $store->internalize ($id => \ $_ ) } @{$_[7]->[1]};       # add the subject indicators
+                        map { $store->internalize ($id => \ $_ ) } @{$_[7]->[1]};       # add the subject indicators
 
-			 {                                                               # memorize basename types and scopes as implicitely defined
-			     my $implicits = $_[0]->{USER}->{implicits};
-			     map { $implicits->{'isa-scope'}->{$_}++ }
-                                   map { $_->[1] } grep ($_->[1], @{$_[7]->[0]});                # get the bloody scopes and tuck them away
+			{                                                               # memorize basename types and scopes as implicitely defined
+			    my $implicits = $_[0]->{USER}->{implicits};
+			    map { $implicits->{'isa-scope'}->{$_}++ }
+                            map { $_->[1] }
+                            grep ($_->[1], @{$_[7]->[0]});                              # get the bloody scopes and tuck them away
 
-			     map { $implicits->{'subclasses'}->{ $_->[0] == TM->NAME ? 'name' : 'occurrence' }->{$_->[2]}++ }
-                                   grep ($_->[2], @{$_[7]->[0]});                                # get all the characteristics with types
-
-#warn "implicits then ".Dumper $implicits;
-			 }
-		         }
-	],
-	[#Rule 13
-		 'reification_indication', 0, undef
+			    map { $implicits->{'subclasses'}->{ $_->[0] == TM->NAME ? 'name' : 'occurrence' }->{$_->[2]}++ }
+                            grep ($_->[2], @{$_[7]->[0]});                              # get all the characteristics with types
+			}
+			warn "added ".(scalar @{$_[7]->[0]})."characteristics for $_[1]" if $tracing > 1;
+		    }
 	],
 	[#Rule 14
-		 'reification_indication', 2,
-sub
-#line 194 "yapp/astma-fact.yp"
-{ [ 1, $_[2] ] }
+		 'reification_indication', 0, undef
 	],
 	[#Rule 15
 		 'reification_indication', 2,
 sub
-#line 195 "yapp/astma-fact.yp"
-{ [ 0, $_[2] ] }
+#line 193 "yapp/astma-fact.yp"
+{ [ 1, $_[2] ] }
 	],
 	[#Rule 16
 		 'reification_indication', 2,
 sub
-#line 196 "yapp/astma-fact.yp"
-{ [ 2, $_[2] ] }
+#line 194 "yapp/astma-fact.yp"
+{ [ 0, $_[2] ] }
 	],
 	[#Rule 17
-		 'types', 0,
+		 'reification_indication', 2,
 sub
-#line 199 "yapp/astma-fact.yp"
-{ [] }
+#line 195 "yapp/astma-fact.yp"
+{ [ 2, $_[2] ] }
 	],
 	[#Rule 18
-		 'types', 2,
+		 'types', 0,
 sub
-#line 200 "yapp/astma-fact.yp"
-{ push @{$_[1]}, @{$_[2]}; $_[1] }
+#line 198 "yapp/astma-fact.yp"
+{ [] }
 	],
 	[#Rule 19
-		 'type', 2,
+		 'types', 2,
 sub
-#line 203 "yapp/astma-fact.yp"
-{ [ $_[2] ] }
+#line 199 "yapp/astma-fact.yp"
+{ push @{$_[1]}, @{$_[2]}; $_[1] }
 	],
 	[#Rule 20
-		 'type', 3,
+		 'type', 2,
 sub
-#line 204 "yapp/astma-fact.yp"
-{   $_[2]   }
+#line 202 "yapp/astma-fact.yp"
+{ [ $_[2] ] }
 	],
 	[#Rule 21
-		 'characteristics_indication', 0, undef
+		 'type', 3,
+sub
+#line 203 "yapp/astma-fact.yp"
+{   $_[2]   }
 	],
 	[#Rule 22
-		 'characteristics_indication', 2,
-sub
-#line 209 "yapp/astma-fact.yp"
-{ push @{$_[1]->[ ref($_[2]) eq 'ARRAY' ? 0 : 1 ]}, $_[2]; $_[1] }
+		 'characteristics_indication', 0, undef
 	],
 	[#Rule 23
-		 'characteristic_indication', 1, undef
+		 'characteristics_indication', 2,
+sub
+#line 208 "yapp/astma-fact.yp"
+{ push @{$_[1]->[ ref($_[2]) eq 'ARRAY' ? 0 : 1 ]}, $_[2]; $_[1] }
 	],
 	[#Rule 24
 		 'characteristic_indication', 1, undef
 	],
 	[#Rule 25
-		 '@2-1', 0,
-sub
-#line 217 "yapp/astma-fact.yp"
-{ $_[0]->{USER}->{string} ||= "\n" }
+		 'characteristic_indication', 1, undef
 	],
 	[#Rule 26
-		 'indication', 3,
+		 '@2-1', 0,
 sub
-#line 218 "yapp/astma-fact.yp"
-{ $_[3] }
-	],
-	[#Rule 27
-		 '@3-1', 0,
-sub
-#line 221 "yapp/astma-fact.yp"
+#line 216 "yapp/astma-fact.yp"
 { $_[0]->{USER}->{string} ||= "\n" }
 	],
+	[#Rule 27
+		 'indication', 3,
+sub
+#line 217 "yapp/astma-fact.yp"
+{ $_[3] }
+	],
 	[#Rule 28
+		 '@3-1', 0,
+sub
+#line 220 "yapp/astma-fact.yp"
+{ $_[0]->{USER}->{string} ||= "\n" }
+	],
+	[#Rule 29
 		 'characteristic', 5,
 sub
-#line 222 "yapp/astma-fact.yp"
+#line 221 "yapp/astma-fact.yp"
 {                           # check whether we are dealing with URIs or strings
 				                                       if ($_[1] == TM->NAME) {  # names are always strings
 									   $_[5] = new TM::Literal  ($_[5], TM::Literal->STRING);
@@ -757,76 +769,76 @@ sub
 								      [ $_[1], $_[3], $_[4], $_[5] ]
 								      }
 	],
-	[#Rule 29
+	[#Rule 30
+		 'class', 1,
+sub
+#line 234 "yapp/astma-fact.yp"
+{ TM->NAME  }
+	],
+	[#Rule 31
 		 'class', 1,
 sub
 #line 235 "yapp/astma-fact.yp"
-{ TM->NAME  }
+{ TM->OCC  }
 	],
-	[#Rule 30
+	[#Rule 32
 		 'class', 1,
 sub
 #line 236 "yapp/astma-fact.yp"
 { TM->OCC  }
 	],
-	[#Rule 31
-		 'class', 1,
-sub
-#line 237 "yapp/astma-fact.yp"
-{ TM->OCC  }
-	],
-	[#Rule 32
+	[#Rule 33
 		 'char_type', 0, undef
 	],
-	[#Rule 33
+	[#Rule 34
 		 'char_type', 1, undef
 	],
-	[#Rule 34
+	[#Rule 35
 		 'assoc_type', 3,
 sub
-#line 244 "yapp/astma-fact.yp"
+#line 243 "yapp/astma-fact.yp"
 {   $_[2]   }
 	],
-	[#Rule 35
+	[#Rule 36
 		 'scope', 0, undef
 	],
-	[#Rule 36
+	[#Rule 37
 		 'scope', 2,
 sub
-#line 248 "yapp/astma-fact.yp"
+#line 247 "yapp/astma-fact.yp"
 { $_[2] }
 	],
-	[#Rule 37
+	[#Rule 38
 		 'inline_assocs', 0, undef
 	],
-	[#Rule 38
+	[#Rule 39
 		 'inline_assocs', 2,
 sub
-#line 253 "yapp/astma-fact.yp"
+#line 252 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
-	[#Rule 39
+	[#Rule 40
 		 'inline_assoc', 2,
 sub
-#line 256 "yapp/astma-fact.yp"
+#line 255 "yapp/astma-fact.yp"
 { [ $_[1], $_[2] ] }
 	],
-	[#Rule 40
+	[#Rule 41
 		 '@4-1', 0,
 sub
-#line 260 "yapp/astma-fact.yp"
-{ ($_[0]->{USER}->{templates}, $_[0]->{USER}->{store}) = ($_[0]->{USER}->{store}, $_[0]->{USER}->{templates}); }
-	],
-	[#Rule 41
-		 'template_definition', 3,
-sub
-#line 263 "yapp/astma-fact.yp"
+#line 259 "yapp/astma-fact.yp"
 { ($_[0]->{USER}->{templates}, $_[0]->{USER}->{store}) = ($_[0]->{USER}->{store}, $_[0]->{USER}->{templates}); }
 	],
 	[#Rule 42
+		 'template_definition', 3,
+sub
+#line 262 "yapp/astma-fact.yp"
+{ ($_[0]->{USER}->{templates}, $_[0]->{USER}->{store}) = ($_[0]->{USER}->{store}, $_[0]->{USER}->{templates}); }
+	],
+	[#Rule 43
 		 'association_definition', 7,
 sub
-#line 269 "yapp/astma-fact.yp"
+#line 268 "yapp/astma-fact.yp"
 {
 ##warn "members ".Dumper $_[5];
 ## ??? TODO SCOPE ????
@@ -840,7 +852,7 @@ sub
 				       push @players, $player;
 				   }
 			       }
-			       my ($a) = $_[0]->{USER}->{store}->assert ( [ undef, $_[4], $_[2], TM->ASSOC, \@roles, \@players, undef ] );
+			       my ($a) = $_[0]->{USER}->{store}->assert (bless [ undef, $_[4], $_[2], TM->ASSOC, \@roles, \@players, undef ], 'Assertion');
 ##warn "templates" .Dumper $_[0]->{USER}->{store};
                               { # reification
 				  my $ms = $_[0]->{USER}->{store};
@@ -856,7 +868,7 @@ sub
 					  #     1) assoc is added as thing (is done already)
 					  #     2) the local identifier is added as thing with the abs URL of the assoc as subject address
 					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^\w+$/;
-					  $ms->internalize ($_[5]->[1] => $a->[TM::LID]);
+					  $ms->internalize ($_[5]->[1] => $a);
 				      } else { # this would be 'indication' but we do not want that here
 					  die "indication for association are undefined";
 				      }
@@ -869,51 +881,52 @@ sub
 # implicit			   $implicits->{'subclasses'}->{'association'}->{$_[2]}++;
 				   $_[0]->{USER}->{implicits}->{'isa-scope'}->{$_[4]}++ if $_[4];
 			       }
+			       warn "added assertion $_[2]" if $tracing;
 			   }
 	],
-	[#Rule 43
+	[#Rule 44
 		 'association_members', 1,
 sub
 #line 314 "yapp/astma-fact.yp"
 {                       [ $_[1] ] }
 	],
-	[#Rule 44
+	[#Rule 45
 		 'association_members', 2,
 sub
 #line 315 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2];   $_[1]  }
 	],
-	[#Rule 45
+	[#Rule 46
 		 'member', 4,
 sub
 #line 318 "yapp/astma-fact.yp"
 { [ $_[1], @{$_[3]} ] }
 	],
-	[#Rule 46
+	[#Rule 47
 		 'eom', 1, undef
 	],
-	[#Rule 47
+	[#Rule 48
 		 'eom', 2, undef
 	],
-	[#Rule 48
+	[#Rule 49
 		 'ids1', 2,
 sub
 #line 325 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
-	[#Rule 49
+	[#Rule 50
 		 'ids', 0,
 sub
 #line 328 "yapp/astma-fact.yp"
 { [] }
 	],
-	[#Rule 50
+	[#Rule 51
 		 'ids', 2,
 sub
 #line 329 "yapp/astma-fact.yp"
 { push @{$_[1]}, $_[2]; $_[1] }
 	],
-	[#Rule 51
+	[#Rule 52
 		 'string', 2,
 sub
 #line 332 "yapp/astma-fact.yp"
@@ -992,6 +1005,7 @@ sub _Lexer {
 
     $$refINPUT =~ s/^%log\s+(.*?)(?=\n)//so           and return ('LOG',       $1); # positive look-ahead
     $$refINPUT =~ s/^%cancel(?=\n)//so                and return ('CANCEL',    $1); # positive look-ahead
+    $$refINPUT =~ s/^%trace\s+(.*?)(?=\n)//so         and return ('TRACE',     $1); # positive look-ahead
     $$refINPUT =~ s/^%encoding\s+(.*?)(?=\n)//so      and return ('ENCODING',  $1); # positive look-ahead
 
     $$refINPUT =~ s/^\*//o                            and return ('ID',        sprintf "uuid-%010d", $TM::toplet_ctr++); ## $parser->{USER}->{topic_count}++);
@@ -1008,6 +1022,7 @@ sub parse {
     $self->YYData->{INPUT} = shift;
 
 #warn "parse";
+    $self->YYData->{INPUT} =~ s/\r\n/\n/sg;
     $self->YYData->{INPUT} =~ s/\r/\n/sg;
     $self->YYData->{INPUT} =~ s/(?<!\\)\\\n//sg;   # a \, but not a \\
     $self->YYData->{INPUT} =~ s/ \~ /\n/g;         # replace _~_ with \n
@@ -1045,7 +1060,7 @@ sub parse {
 	{ # all super/subclasses
 	    foreach my $superclass (keys %{$implicits->{'subclasses'}}) {
 		$store->assert ( map {
-		    [ undef, undef, 'is-subclass-of', TM->ASSOC, [ 'superclass', 'subclass' ], [ $superclass, $_ ] ] 
+		    bless [ undef, undef, 'is-subclass-of', TM->ASSOC, [ 'superclass', 'subclass' ], [ $superclass, $_ ] ], 'Assertion' 
 		    }  keys %{$implicits->{'subclasses'}->{$superclass}});
 	    }
 #warn "done with subclasses";
@@ -1056,7 +1071,7 @@ sub parse {
 	}
 	{ # establishing the scoping topics
 	    $store->assert (map {
-                                 [ undef, undef, 'isa', TM->ASSOC, [ 'class', 'instance' ], [ 'scope', $_ ] ] 
+                                 bless [ undef, undef, 'isa', TM->ASSOC, [ 'class', 'instance' ], [ 'scope', $_ ] ], 'Assertion' 
 				 } keys %{$implicits->{'isa-scope'}});
 	}
     }

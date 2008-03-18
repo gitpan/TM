@@ -40,7 +40,7 @@ winner: others
 sucker: nobody
 winner: nobody
 
-thistop reifies atop
+thistop 
 bn: reification
 sin: http://nowhere.never.ever
 
@@ -50,8 +50,14 @@ sucker: nobody
 
 ');
 $tm->sync_in;
-my $content=$tm->serialize;
-ok($content,"serialize returned something");
+
+my $content = $tm->serialize;
+ok ($content, "serialize returned something");
+
+#warn $content;
+
+like ($content, qr/sucks-more.+is-reified-by atop/, 'association reification');
+like ($content, qr/btop \(ctop\)/,                  'topic type');
 
 # now do the round trip
 my $rt=TM::Materialized::AsTMa->new(baseuri=>"tm://", inline=>$content);
@@ -59,30 +65,52 @@ $rt->sync_in;
 ok($rt->is_a($rt->mids("atop"),$rt->mids("thing")),"serialized stuff is parseable AsTMa");
 
 # check that the topics/reification info has survived
-my @otopics=sort $tm->midlets;
-my @ntopics=sort $rt->midlets;
-ok(eq_array(\@otopics,\@ntopics),"all topics have survived");
+my @otopics =sort map { $_->[TM->LID] } $tm->toplets;
+my @ntopics =sort map { $_->[TM->LID] } $rt->toplets;
+ok(eq_array(\@otopics,\@ntopics),"topics roundtrip");
+
+#warn "diff: ".Dumper diffarr (\@otopics,\@ntopics);
+
+sub diffarr {
+    my $arr1 = shift;
+    my $arr2 = shift;
+    my @intersection;
+    my @difference;
+    my @union = @intersection = @difference = ();
+    my %count = ();
+    foreach my $element (@$arr1, @$arr2) { $count{$element}++ }
+    foreach my $element (keys %count) {
+        push @union, $element;
+        push @{ $count{$element} > 1 ? \@intersection : \@difference }, $element;
+    }
+    return \@difference;
+
+}
 
 # and the rest: topic-chars and associations
-my @oass=sort { $a->[TM->LID] cmp $b->[TM->LID] } $tm->match(TM->FORALL);
-my @nass=sort { $a->[TM->LID] cmp $b->[TM->LID] } $rt->match(TM->FORALL);
-ok(eq_array(\@oass,\@nass),"all assertions have survived");
+my @oass = map { $_->[TM->LID] } sort { $a->[TM->LID] cmp $b->[TM->LID] } $tm->match(TM->FORALL);
+my @nass = map { $_->[TM->LID] } sort { $a->[TM->LID] cmp $b->[TM->LID] } $rt->match(TM->FORALL);
+ok(eq_array(\@oass,\@nass),"assertions roundtrip");
+
+#warn "diff: ".Dumper diffarr (\@oass,\@nass);
+
+is (ref ($tm->reifies ($tm->tids ('atop'))), 'Assertion', 'reification still there');
+
 
 # test omission options
 $content=$tm->serialize(omit_trivia=>1);
 ok($content,"serialize with options returns something");
 ok($content!~/nackertes_topic/,"suppression of naked topics works");
 
+
+
 # time for some destruction!
 # reified bn or oc: no go in AsTMa 1.
 my @stuff=$rt->match(TM->FORALL,char=>1,topic=>$rt->mids("ctop")); # topic must have 1 or more bn and oc
-for my $nogo (TM->NAME,TM->OCC)
-{
-    my $thing=$rt->midlet((map { $_->[TM->LID] } (grep $_->[TM->KIND] == $nogo, @stuff))[0]);
-    $thing->[TM->ADDRESS]="http://subject";
-    eval 
-    {
+for my $nogo (@stuff) {
+    $rt->internalize ('rumsti' => $nogo);
+    eval {
 	$content=$rt->serialize;
-    }; 
-    ok($@,"serialize throws exception on non-AsTMa-1 construct");
+    }; like ($@, qr/offer reification/, "serialize throws exception on non-AsTMa-1 construct");
+    $rt->externalize ($rt->tids ('rumsti'));
 }

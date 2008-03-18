@@ -17,7 +17,7 @@ use TM::PSI;
 
 sub _parse {
   my $text = shift;
-  my $ms = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps);
+  my $ms = new TM (baseuri => 'tm:');
   my $p  = new TM::AsTMa::Fact2 (store => $ms);
   my $i  = $p->parse ($text);
   return $ms;
@@ -40,21 +40,19 @@ my $astma = 'http://astma.topicmaps.bond.edu.au/2.0/';
 
 require_ok( 'TM::AsTMa::Fact2' );
 
-my $npa = @{$TM::PSI::topicmaps->{assertions}};
-my $npt = $npa + keys %{$TM::PSI::topicmaps->{mid2iid}};
-
-
 { # class ok
     my $p = new TM::AsTMa::Fact2;
     ok (ref($p) eq 'TM::AsTMa::Fact2', 'class ok');
 }
 
+my $npa = scalar keys   %{$TM::infrastructure->{assertions}};
+my $npt = scalar values %{$TM::infrastructure->{mid2iid}};
 
 
 { #-- identification
     my $ms = _parse ('aaa
 ');
-    is ($ms->mids ('aaa'), 'tm:aaa', 'aaa internalized');
+    is ($ms->tids ('aaa'), 'tm:aaa', 'aaa internalized');
 
     eval {
 	my $ms = _parse ('aaa xxx ~ http://aaa/
@@ -71,26 +69,25 @@ bbb http://bbb/
 ccc = http://ccc/
 ');
 #warn Dumper $ms;
-    is ($ms->mids ('aaa'), 'tm:aaa', 'aaa internalized');
-    my $t = $ms->midlet ('tm:aaa');
+    is ($ms->tids ('aaa'), 'tm:aaa', 'aaa internalized');
+    my $t = $ms->toplet ('tm:aaa');
     ok (eq_set (
 		$t->[TM->INDICATORS],
 		[
 		 'http://aaa/',
 		 ]), 'indicators');
 
-    is ($ms->mids ('bbb'), 'tm:bbb', 'bbb internalized');
-    $t = $ms->midlet ('tm:bbb');
+    is ($ms->tids ('bbb'), 'tm:bbb', 'bbb internalized');
+    $t = $ms->toplet ('tm:bbb');
     ok (eq_set (
 		$t->[TM->INDICATORS],
 		[
 		 'http://bbb/',
 		 ]), 'indicators');
 
-    is ($ms->mids ('ccc'),         'tm:ccc', 'ccc internalized');
-    is ($ms->mids ('http://ccc/'), 'tm:ccc', 'ccc internalized');
+    is ($ms->tids ('ccc'),         'tm:ccc', 'ccc internalized');
+    is ($ms->tids ('http://ccc/'), 'tm:ccc', 'ccc internalized');
 }
-
 
 {
     my $ms = _parse ('aaa ~ http://aaa/  ~ http://bbb/ ~ http://ccc/
@@ -102,14 +99,13 @@ aaa
 
 ');
 #warn Dumper $ms;
-    is ($ms->mids ('aaa'), 'tm:aaa', 'aaa internalized');
-    my $t = $ms->midlet ('tm:aaa');
+    is ($ms->tids ('aaa'), 'tm:aaa', 'aaa internalized');
+    my $t = $ms->toplet ('tm:aaa');
     ok (eq_set (
 		$t->[TM->INDICATORS],
 		[
 		 'http://aaa/',
 		 'http://bbb/',
-		 'http://ccc/',
 		 'http://ccc/',
 		 'http://ddd/',
 		 'http://eee/'
@@ -126,8 +122,8 @@ aaa
 |);
 #warn Dumper $ms;
 
-  like ($ms->mids ('http://aaa/'), qr/tm:uuid-\d{10}/, 'generated ids ok');
-  like ($ms->mids ('http://bbb/'), qr/tm:uuid-\d{10}/, 'generated ids ok');
+  like ($ms->tids ('http://aaa/'), qr/tm:uuid-\d{10}/, 'generated ids ok');
+  like ($ms->tids ('http://bbb/'), qr/tm:uuid-\d{10}/, 'generated ids ok');
 
   eval {
       $ms = _parse (q|
@@ -153,7 +149,7 @@ xxx * = http://aaa/
 |);
 #warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL,                                       iplayer => $ms->mids ('http://rumsti.com/') ), 1, 'ext reification: finding');
+  is (scalar $ms->match (TM->FORALL,                                       iplayer => $ms->tids ('http://rumsti.com/') ), 1, 'ext reification: finding');
 }
 
 
@@ -165,8 +161,8 @@ xxx * = http://aaa/
 |);
 #warn Dumper $ms;
 
-  like ($ms->mids (\ 'urn:x-date:2004-01-12:00:00'), qr/tm:uuid-\d{10}/, 'generated dates ok');
-  like ($ms->mids (\ 'urn:x-date:2004-01-12:15:15'), qr/tm:uuid-\d{10}/, 'generated dates ok');
+  like ($ms->tids (\ 'urn:x-date:2004-01-12:00:00'), qr/tm:uuid-\d{10}/, 'generated dates ok');
+  like ($ms->tids (\ 'urn:x-date:2004-01-12:15:15'), qr/tm:uuid-\d{10}/, 'generated dates ok');
 
 }
 
@@ -181,10 +177,9 @@ tm:ccc : tm:aaa
 |);
 #warn Dumper $ms;
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:isa', roles => [ 'tm:class', 'tm:instance'  ], players => [ 'tm:aaa',   'tm:bbb' ] ), 1, 'using baseuri 1');
-  is (scalar $ms->match(TM->FORALL, type => 'tm:bbb', roles => [ 'tm:ccc'  ],                  players => [ 'tm:aaa' ] ),             1, 'using baseuri 2');
+  is (scalar $ms->match(TM->FORALL, type => 'isa',    roles => [ 'class', 'instance'  ], players => [ 'tm:aaa',   'tm:bbb' ] ), 1, 'using baseuri 1');
+  is (scalar $ms->match(TM->FORALL, type => 'tm:bbb', roles => [ 'tm:ccc'  ],            players => [ 'tm:aaa' ] ),             1, 'using baseuri 2');
 }
-
 
 { #-- predef inlineds (structural)
   my $ms = _parse (q|
@@ -197,7 +192,7 @@ aaa subclasses ddd
 |);
 
 #warn Dumper $ms;
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:aaa' ), 3, 'assocs for aaa');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:aaa' ), 3, 'assocs for aaa');
 }
 
 { # predef inlineds (struct + reification)
@@ -207,15 +202,15 @@ xxx  isa http://www.topicmaps.org/xtm/1.0/#psi-topic
 #warn Dumper $ms;
   is (scalar $ms->match, $npa+1, 'reification: type');
 
-  my $m = $ms->mids (\ 'http://www.topicmaps.org/xtm/1.0/#psi-topic');
-  ok ($ms->is_asserted (Assertion->new (scope   => 'tm:us',
-					type    => 'tm:isa',
-					roles   => [ 'tm:class', 'tm:instance' ],
+  my $m = $ms->tids (\ 'http://www.topicmaps.org/xtm/1.0/#psi-topic');
+  ok ($ms->is_asserted (Assertion->new (scope   => 'us',
+					type    => 'isa',
+					roles   => [ 'class', 'instance' ],
 					players => [ $m, 'tm:xxx' ])), 'predef inlineds (struct + reification): xxx isa found');
-  ok ($ms->is_asserted (Assertion->new (scope   => 'tm:us',
-					type    => 'tm:isa',
-					roles   => [ 'tm:class', 'tm:instance' ],
-					players => [ $m, 'tm:xxx' ])), 'predef inlineds (struct + reification): xxx isa found (via mids)');
+  ok ($ms->is_asserted (Assertion->new (scope   => 'us',
+					type    => 'isa',
+					roles   => [ 'class', 'instance' ],
+					players => [ $m, 'tm:xxx' ])), 'predef inlineds (struct + reification): xxx isa found (via tids)');
 }
 
 { #-- characteristics (structural)
@@ -228,10 +223,10 @@ in: bla has oc: http:www
 
 #warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL,                                   irole => 'tm:thing',    iplayer => 'tm:aaa' ), 4, 'chars/assoc for aaa');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:characteristic',      irole => 'tm:thing',    iplayer => 'tm:aaa' ), 4, 'chars for aaa');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:occurrence',          irole => 'tm:thing',    iplayer => 'tm:aaa' ), 2, 'occurrences for aaa');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name',                irole => 'tm:thing',    iplayer => 'tm:aaa' ), 2, 'basenames for aaa');
+  is (scalar $ms->match (TM->FORALL,                                   irole => 'thing',    iplayer => 'tm:aaa' ), 4, 'chars/assoc for aaa');
+  is (scalar $ms->match (TM->FORALL, type => 'characteristic',      irole => 'thing',    iplayer => 'tm:aaa' ), 4, 'chars for aaa');
+  is (scalar $ms->match (TM->FORALL, type => 'occurrence',          irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'occurrences for aaa');
+  is (scalar $ms->match (TM->FORALL, type => 'name',                irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'basenames for aaa');
 
   $ms = _parse (q|
 bbb has nickname : "BBB"
@@ -242,10 +237,10 @@ rumsti    : FFF
 |);
 
 #warn Dumper $ms;
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name',                irole => 'tm:thing',    iplayer => 'tm:bbb' ), 4, 'names for bbb');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:middlename',          irole => 'tm:thing',    iplayer => 'tm:bbb' ), 1, 'names for bbb');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:occurrence',          irole => 'tm:thing',    iplayer => 'tm:bbb' ), 1, 'occs for bbb');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:rumsti',              irole => 'tm:thing',    iplayer => 'tm:bbb' ), 1, 'occs for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'name',                irole => 'thing',    iplayer => 'tm:bbb' ), 4, 'names for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:middlename',          irole => 'thing',    iplayer => 'tm:bbb' ), 1, 'names for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'occurrence',          irole => 'thing',    iplayer => 'tm:bbb' ), 1, 'occs for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:rumsti',              irole => 'thing',    iplayer => 'tm:bbb' ), 1, 'occs for bbb');
 
   $ms = _parse (q|
 bbb has nickname : "BBB" and has firstname : CCC has lastname: "DDD"
@@ -261,7 +256,7 @@ firstname : "CCC" and which has lastname : DDD
 |);
 
 #warn Dumper $ms;
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name',                irole => 'tm:thing',    iplayer => 'tm:bbb' ), 4, 'names for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'name',                irole => 'thing',    iplayer => 'tm:bbb' ), 4, 'names for bbb');
 
 }
 
@@ -273,10 +268,10 @@ name : "AAA" and which has nickname : "AAAAA" .
 |);
 
 #warn Dumper $ms;
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:aaa' ), 3, 'assocs for aaa');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:bbb' ), 4, 'assocs for bbb');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:ccc' ), 1, 'assocs for ccc');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:ddd' ), 1, 'assocs for ddd');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:aaa' ), 3, 'assocs for aaa');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:bbb' ), 4, 'assocs for bbb');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:ccc' ), 1, 'assocs for ccc');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:ddd' ), 1, 'assocs for ddd');
 
   $ms = _parse (q|
 aaa isa bbb, which isa ccc, which isa ddd and 
@@ -286,10 +281,10 @@ aaa isa bbb, which isa ccc, which isa ddd and
 |);
 
 #warn Dumper $ms;
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:aaa' ), 2, 'assocs for aaa');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:bbb' ), 3, 'assocs for bbb');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:ccc' ), 3, 'assocs for ccc');
-  is (scalar $ms->match (TM->FORALL,                                    irole => 'tm:thing',    iplayer => 'tm:ddd' ), 1, 'assocs for ddd');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'assocs for aaa');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:bbb' ), 3, 'assocs for bbb');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:ccc' ), 3, 'assocs for ccc');
+  is (scalar $ms->match (TM->FORALL,                                    irole => 'thing',    iplayer => 'tm:ddd' ), 1, 'assocs for ddd');
 }
 
 #-- inlined values
@@ -308,16 +303,16 @@ hhh < iii < jjj
 
 |);
 ##warn Dumper $ms;
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:aaa', 'tm:bbb' ] ), 1, 'intrinsic is-subclass-of, different forms 1');
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:ccc', 'tm:ddd' ] ), 1, 'intrinsic is-subclass-of, different forms 2');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:aaa', 'tm:bbb' ] ), 1, 'intrinsic is-subclass-of, different forms 1');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:ccc', 'tm:ddd' ] ), 1, 'intrinsic is-subclass-of, different forms 2');
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:eee', 'tm:fff' ] ), 1, 'intrinsic is-subclass-of, different forms 3');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:eee', 'tm:fff' ] ), 1, 'intrinsic is-subclass-of, different forms 3');
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:eee', 'tm:ggg' ] ), 1, 'intrinsic is-subclass-of, different forms 4');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:eee', 'tm:ggg' ] ), 1, 'intrinsic is-subclass-of, different forms 4');
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:hhh', 'tm:iii' ] ), 1, 'intrinsic is-subclass-of, different forms 5');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:hhh', 'tm:iii' ] ), 1, 'intrinsic is-subclass-of, different forms 5');
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:is-subclass-of', roles => [ 'tm:subclass', 'tm:superclass' ], players => [ 'tm:hhh', 'tm:jjj' ] ), 1, 'intrinsic is-subclass-of, different forms 6');
+  is (scalar $ms->match(TM->FORALL, type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'tm:hhh', 'tm:jjj' ] ), 1, 'intrinsic is-subclass-of, different forms 6');
 
 }
 
@@ -337,11 +332,11 @@ eee isa bbb isa ccc isa ddd
 |);
 ##warn Dumper $ms;
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:isa', roles => [ 'tm:class', 'tm:instance'  ], players => [ 'tm:ccc',   'tm:bbb' ] ), 1, 'explicit isa 2');
+  is (scalar $ms->match(TM->FORALL, type => 'isa', roles => [ 'class', 'instance'  ], players => [ 'tm:ccc',   'tm:bbb' ] ), 1, 'explicit isa 2');
 
-  is (scalar $ms->match(TM->FORALL, type => 'tm:isa', roles => [ 'tm:class', 'tm:instance'  ], players => [ 'tm:ddd',   'tm:eee' ] ), 1, 'explicit isa 3');
-  is (scalar $ms->match(TM->FORALL, type => 'tm:isa', roles => [ 'tm:class', 'tm:instance'  ], players => [ 'tm:ccc',   'tm:eee' ] ), 1, 'explicit isa 4');
-  is (scalar $ms->match(TM->FORALL, type => 'tm:isa', roles => [ 'tm:class', 'tm:instance'  ], players => [ 'tm:bbb',   'tm:eee' ] ), 1, 'explicit isa 5');
+  is (scalar $ms->match(TM->FORALL, type => 'isa', roles => [ 'class', 'instance'  ], players => [ 'tm:ddd',   'tm:eee' ] ), 1, 'explicit isa 3');
+  is (scalar $ms->match(TM->FORALL, type => 'isa', roles => [ 'class', 'instance'  ], players => [ 'tm:ccc',   'tm:eee' ] ), 1, 'explicit isa 4');
+  is (scalar $ms->match(TM->FORALL, type => 'isa', roles => [ 'class', 'instance'  ], players => [ 'tm:bbb',   'tm:eee' ] ), 1, 'explicit isa 5');
 }
 
 
@@ -354,7 +349,7 @@ bn: XXX
 |);
 ##warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name', roles => [ 'tm:value', 'tm:thing' ], players => [ undef, 'tm:xxx' ]), 1, 'basename characteristics');
+  is (scalar $ms->match (TM->FORALL, type => 'name', roles => [ 'value', 'thing' ], players => [ undef, 'tm:xxx' ]), 1, 'basename characteristics');
 }
 
 {
@@ -365,8 +360,8 @@ bn: XXX
 |);
 ##warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name', roles   => [ 'tm:value', 'tm:thing' ], 
-			                                players => [ $ms->mids (undef, 'http://xxx') ]), 1, 'basename characterisistics (reification)');
+  is (scalar $ms->match (TM->FORALL, type => 'name', roles   => [ 'value', 'thing' ], 
+			                                players => [ $ms->tids (undef, 'http://xxx') ]), 1, 'basename characterisistics (reification)');
 }
 
 { #-- name guessing
@@ -381,10 +376,10 @@ remsti     < ccc : FFF    # should be nothing
 |);
 ##warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL, type => 'tm:name',                irole => 'tm:thing',    iplayer => 'tm:bbb' ), 3, 'name guessing: names for bbb');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:occurrence',          irole => 'tm:thing',    iplayer => 'tm:bbb' ), 2, 'name guessing: occurrence for bbb');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:ccc',                 irole => 'tm:thing',    iplayer => 'tm:bbb' ), 1, 'name guessing: bogus type');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:remsti',              irole => 'tm:thing',    iplayer => 'tm:bbb' ), 1, 'name guessing: bogus type');
+  is (scalar $ms->match (TM->FORALL, type => 'name',                irole => 'thing',    iplayer => 'tm:bbb' ), 3, 'name guessing: names for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'occurrence',          irole => 'thing',    iplayer => 'tm:bbb' ), 2, 'name guessing: occurrence for bbb');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:ccc',                 irole => 'thing',    iplayer => 'tm:bbb' ), 1, 'name guessing: bogus type');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:remsti',              irole => 'thing',    iplayer => 'tm:bbb' ), 1, 'name guessing: bogus type');
 
 }
 
@@ -395,7 +390,7 @@ in:         blabla
 |);
 ##warn Dumper $ms;
 
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	      [ 'blabla' ]), 'test blanks in resourceData 1');
 }
 
@@ -407,7 +402,7 @@ ex: http://yyy.com
 |);
 ##warn Dumper $ms;
 
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:xxx' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:xxx' ) ] ,
 	      [ 'http://yyy.com', 'http://xxx.com' ]), 'occurrence char, value ok');
 }
 
@@ -423,16 +418,16 @@ aaa
 |);
 #warn Dumper $ms;
   ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } 
-                      $ms->match (TM->FORALL, type => 'tm:name',   iplayer => 'tm:aaa' ) ] ,
+                      $ms->match (TM->FORALL, type => 'name',   iplayer => 'tm:aaa' ) ] ,
 	      [ 'AAA', 'AAAT' ]), 'name typed & untyped char, value ok');
   ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } 
-                grep ($_->[TM->TYPE] eq 'tm:name', 
-                      $ms->match (TM->FORALL, type => 'tm:name',   iplayer => 'tm:aaa' )) ] ,
+                grep ($_->[TM->TYPE] eq 'name', 
+                      $ms->match (TM->FORALL, type => 'name',   iplayer => 'tm:aaa' )) ] ,
 	      [ 'AAA' ]), 'basename untyped char, value ok');
   ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:rumsti',         iplayer => 'tm:aaa' ) ] ,
 	      [ 'AAAT' ]), 'basename typed char, value ok');
 
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:occurrence',     iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'occurrence',     iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://xxxt/',
 		'http://yyy/',
 		'http://xxx/',
@@ -458,16 +453,16 @@ aaa
 |);
 #warn Dumper $ms;
 
-  ok (eq_set (_q_players ($ms, type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, type => 'name',   iplayer => 'tm:aaa' ),
 	      [ 'AAA', 'AAAS' ]), 'basename untyped, scoped, value ok');
-  ok (eq_set (_q_players ($ms, scope => 'tm:us', type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => 'us', type => 'name',   iplayer => 'tm:aaa' ),
 	      [ 'AAA' ]), 'basename untyped, scoped, value ok');
-  ok (eq_set (_q_players ($ms, scope => 'tm:sss', type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => 'tm:sss', type => 'name',   iplayer => 'tm:aaa' ),
 	      [ 'AAAS' ]), 'basename untyped, scoped, value ok');
 
-  ok (eq_set (_q_players ($ms, type => 'tm:occurrence',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, type => 'occurrence',   iplayer => 'tm:aaa' ),
 	      [ 'III', 'IIIS', 'http://xxx/', 'http://xxxs/' ]), 'occurrences untyped, mixscoped, value ok');
-  ok (eq_set (_q_players ($ms, scope => 'tm:sss', type => 'tm:occurrence',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => 'tm:sss', type => 'occurrence',   iplayer => 'tm:aaa' ),
 	      [ 'IIIS', 'http://xxxs/' ]), 'occurrences untyped, scoped, value ok');
 }
 
@@ -485,15 +480,15 @@ aaa
 #  warn Dumper $ms;
   ok (eq_set (_q_players ($ms, type => 'tm:ramsti',   iplayer => 'tm:aaa' ),
 	      [ 'AAA', 'IIIS', 'http://xxxs/' ]), 'basename typed, mixscoped, value ok');
-  ok (eq_set (_q_players ($ms, scope => 'tm:us', type => 'tm:ramsti',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => 'us', type => 'tm:ramsti',   iplayer => 'tm:aaa' ),
 	      [ 'AAA' ]), 'basename untyped, scoped, value ok');
   ok (eq_set (_q_players ($ms, scope => 'tm:sss', type => 'tm:rumsti',   iplayer => 'tm:aaa' ),
 	      [ 'AAAS' ]), 'basename untyped, scoped, value ok');
 
 
-  ok (eq_set (_q_players ($ms, type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, type => 'name',   iplayer => 'tm:aaa' ),
 	      [   'http://xxxs/',  'AAA',  'IIIS',  'AAAS' ]), 'basenames typed, mixscoped, value ok');
-  ok (eq_set (_q_players ($ms, type => 'tm:occurrence',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, type => 'occurrence',   iplayer => 'tm:aaa' ),
 	      [ 'http://xxxs/',  'http://xxx/', 'AAA',  'IIIS',  'III' ]), 'occurrences typed, mixscoped, value ok');
 }
 
@@ -553,7 +548,7 @@ yyy << xxx ( role1 : aaa bbb , role2 : ccc )
 
   is (scalar $ms->match,                                                                                 $npa+1, 'basic association no *');
   is (scalar $ms->match (TM->FORALL,                                       iplayer => 'tm:player' ), 1, 'finding basic association 1 no *');
-  like ( ($ms->match (TM->FORALL,        iplayer => 'tm:player' ))[0]->[TM::LID], qr/tm:[0-9a-f]{32}/,  'generated id for no * assoc ok');
+  like (    ($ms->match (TM->FORALL,        iplayer => 'tm:player' ))[0]->[TM->LID], qr/[0-9a-f]{32}/,  'generated id for no * assoc ok');
   is (scalar $ms->match (TM->FORALL, type => 'tm:xxx',                     iplayer => 'tm:player' ), 1, 'finding basic association 2 no *');
   is (scalar $ms->match (TM->FORALL, type => 'tm:xxx', irole => 'tm:role', iplayer => 'tm:player' ), 1, 'finding basic association 3 no *');
 
@@ -593,7 +588,7 @@ yyy << xxx
 |);
 #warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL, type=> 'tm:isa',                     iplayer => 'tm:sss'    ),   1, 'association scoped 1');
+  is (scalar $ms->match (TM->FORALL, type=> 'isa',                     iplayer => 'tm:sss'    ),   1, 'association scoped 1');
 
   is (scalar $ms->match, $npa+2, 'association scoped');
   is (scalar $ms->match (TM->FORALL,                                      iplayer => 'tm:player' ),   1, 'association scoped 2');
@@ -608,9 +603,9 @@ yyy << xxx
 |);
 #warn Dumper $ms;
   is (scalar $ms->match, $npa+1, 'reification: association');
-  is (scalar $ms->match (TM->FORALL, type    =>   $ms->mids (\ 'http://xxx'), 
-			             roles   => [ $ms->mids (\ 'http://role1', \ 'http://role2', \ 'http://role1') ],
-			             players => [ $ms->mids ('tm:aaa', undef, 'http://bbb') ] ), 1, 'reification: association');
+  is (scalar $ms->match (TM->FORALL, type    =>   $ms->tids (\ 'http://xxx'), 
+			             roles   => [ $ms->tids (\ 'http://role1', \ 'http://role2', \ 'http://role1') ],
+			             players => [ $ms->tids ('tm:aaa', undef, 'http://bbb') ] ), 1, 'reification: association');
 }
 
 #-- prefixes --------------------------
@@ -634,12 +629,12 @@ bbb: tmql:function
 |);
 #warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', iplayer => 'tm:ontology' ),                                             2, 'finding all ontologies');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:is-subclass-of', iplayer => $ms->mids (\ 'http://www.w3.org/2001/XMLSchema#integer' )), 1, 'prefixed tid as player');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', iplayer => 'ontology' ),                                             2, 'finding all ontologies');
+  is (scalar $ms->match (TM->FORALL, type => 'is-subclass-of', iplayer => $ms->tids (\ 'http://www.w3.org/2001/XMLSchema#integer' )), 1, 'prefixed tid as player');
 
-  is (scalar $ms->match (TM->FORALL, type => 'tm:ddd', iplayer => $ms->mids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as assoc player');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:aaa', irole   => $ms->mids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as assoc role');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', iplayer => $ms->mids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as class player');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:ddd', iplayer => $ms->tids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as assoc player');
+  is (scalar $ms->match (TM->FORALL, type => 'tm:aaa', irole   => $ms->tids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as assoc role');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', iplayer => $ms->tids (\ 'http://www.isotopicmaps.org/tmql/#function' )), 1, 'prefixed tid as class player');
 }
 
 eval {
@@ -793,7 +788,7 @@ xxx
 |);
 
 #warn Dumper $ms;
-  ok (! $ms->mids ('ttt'), 'template ttt removed by default');
+  ok (! $ms->tids ('ttt'), 'template ttt removed by default');
 }
 
 #-- syntactic issues ----------------------------------------------------------------
@@ -805,7 +800,7 @@ xxx
 |);
 #warn Dumper $ms;
   is (scalar $ms->match(), $npa, 'empty map 1 (assertions)');
-  is ($ms->midlets,        $npt, 'empty map 2 (toplets)');
+  is ($ms->toplets,        $npt, 'empty map 2 (toplets)');
 }
 
 {
@@ -825,10 +820,10 @@ ddd isa xxxx
 |);
 ##warn Dumper $ms;
 
-  is (scalar $ms->midlets, $npt+6+3, 'test comment/separation');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:aaa' ), 1, 'types for aaa');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:ccc' ), 1, 'type  for ccc');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:ddd' ), 1, 'type  for ddd');
+  is (scalar $ms->toplets, $npt+6, 'test comment/separation');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:aaa' ), 1, 'types for aaa');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:ccc' ), 1, 'type  for ccc');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:ddd' ), 1, 'type  for ddd');
 }
 
 { # inline comments
@@ -842,10 +837,10 @@ oc: http://rumsti#no-comment
 
   is (scalar $ms->match, $npa+3, 'comment + assertions');
 
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 	      [ 'AAA',
 		'AAA# no-comment' ]), 'getting back commented basename');
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://rumsti#no-comment' ]), 'getting back commented occ');
 }
 
@@ -859,7 +854,7 @@ topic2
 
 |);
 ##warn Dumper $ms;
-  is (scalar $ms->midlets(), $npt+2, 'empty line contains blanks');
+  is (scalar $ms->toplets(), $npt+2, 'empty line contains blanks');
 }
 
 { # empty lines with \r
@@ -867,7 +862,7 @@ topic2
 topic1topic2topic3
 |);
 
-    is (scalar $ms->midlets(), $npt+3, 'empty line \r contains blanks');
+    is (scalar $ms->toplets(), $npt+3, 'empty line \r contains blanks');
 }
 
 { # using TABs as separators
@@ -877,7 +872,7 @@ topic1	isa	topic2
 topic3  isa	topic4	
 |);
 #warn Dumper $ms;
-    is (scalar $ms->midlets, $npt+2+2+1+1, 'using TABs as separators');
+    is (scalar $ms->toplets, $npt+2+2, 'using TABs as separators');
 }
 
 #-- syntactic issues ----------------------------------------------------------------
@@ -890,7 +885,7 @@ topic1
 topic2
 
 |);
-    is (scalar $ms->midlets, $npt+1, 'continuation in comment');
+    is (scalar $ms->toplets, $npt+1, 'continuation in comment');
 }
 
 { # line continuation with comments
@@ -902,7 +897,7 @@ topic1
 topic2
 
 |);
-    is (scalar $ms->midlets, $npt+2, 'continuation in comment, not 1');
+    is (scalar $ms->toplets, $npt+2, 'continuation in comment, not 1');
 }
 
 { # line continuation with comments
@@ -912,7 +907,7 @@ topic1
 topic2
 
 |);
-    is (scalar $ms->midlets, $npt+2, 'continuation in comment, not 2');
+    is (scalar $ms->toplets, $npt+2, 'continuation in comment, not 2');
 }
 
 { # line continuation
@@ -923,8 +918,8 @@ isa dddd
 
 |
 );
-  is (scalar $ms->midlets, $npt+7, 'line continuation');
-  is (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:aaa' ), 3, 'continuation: types for aaa');
+  is (scalar $ms->toplets, $npt+4, 'line continuation');
+  is (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:aaa' ), 3, 'continuation: types for aaa');
 }
 
 { # line continuation, not
@@ -938,7 +933,7 @@ aaa
 |);
 ##warn Dumper $ms;
 
-  my @res = $ms->match (TM->FORALL, type => 'tm:occurrence', irole => 'tm:thing', iplayer => 'tm:aaa' );
+  my @res = $ms->match (TM->FORALL, type => 'occurrence', irole => 'thing', iplayer => 'tm:aaa' );
   is (scalar @res, 3, 'ins for aaa');
 #warn Dumper \@res;
 ##warn Dumper [ map { ${$_->[TM->PLAYERS]->[1]}} @res ];
@@ -973,7 +968,7 @@ ccc isa ddd +++ bn: CCC
 ##  warn Dumper $ms;
 
   is (scalar $ms->match, $npa+5, '+++ assertions');
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 	      [ 'AAA' ]), 'AAA basename');
 }
 
@@ -985,7 +980,7 @@ aaa isa bbb +++ bn: AAA +++ in: rumsti is using ++++ in: text
 ##  warn Dumper $ms;
   is (scalar $ms->match, $npa+3, '++++ assertions');
 
-  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL,  type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } $ms->match (TM->FORALL,  type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	      [ 'rumsti is using +++ in: text' ]), 'getting back ++++ text');
 }
 
@@ -1009,7 +1004,7 @@ romsti"""
 |);
 ##  warn Dumper $ms;
   is (scalar $ms->match, $npa+2, 'multiline string detection');
-  my @res = $ms->match (TM->FORALL, type => 'tm:occurrence', irole => 'tm:thing', iplayer => 'tm:bbb' );
+  my @res = $ms->match (TM->FORALL, type => 'occurrence', irole => 'thing', iplayer => 'tm:bbb' );
   ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0]} @res ],
 	      [ '
 xxxxxxxxxxxxx
@@ -1018,7 +1013,7 @@ zzzzzz
 ',
 		]), 'multiline string: same text ["""]');
 
-  @res = $ms->match (TM->FORALL, type => 'tm:occurrence', irole => 'tm:thing', iplayer => 'tm:ccc' );
+  @res = $ms->match (TM->FORALL, type => 'occurrence', irole => 'thing', iplayer => 'tm:ccc' );
   ok (eq_set ([ map { $_->[TM->PLAYERS]->[1]->[0] } @res ],
 	      [ 'rumsti
 ramsti
@@ -1130,7 +1125,7 @@ aaa
 bbb
 |);
 #warn Dumper $ms;
- is (scalar $ms->midlets, $npt+1, 'cancelling');
+ is (scalar $ms->toplets, $npt+1, 'cancelling');
 }
 
 { # log
@@ -1141,7 +1136,7 @@ aaa
 
 bbb
 |);
- is (scalar $ms->midlets, $npt+2, 'logging');
+ is (scalar $ms->toplets, $npt+2, 'logging');
 }
 
 { # version
@@ -1181,9 +1176,9 @@ eee
 
 |);
 #warn Dumper $ms;
-    is ($ms->mids ('aaa'), 'tm:aaa', '%include: file, internalized');
-    is ($ms->mids ('ccc'), 'tm:ccc', '%include: file, internalized');
-    is ($ms->mids ('eee'), 'tm:eee', '%include: file, internalized');
+    is ($ms->tids ('aaa'), 'tm:aaa', '%include: file, internalized');
+    is ($ms->tids ('ccc'), 'tm:ccc', '%include: file, internalized');
+    is ($ms->tids ('eee'), 'tm:eee', '%include: file, internalized');
 }
 
 { # include with UNIX pipe
@@ -1194,9 +1189,9 @@ eee
 %include (echo "aaa" ; echo ; echo "ccc" ; echo ) \|
 
 |);
-    is ($ms->mids ('aaa'), 'tm:aaa', '%include: pipe, internalized');
-    is ($ms->mids ('ccc'), 'tm:ccc', '%include: pipe, internalized');
-    is ($ms->mids ('eee'), 'tm:eee', '%include: pipe, internalized');
+    is ($ms->tids ('aaa'), 'tm:aaa', '%include: pipe, internalized');
+    is ($ms->tids ('ccc'), 'tm:ccc', '%include: pipe, internalized');
+    is ($ms->tids ('eee'), 'tm:eee', '%include: pipe, internalized');
 
 };
 
@@ -1213,11 +1208,11 @@ in: Mohu jíst sklo, neublí?í mi
 |);
 #warn Dumper $ms;
 
-  my ($a) = $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' );
+  my ($a) = $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' );
   like ($a->[TM->PLAYERS]->[1]->[0], qr/Ich/,       'encoding: iso-8859-2, normal text');
   like ($a->[TM->PLAYERS]->[1]->[0], qr/\x{E4}sse/, 'encoding: iso-8859-2, normal text');
 
-  ($a) = $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:bbb' );
+  ($a) = $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:bbb' );
   like ($a->[TM->PLAYERS]->[1]->[0], qr/Mohu/,       'encoding: iso-8859-2, normal text');
   like ($a->[TM->PLAYERS]->[1]->[0], qr/\x{ED}st/,   'encoding: iso-8859-2, normal text');
 
@@ -1236,9 +1231,9 @@ aaa
 |);
 #warn Dumper $ms;
 
-  ok (eq_set (_q_players ($ms, scope => $ms->mids (\ 'http://psi.semagia.com/iso8601/2004-01-12'), type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => $ms->tids (\ 'http://psi.semagia.com/iso8601/2004-01-12'), type => 'name',   iplayer => 'tm:aaa' ),
 	      [ 'XXX' ]), 'date scoped 1');
-  ok (eq_set (_q_players ($ms, scope => $ms->mids (\ 'http://psi.semagia.com/iso8601/2004-01-12T12:23'), type => 'tm:name',   iplayer => 'tm:aaa' ),
+  ok (eq_set (_q_players ($ms, scope => $ms->tids (\ 'http://psi.semagia.com/iso8601/2004-01-12T12:23'), type => 'name',   iplayer => 'tm:aaa' ),
 	      [ 'YYY' ]), 'date scoped 2');
 
 }

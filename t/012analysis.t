@@ -133,7 +133,7 @@ ddd subclasses aaa
 
     $taxo =  $tm->taxonomy;
 #warn Dumper $taxo;
-    ok ($taxo->{lid} eq 'tm:thing',              'taxo 3');
+    ok ($taxo->{lid} eq 'thing',                 'taxo 3');
     ok (eq_set([ map { $_->{lid} } @{$taxo->{children}} ],
 	       [ 'tm:aaa', 'tm:bbb' ]),          'taxo 4');
     my ($aaa) = grep ($_->{lid} eq 'tm:aaa', @{$taxo->{children}});

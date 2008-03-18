@@ -18,7 +18,7 @@ use TM::PSI;
 
 sub _parse {
   my $text = shift;
-  my $ms = new TM (baseuri => 'tm:', psis => $TM::PSI::topicmaps);
+  my $ms = new TM (baseuri => 'tm:');
   my $p  = new TM::LTM::Parser (store => $ms);
   my $i  = $p->parse ($text);
 #  use TM::Materialized::AsTMa;
@@ -72,9 +72,9 @@ require_ok( 'TM::Materialized::LTM' );
 [ ccc ]
 |);
 #warn Dumper $ms;
-    ok ($ms->mids ('aaa'), 'comment: outside');
-    ok (!$ms->mids ('bbb'), 'comment: inside');
-    ok ($ms->mids ('ccc'), 'comment: outside');
+    ok ($ms->tids ('aaa'), 'comment: outside');
+    ok (!$ms->tids ('bbb'), 'comment: inside');
+    ok ($ms->tids ('ccc'), 'comment: outside');
 }
 
 die_ok (q{
@@ -98,7 +98,7 @@ ok (1, 'encoding: ignored');
  [aaa % "urn:aaa" ]
 |);
 #    warn Dumper $ms;
-    is ($ms->mids ('aaa'), $ms->mids ('urn:aaa'), 'reification: subject identifier ok');
+    is ($ms->tids ('aaa'), $ms->tids ('urn:aaa'), 'reification: subject identifier ok');
 }
 
 
@@ -108,7 +108,7 @@ ok (1, 'encoding: ignored');
 |);
 #    warn Dumper $ms;
 
-    ok (eq_set ($ms->midlet ($ms->mids ('urn:aaa'))->[TM->INDICATORS],
+    ok (eq_set ($ms->midlet ($ms->tids ('urn:aaa'))->[TM->INDICATORS],
 		[ 'urn:xxx', 'urn:yyy' ]),                          'indication: all found');
 }
 
@@ -118,7 +118,7 @@ ok (1, 'encoding: ignored');
 |);
 #warn Dumper $ms;
 
-    my @res = $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:aaa');
+    my @res = $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:aaa');
     ok (eq_set ([ map { $_->[TM->PLAYERS]->[0]  } @res ],
 		[ 'tm:bbb', 'tm:ccc' ]), 'topic: class values');
 }
@@ -129,7 +129,7 @@ ok (1, 'encoding: ignored');
 |);
 #warn Dumper $ms;
 
-    ok (eq_set ([ map { $_->[0] } map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+    ok (eq_set ([ map { $_->[0] } map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 		[ 'AAA' ]), 'topic: AAA basename');
 }
 
@@ -138,10 +138,10 @@ ok (1, 'encoding: ignored');
 [aaa: bbb ccc = "AAAS" / sss ]
 		    |);
 #warn Dumper $ms;
-    ok (eq_set ([ map {$_->[0]}  map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, scope => 'tm:sss', type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+    ok (eq_set ([ map {$_->[0]}  map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, scope => 'tm:sss', type => 'name', iplayer => 'tm:aaa' ) ] ,
 		[ 'AAAS' ]), 'topic: AAA basename (scoped)');
 
-    ok (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:sss' ) == 1, 'scope isa scope');
+    ok (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:sss' ) == 1, 'scope isa scope');
 }
 
 { # topic, basename, sortname
@@ -155,9 +155,9 @@ my $ms = _parse (q|
 [vvv = "VVV";  "SORTVVV"; "DISPVVV" / sss ]
 |);
 #warn Dumper $ms;
-    ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+    ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 		[ 'AAA' ]), 'topic: AAA basename');
-#    ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:name', iplayer => 'tm:aaa' ) ] ,
+#    ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 #		[ 'SORTAAA' ]), 'topic: SORTAAA basename');
 }
 
@@ -168,7 +168,7 @@ my $ms = _parse (q|
 #warn Dumper $ms;
   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:bbb',        iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://xxxt/' ]), 'topic: occurr typed');
-  ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://xxxt/' ]), 'topic: occurr (typed)');
 }
 
@@ -182,7 +182,7 @@ my $ms = _parse (q|
 #warn Dumper $ms;
   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:bbb',        iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://xxxt/' ]), 'topic: int occurr typed');
-  ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+  ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	      [ 'http://xxxt/' ]), 'topic: int occurr (typed)');
 }
 
@@ -198,12 +198,12 @@ my $ms = _parse (q|
 
 #warn Dumper $ms;
 
-   ok (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:aaa' ) == 1, 'topic+occur: class');
-   ok (scalar $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:ccc' ) == 1, 'topic+occur: class');
+   ok (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:aaa' ) == 1, 'topic+occur: class');
+   ok (scalar $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:ccc' ) == 1, 'topic+occur: class');
 
-   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:aaa' ) ] ,
+   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
 	       [ 'http://xxx/' ]), 'topic+occur: occurr');
-   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'tm:occurrence', iplayer => 'tm:ccc' ) ] ,
+   ok (eq_set ([ map {$_->[0]} map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:ccc' ) ] ,
 	       [ 'http://yyy/' ]), 'topic+occur: occurr');
 }
 
@@ -233,7 +233,7 @@ ccc (play1, play2: role2)
     ok (eq_set ([ map { @{$_->[TM->PLAYERS]}  } @res ],
 		[ 'tm:play1', 'tm:play2' ]), 'assoc: players');
     ok (eq_set ([ map { @{$_->[TM->ROLES]}  } @res ],
-		[ 'tm:thing', 'tm:role2' ]), 'assoc: roles (default)');
+		[ 'thing', 'tm:role2' ]), 'assoc: roles (default)');
 }
 
 { # scoped assoc
@@ -252,7 +252,7 @@ aaa (play1: role1, play2: role2) / ttt
 
     ok (grep ($_->[TM->SCOPE] eq 'tm:ttt', @res), 'scoped mixed assoc: scoping');
     ok (grep ($_->[TM->SCOPE] eq 'tm:sss', @res), 'scoped mixed assoc: scoping');
-    ok (grep ($_->[TM->SCOPE] eq 'tm:us',  @res), 'scoped mixed assoc: scoping');
+    ok (grep ($_->[TM->SCOPE] eq 'us',  @res), 'scoped mixed assoc: scoping');
 
     foreach my $r (@res) {
 	ok (eq_set ([ @{$r->[TM->PLAYERS]} ],
@@ -274,7 +274,7 @@ aaa ( [ play1: ccc ]:  role1, play2: role2)
     ok (eq_set ([ map { @{$_->[TM->ROLES]}  } @res ],
 		[ 'tm:role1', 'tm:role2' ]), 'assoc + embed: roles');
 
-    @res = $ms->match (TM->FORALL, type => 'tm:isa', irole => 'tm:instance', iplayer => 'tm:play1');
+    @res = $ms->match (TM->FORALL, type => 'isa', irole => 'instance', iplayer => 'tm:play1');
     ok (eq_set ([ map { @{$_->[TM->PLAYERS]}  } @res ],
 		[ 'tm:play1', 'tm:ccc' ]), 'assoc + embed: types');
 }
@@ -305,7 +305,7 @@ aaa ( play1: role1, play2: role2) ~ xxx
 [ aaa = "AAA" ~ xxx ]
 		     |);
 #warn Dumper $ms;
-    my ($a) = $ms->match (TM->FORALL, type => 'tm:name');
+    my ($a) = $ms->match (TM->FORALL, type => 'name');
     is ($a->[TM->LID], $ms->midlet ('tm:xxx')->[TM->ADDRESS], 'basename reification');
 }
 
@@ -386,12 +386,12 @@ aaa:uuu (play: bbb:role)
 
 #    warn Dumper $ms;
     
-    my @res = $ms->match (TM->FORALL, type => $ms->mids ('http://xxxx/#uuu'));
+    my @res = $ms->match (TM->FORALL, type => $ms->tids ('http://xxxx/#uuu'));
     ok (scalar @res == 1, 'prefixed assoc name: found');
     ok (eq_set ([ map { @{$_->[TM->PLAYERS]}  } @res ],
 		[ 'tm:play' ]), 'unprefixed player name');
 
-    my $id = $ms->mids ('http://yyyy/#role');
+    my $id = $ms->tids ('http://yyyy/#role');
     ok (eq_set ([ map { @{$_->[TM->ROLES]}  } @res ],
 		[ $id ]), 'prefixed role name');
 }
@@ -412,9 +412,9 @@ die_ok (q{
 
 TODO: {
     local $TODO = "merging";
-    ok ($ms->mids ('aaa'), 'merge: topic');
-    ok ($ms->mids ('bbb'), 'merge: topic');
-    ok ($ms->mids ('ccc'), 'merge: topic');
+    ok ($ms->tids ('aaa'), 'merge: topic');
+    ok ($ms->tids ('bbb'), 'merge: topic');
+    ok ($ms->tids ('ccc'), 'merge: topic');
 }
 }
 
@@ -430,9 +430,9 @@ TODO: {
 
 TODO: {
     local $TODO = "merging (default)";
-    ok ($ms->mids ('aaa'), 'merge: topic');
-    ok ($ms->mids ('bbb'), 'merge: topic');
-    ok ($ms->mids ('ccc'), 'merge: topic');
+    ok ($ms->tids ('aaa'), 'merge: topic');
+    ok ($ms->tids ('bbb'), 'merge: topic');
+    ok ($ms->tids ('ccc'), 'merge: topic');
 }
 }
 

@@ -122,6 +122,9 @@ sub DESTROY {
     my $self = shift;
 #warn "tau DESTROY"; #. Dumper $self;
     return if $@; # we do not do anything in case of errors/exceptions
+#warn "{sync_out} is ".$self->{sync_out};
+#warn "and we can? ".$self->can ('source_out');
+#warn "and where to? ".$self->url;
     $self->sync_out if $self->{sync_out} && $self->can ('source_out');
 }
 
@@ -182,10 +185,15 @@ sub source_in {
 #warn "filtrer source in";
     my $self = shift;
 
-#warn __PACKAGE__ . "source in". $self->url;
+#warn __PACKAGE__ . " source in ". $self->url;
+#warn __PACKAGE__ . " baseuri ". $self->baseuri;
     $self->{left}->source_in;                             # lets get the upstream crap, uhm map
 #warn "left before  melt".Dumper $self->{left};
-    $self->melt ( $self->transform ($self->{left}, $self->{baseuri}) );
+
+#    my $m = $self->{left}->insane;
+
+    $self->melt ( $self->transform ($self->{left}, $self->baseuri) );        
+#warn __PACKAGE__ . " baseuri after melt". $self->baseuri;
 #warn "whole thing after melt".Dumper $self;
 }
 

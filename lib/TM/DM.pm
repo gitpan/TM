@@ -21,11 +21,11 @@ sub topics {
     return map { 
 	         TM::DM::Topic->new (
 				     tmdm  => $self->{tmdm},
-				     sad   =>     $map->midlet ($_)->[TM->ADDRESS],
-				     sids  => [ @{$map->midlet ($_)->[TM->INDICATORS]} ],          # TODO: can be optimized
+				     sad   =>      $_->[TM->ADDRESS],
+				     sids  => [ @{ $_->[TM->INDICATORS] } ],
 				     mid   => $_
 				     )
-		 } $map->midlets (@_);
+		 } $map->toplets (@_);
 }
 
 sub associations {
@@ -33,7 +33,7 @@ sub associations {
     my $map  = $self->{tmdm}->{map};
     my %search = @_;
     foreach my $k (keys %search) {
-	$search{$k} = $map->mids ($search{$k}) if $k =~ /role|type|player/;
+	$search{$k} = $map->tids ($search{$k}) if $k =~ /role|type|player/;
     }
 
     return map { TM::DM::Association->new (lid  => $_->[TM->LID],
@@ -47,7 +47,7 @@ sub reifier {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
 
-    my ($mid) = $map->reifies ($map->baseuri)             # find a topic which has as subject address the baseuri
+    my ($mid) = $map->is_reified ($map->baseuri)             # find a topic which has as subject address the baseuri
 	or return undef;
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $mid);
 }
@@ -55,7 +55,7 @@ sub reifier {
 sub topic {
     my $self = shift;
     my $id   = shift;
-    return TM::DM::Topic::_mk_topic ($self->{tmdm}, $self->{tmdm}->{map}->mids ($id));
+    return TM::DM::Topic::_mk_topic ($self->{tmdm}, $self->{tmdm}->{map}->tids ($id));
 }
 
 1;
@@ -110,7 +110,7 @@ sub names {
 				 ) }
              grep ($_->[TM->KIND] == TM->NAME,
                    $map->match (TM->FORALL, char    => 1,
-                                            iplayer => $self->{mid} ));
+                                            topic   => $self->{mid} ));
 }
 
 sub occurrences {
@@ -124,7 +124,7 @@ sub occurrences {
 				       ) }
              grep ($_->[TM->KIND] == TM->OCC,
                  $map->match (TM->FORALL, char    => 1,
-                                          iplayer => $self->{mid} ));
+                                          topic   => $self->{mid} ));
 
 }
 
@@ -200,8 +200,9 @@ sub parent {
 sub reifier {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
+    my $a    = $map->retrieve ($self->{lid});
 
-    my ($mid) = $map->reifies ($self->{lid})
+    my ($mid) = $map->is_reified ($a)
 	or return undef;
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $mid);
 }
@@ -253,8 +254,9 @@ sub scope {
 sub reifier {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
+    my $a     = $map->retrieve ($self->{lid});
 
-    my ($mid) = $map->reifies ($self->{lid})
+    my ($mid) = $map->is_reified ($a)
 	or return undef;
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $mid);
 }
@@ -310,7 +312,8 @@ sub scope {
 sub reifier {
     my $self  = shift;
     my $map   = $self->{tmdm}->{map};
-    my ($mid) = $map->reifies ($self->{lid})
+    my $a     = $map->retrieve ($self->{lid});
+    my ($mid) = $map->is_reified ($a)
 	or return undef;
     return TM::DM::Topic::_mk_topic ($self->{tmdm}, $mid);
 }
@@ -519,7 +522,7 @@ This will work:
 
 =head2 TM::DM
 
-The TM::DM class itself does not offer much functionality itself. It one keeps the connection to the
+The TM::DM class itself does not offer much functionality itself. It only keeps the connection to the
 background map.
 
 =head3 Constructor
@@ -592,7 +595,7 @@ Examples:
 
     print "he again" if $topicmap->topics ('god');
 
-If a selection is specified then the same language as in L<TM> (method C<midlets>) can be used.
+If a selection is specified then the same language as in L<TM> (method C<toplets>) can be used.
 
 =item B<associations>
 

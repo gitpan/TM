@@ -14,11 +14,13 @@ sub serialize {
 
     my $idx  = new TM::Index::Match ($self);
 
-    my $info = TM::Analysis::statistics ($self, 'nr_midlets', 'nr_maplets');
-    $info->{sub_topicmaps} = [ $self->instances ($self->mids (\ TM::PSI->TOPICMAP ))];
+    my $info = TM::Analysis::statistics ($self, 'nr_toplets', 'nr_asserts');
+    $info->{sub_topicmaps} = [ $self->instances ($self->tids (\ TM::PSI->TOPICMAP ))];
     $info->{untyped}       = TM::Analysis::orphanage ($self, 'untyped')->{untyped};
 
-    my @infra = $self->mids (keys %{$TM::PSI::topicmaps->{mid2iid}});
+#    warn "info ".Dumper $info;
+
+    my @infra = keys %{$TM::infrastructure->{mid2iid}};
     my %infra;
     @infra{ @infra } = (1) x @infra;
 
