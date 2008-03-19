@@ -11,11 +11,11 @@ $Data::Dumper::Indent = 1;
 
 use TM;
 
-use Class::Trait;
-Class::Trait->initialize();
-
 require_ok( 'TM::ResourceAble' );
-Class::Trait->apply ('TM', 'TM::ResourceAble');
+
+can_ok 'TM::ResourceAble', 'apply';
+
+Class::Trait->apply ('TM' => 'TM::ResourceAble');
 
 { # structural tests
     my $tm = new TM (baseuri => 'tm:');

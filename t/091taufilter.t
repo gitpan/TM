@@ -131,7 +131,7 @@ eval {
     $f->sync_in;
 
     use Class::Trait;
-    Class::Trait->apply ($tm, 'TM::Analysis');
+    'TM::Analysis'->apply ($tm);
     my $stats = $tm->statistics ;                   # has to be here, as this is the time after parsing AsTMa
 
     ok (eq_set ([ $f->instances ($f->tids ('metric')) ],

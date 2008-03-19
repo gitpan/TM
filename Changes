@@ -2,6 +2,9 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.32  Mi 19. Mär 17:17:11 CET 2008
+	- t/*.t trying to massage Class::Trait invocations such that they work with Perl 5.10
+
 1.31  Di 18. Mär 13:37:54 CET 2008
 	- TM::Bulk: added peers and peers* (rho)
 	- TM::Bulk: added associations (rho)

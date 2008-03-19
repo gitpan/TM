@@ -67,7 +67,7 @@ ccc: hhh
 
   use TM::Bulk;
   use Class::Trait;
-  Class::Trait->apply ($tm, 'TM::Bulk');
+  'TM::Bulk'->apply ($tm);
 
   eval {
     $tm->vortex ('whatever', {}, [ 'rumsti' ]);
@@ -158,7 +158,7 @@ bn @ s2: CCCS
 
     use TM::Bulk;
     use Class::Trait;
-    Class::Trait->apply ($tm, 'TM::Bulk');
+    'TM::Bulk'->apply ($tm);
     {
 	my $names = $tm->names ([ 'ccc', 'ggg', 'aaa' ]);
 #warn Dumper $names;

@@ -18,7 +18,6 @@ WriteMakefile(
 "Config::General"    => 2.26,
 "Class::Trait"       => 0.22,
 "Log::Log4perl"    => 0.50,
-"Log::Log4perl::Appender::File"    => undef,
 'LWP::Simple'               => '1.41',
 "MLDBM"    => 2.01,
 "MLDBM::Sync"    => 0.30,
@@ -75,6 +74,8 @@ manifesto:
 	find lib/ -iname '*.pm' | sort
 	find t    -iname '*.t'  | sort
 
+upload: cpan-upload-http TM-\$(VERSION).tar.gz
+
 #MAKE
 #}
 
@@ -102,6 +103,6 @@ MAKE
 sub upload {
     return <<MAKE
 
-upload: cpan-upload-http TM-1.25.tar.gz
+upload: cpan-upload-http TM-\$(VERSION).tar.gz
 MAKE
 }

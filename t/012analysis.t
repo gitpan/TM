@@ -73,7 +73,13 @@ child: noam
 
    ');
 
-    Class::Trait->apply ($tm => 'TM::Tree');
+    can_ok 'TM::Tree',     'apply';
+    can_ok 'TM::Graph',    'apply';
+    can_ok 'TM::Analysis', 'apply';
+
+    ok 'TM::Tree'->apply ($tm), '....applying to an instance';
+
+#    Class::Trait->apply ($tm => 'TM::Tree'); # this makes perl 5.10 choke
     $tm->sync_in;
 
 #warn Dumper $tm;
@@ -118,7 +124,7 @@ ccc subclasses aaa
 ddd subclasses aaa
 
 ');
-    Class::Trait->apply ($tm => 'TM::Tree');
+    'TM::Tree'->apply ($tm);
     $tm->sync_in;
 
 #warn Dumper $tm;
@@ -173,7 +179,7 @@ qqq: www
 
 #warn Dumper $tm; exit;
 
-    Class::Trait->apply ($tm, 'TM::Graph');
+    'TM::Graph'->apply ($tm);
 
     my $clusters = $tm->clusters (use_lid => 0);
 #    foreach (@$clusters) {
@@ -283,7 +289,7 @@ child: noam
 
    ');
 
-    Class::Trait->apply ($tm => 'TM::Graph');
+    'TM::Graph'->apply ($tm);
     $tm->sync_in;
 
     ok ($tm->is_path ([ 'adam' ],  [ [ 'isa' ] ], 'human'), 'adam is human');
@@ -319,7 +325,8 @@ exit;
 { # statistics
     use TM;
     my $tm1 = new TM;
-    Class::Trait->apply ($tm1, 'TM::Analysis', 'TM::Graph');
+    'TM::Analysis'->apply ($tm1);
+    'TM::Graph'->apply ($tm1);
 
     my $stats1 = $tm1->statistics;
 #warn Dumper $stats1;
@@ -338,7 +345,7 @@ bbb is-a ccc
     $tm2->sync_in;
 #warn Dumper $tm2;
 
-    Class::Trait->apply ($tm2, 'TM::Analysis');
+    'TM::Analysis'->apply ($tm2);
     my $stats2 = $tm2->statistics;
 #warn Dumper $stats;
 
@@ -357,7 +364,7 @@ aaa subclasses bbb
 bbb is-a ccc
     ');
     $tm->sync_in;
-    Class::Trait->apply ($tm, 'TM::Analysis');
+    'TM::Analysis'->apply ($tm);
 
     my $o = $tm->orphanage;
 #warn Dumper $o;

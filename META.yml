@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         TM
-version:      1.31
+version:      1.32
 version_from: lib/TM.pm
 installdirs:  site
 requires:
@@ -9,7 +9,6 @@ requires:
     Class::Trait:                  0.22
     Config::General:               2.26
     Log::Log4perl:                 0.5
-    Log::Log4perl::Appender::File: 
     LWP::Simple:                   1.41
     MLDBM:                         2.01
     MLDBM::Sync:                   0.3

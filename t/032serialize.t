@@ -11,10 +11,15 @@ $Data::Dumper::Indent = 1;
 
 use TM;
 
-use Class::Trait;
-Class::Trait->initialize();
+#use Class::Trait;
+#Class::Trait->initialize();
 
 require_ok( 'TM::Serializable::Dumper' );
+
+can_ok 'TM::Serializable::Dumper', 'apply';
+can_ok 'TM::Serializable',         'apply';
+can_ok 'TM::Synchronizable',       'apply';
+can_ok 'TM::ResourceAble',         'apply';
 
 Class::Trait->apply ('TM', qw(TM::Serializable::Dumper TM::Serializable TM::Synchronizable TM::ResourceAble));
 

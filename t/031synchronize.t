@@ -11,12 +11,11 @@ $Data::Dumper::Indent = 1;
 
 use TM;
 
-use Class::Trait;
-Class::Trait->initialize();
-
 require_ok( 'TM::Synchronizable::Null' );
 
-Class::Trait->apply ('TM', qw(TM::Synchronizable::Null));
+can_ok 'TM::Synchronizable::Null', 'apply';
+
+Class::Trait->apply ('TM' => qw(TM::Synchronizable::Null));
 
 { # structural tests
     my $tm = new TM (baseuri => 'tm:');
