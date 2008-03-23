@@ -23,9 +23,10 @@ t/032serialize.t
 t/03resource.t
 t/041astmafact.t
 t/042merge.t
-t/043astma1serial.t
+t/043diff.t
 t/044merge2.t
 t/045astma2fact.t
+t/046astma1serial.t
 t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t

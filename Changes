@@ -2,6 +2,10 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.33  So 23. Mär 20:39:55 CET 2008
+	- TM::* removed dependency from Test::Deeply::NoTest (conflicts with Class::Trait under Perl 5.10)
+	- TM: reactivated diff code and added test cases for it (rho, TODO identification stuff flaky)
+
 1.32  Mi 19. Mär 17:17:11 CET 2008
 	- t/*.t trying to massage Class::Trait invocations such that they work with Perl 5.10
 

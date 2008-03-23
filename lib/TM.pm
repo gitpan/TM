@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.32';
+our $VERSION  = '1.33';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -15,7 +15,6 @@ $Data::Dumper::VERSION = '2.12108';
 
 use Class::Struct;
 use Time::HiRes;
-use Test::Deep::NoTest;		# for eq_deeply
 use TM::PSI;
 
 use Log::Log4perl;
@@ -830,37 +829,38 @@ sub diff {
     my ($newmap,$oldmap,$options)=@_;
     return undef if (!$oldmap || !$newmap);
 
+    my ($base)=$oldmap->baseuri;
+    $log->logdie ("comparison of maps with different bases not supported yet!")
+	if ($newmap->baseuri ne $base);
+
     my (%plus,%minus,%modified);
     # a lot of comparison/translation can be skipped if tids are the only identity
     my $xlatneeded= grep($_==TM->Subject_based_Merging || 
 			 $_==TM->Indicator_based_Merging,@{$options->{consistency}});
 
-    my ($base)=$oldmap->baseuri;
-    $log->logdie ("comparison of maps with different bases not supported yet!")
-	if ($newmap->baseuri ne $base);
-
     # first walk the maps to match old and new items
     my (%seen,%locators,%indicators);
-    for my $map ($oldmap,$newmap)
-    {
-	my $key=($map eq $oldmap?"old":"new");
-	my $value=($map eq $oldmap?1:2);
+    for my $map ($oldmap,$newmap) {
+	my $key   = ($map eq $oldmap ? "old":"new");
+	my $value = ($map eq $oldmap ? 1:2);
 
-	for my $m ($map->toplets(\ '+all'))
-	{
+	for my $m (map { $_->[TM->LID] } ($map->toplets(\ '+all'))) {
 	    # get the topic-aspects (tid, locators and identifiers)
 	    # for finding unchanged/new/old topics
 	    my $midlet=$map->toplet($m);
 	    $locators{$key}->{$midlet->[TM->ADDRESS]}=$m
 		if ($midlet->[TM->ADDRESS]);
 	    map { $indicators{$key}->{$_}=$m } (@{$midlet->[TM->INDICATORS]});
-	    $seen{$m}|=$value; 
+	    $seen{$m}|=$value;
+	}
+	for my $a (map { $_->[TM->LID] } $map->asserts (\ '+all')) {
+	    $seen{$a}|=$value;
 	}
     }
 
     # identify same topics
     # first identity: same topic ids 
-    my %old2new = map { ($_,$_) } (grep($seen{$_}==3,keys %seen));
+    my %old2new = map { ($_,$_) } grep { $seen{$_} == 3 } keys %seen;
     my $foundxlat;
     if (grep($_==TM->Subject_based_Merging,@{$options->{consistency}}))
     {
@@ -868,7 +868,8 @@ sub diff {
 	# note that this overwrites topic identitites!
 	# scenario: old has topica/loc x; new has topica/no loc and topicb/loc x
 	map { $foundxlat||=($locators{old}->{$_} ne $locators{new}->{$_});
-	      $old2new{$locators{old}->{$_}}=$locators{new}->{$_}; } 
+	      $old2new{$locators{old}->{$_}}=$locators{new}->{$_}; 
+              } 
 	(grep(exists $locators{new}->{$_}, keys %{$locators{old}}));
     }
     if (grep($_==TM->Indicator_based_Merging,@{$options->{consistency}}))
@@ -903,27 +904,52 @@ sub diff {
     }
     undef %seen; undef %locators; undef %indicators;
 
+#warn "check midlets ".Dumper \ %checkmidlet;
+
     # weed out the topics/midlets that are unchanged
     # and all the identical assertions
     my @checkassertion;
-    for my $t (keys %checkmidlet)
-    {
-	if (!eq_deeply($oldmap->toplet($t),
-		       $newmap->toplet($old2new{$t})))
-	{
-	    $modified{$t}->{identities}=1;
-	    $modified{$t}->{plus}||=[];
-	    $modified{$t}->{minus}||=[];
-	}
-	
-	my $oa=$oldmap->retrieve($t);
-	my $on=$newmap->retrieve($old2new{$t});
-	
-	if ($oa && $on && !eq_deeply($oa,$on))
-	{
-	    push @checkassertion,$t;
+    for my $t (keys %checkmidlet) {
+
+	if ($t =~ /^[A-F0-9]{32}$/i) {
+	    my $oa=$oldmap->retrieve($t);
+	    my $on=$newmap->retrieve($old2new{$t});
+	    
+	    if ($oa && $on && $oa->[TM->LID] ne $on->[TM->LID]) {
+		push @checkassertion,$t;
+	    }
+	} else {
+	    my $ot = $oldmap->toplet($t);
+	    my $nt = $newmap->toplet($old2new{$t});
+
+#warn "$t    --->   ".Dumper ($ot, $nt);
+#warn "   eq -> "._toplets_eq ($ot, $nt);
+
+	    unless (_toplets_eq ($ot, $nt)) {
+#	if (!eq_deeply($oldmap->toplet($t),
+#		       $newmap->toplet($old2new{$t})))
+		$modified{$t}->{identities}=1;
+		$modified{$t}->{plus}||=[];
+		$modified{$t}->{minus}||=[];
+	    }
+
+	    sub _toplets_eq {
+		my $a = shift;
+		my $b = shift;
+		
+		return 0 unless $a->[TM->LID]     eq $b->[TM->LID];                   # different internal ID?
+		my ($A, $B) = ($a->[TM->ADDRESS] ||'', $b->[TM->ADDRESS] ||'');       # just convert undef into ''
+		return 0 unless $A eq $B;                                             # different subject address?
+		my %SIDS;
+		map { $SIDS{$_} } @{$a->[TM->INDICATORS]}, @{$b->[TM->INDICATORS]};   # we KNOW that the lists are UNIQUE, do we?
+		return 0 if grep { $_ != 2 } values %SIDS;                            # if it is not exactly 2 (one from a, one from b), then not equal
+		return 1;                                                             # exhaustive
+	    }
+	    
 	}
     }
+
+#warn "modified ".Dumper \%modified;
 
     my %old2newid;    
     if ($xlatneeded)
@@ -983,13 +1009,13 @@ sub diff {
 	    if ($m->[TM->KIND] ne TM->ASSOC)
 	    {
 		# bn or oc: attach to referenced topic
-		$who=($map->get_x_players($m,$base."thing"))[0];
+		$who=($map->get_x_players($m,"thing"))[0];
 		$what=$t;
 	    }
-	    elsif ($m->[TM->TYPE] eq $base."isa")
+	    elsif ($m->[TM->TYPE] eq "isa")
 	    {
 		# isa associations get attached to the instance topic
-		$who=($map->get_x_players($m,$base."instance"))[0];
+		$who=($map->get_x_players($m,"instance"))[0];
 		$what=$t;
 	    }
 	    else 
@@ -1036,7 +1062,7 @@ sub diff {
 	# (assertions are fine, their names always reflect their content uniquely)
 
 	my (%plusm,%minusm,%ass,$a);
-	map { $plusm{$_}=$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
+	map { $plusm{$_} =$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
 	map { $minusm{$_}=$oldmap->toplet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (keys %minus);
 
 	for my $k (keys %modified)
@@ -1044,17 +1070,16 @@ sub diff {
 	    # these are corresponding topics with differing midlet (contents)
 	    if ($modified{$k}->{identities})
 	    {
-		$plusm{$k}=$newmap->toplet($old2new{$k});
-		$minusm{$k}=$oldmap->toplet($k);
+		$plusm{$k}  = $newmap->toplet($old2new{$k});
+		$minusm{$k} = $oldmap->toplet($k);
 	    }
-	    map { $plusm{$_}=$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{plus}}); 
+	    map { $plusm{$_} =$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{plus}}); 
 	    map { $minusm{$_}=$oldmap->toplet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (@{$modified{$k}->{minus}}); 
 	}
 
-	$returnvalue->{plus_midlets}=\%plusm;
-	$returnvalue->{minus_midlets}=\%minusm;
-	$returnvalue->{assertions}=\%ass;
-
+	$returnvalue->{plus_midlets}  =\%plusm;
+	$returnvalue->{minus_midlets} =\%minusm;
+	$returnvalue->{assertions}    =\%ass;
     }
 
     return $returnvalue;
@@ -3052,7 +3077,7 @@ sub reifies {
 
     my $add = $self->{mid2iid}->{$tid}->[TM->ADDRESS] if $self->{mid2iid}->{$tid};
     return undef unless $add;
-    return $add =~ /^[a-zA-Z0-9]{32}$/ ? $self->{assertions}->{$add} : $add;
+    return $add =~ /^[A-F0-9]{32}$/i ? $self->{assertions}->{$add} : $add;
 }
 
 =pod

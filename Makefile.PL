@@ -1,20 +1,16 @@
-use 5.008003;
+use v5.6;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
-	      NAME              => 'TM',
-	      VERSION_FROM      => 'lib/TM.pm', # finds $VERSION
-	      PREREQ_PM         => {}, # e.g., Module::Name => 1.1
-	      ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-	       (ABSTRACT_FROM  => 'lib/TM.pm',
-		AUTHOR         => 'Robert Barta <drrho@cpan.org>') : ()),
-	      'EXE_FILES'     => [ 'bin/tm' ],
-
-              'NOECHO'        => '@',
-              'PREREQ_PM'     => {
-# do a 'make dependencies' to get an update
-'BerkeleyDB'                => '0.26',
+	      NAME           => 'TM',
+	      VERSION_FROM   => 'lib/TM.pm', # finds $VERSION
+	      ABSTRACT_FROM  => 'lib/TM.pm',
+	      AUTHOR         => 'Robert Barta <drrho@cpan.org>',
+	      EXE_FILES      => [ 'bin/tm' ],
+              NOECHO         => '@',
+              PREREQ_PM      => { # do a 'make dependencies' to get an update
+'BerkeleyDB'                 => '0.26',
 "Config::General"    => 2.26,
 "Class::Trait"       => 0.22,
 "Log::Log4perl"    => 0.50,
@@ -24,9 +20,6 @@ WriteMakefile(
 "Parse::RecDescent"    => 1.94,
 "Parse::Yapp::Driver"    => 1.05,
 "Pod::Usage"    => 1.16,
-#"Proc::Daemon"    => 0.03,
-#"Proc::PID::File"    => 1.24,
-#"SOAP::Transport::HTTP"    => 0.55,
 "Term::ReadLine"    => 1.01,
 "Test::More"    => 0.47,
 "Test::Deep"    => 0.093,
@@ -36,8 +29,7 @@ WriteMakefile(
 "XML::LibXML"    => 1.58,
 "XML::Simple"    => 2.13,
 	      },
-              'NORECURS'       => 1,
-
+              NORECURS       => 1,
 );
 
 package MY;
@@ -74,13 +66,8 @@ manifesto:
 	find lib/ -iname '*.pm' | sort
 	find t    -iname '*.t'  | sort
 
-upload: cpan-upload-http TM-\$(VERSION).tar.gz
-
-#MAKE
-#}
-
-#sub debian {
-#    return <<MAKE
+upload:
+	cpan-upload-http TM-\$(VERSION).tar.gz
 
 inject:
 	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
@@ -95,7 +82,8 @@ MAKE
 sub UML {
     return <<MAKE
 
-UML: autodia.pl -F -H -d ~/projects/tm_base/TM-1.22/lib/ -r -Z
+UML:
+	autodia.pl -F -H -d ~/projects/tm_base/TM-1.22/lib/ -r -Z
 
 MAKE
 }
@@ -103,6 +91,5 @@ MAKE
 sub upload {
     return <<MAKE
 
-upload: cpan-upload-http TM-\$(VERSION).tar.gz
 MAKE
 }
