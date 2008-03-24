@@ -72,6 +72,7 @@ upload:
 inject:
 	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
 	sudo mcpani --inject
+	echo "reload index" | cpan
 
 debian:
 	(cd /usr/local/share/packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest)

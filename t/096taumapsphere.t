@@ -73,8 +73,8 @@ sub _chomp {
 my ($tmp1, $tmp2);
 use IO::File;
 use POSIX qw(tmpnam);
-do { $tmp1 = tmpnam() ;  } until IO::File->new ($tmp1, O_RDWR|O_CREAT|O_EXCL);
-do { $tmp2 = tmpnam() ;  } until IO::File->new ($tmp2, O_RDWR|O_CREAT|O_EXCL);
+do { $tmp1 = tmpnam() . '.atm' ;  } until IO::File->new ($tmp1, O_RDWR|O_CREAT|O_EXCL);
+do { $tmp2 = tmpnam() ;           } until IO::File->new ($tmp2, O_RDWR|O_CREAT|O_EXCL);
 
 END { unlink ($tmp1, $tmp2) || warn "cannot unlink tmp files '$tmp1' and '$tmp2'"; }
 
@@ -117,8 +117,8 @@ $TM::Tau::sources{'^tm:/.*'} = 'MyPersistentMapSphere';
     my $t = new TM::Tau ("file:$tmp1 > tm:/rumsti/");
 }
 
-ok ($MyPersistentMapSphereFilter::ms->mids ('rumsti'),                       'mem persistent mapsphere: map has been mounted');
-ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/rumsti/')->mids ('aaa'), 'mem persistent mapsphere: map has values');
+ok ($MyPersistentMapSphereFilter::ms->tids ('rumsti'),                       'mem persistent mapsphere: map has been mounted');
+ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/rumsti/')->tids ('aaa'), 'mem persistent mapsphere: map has values');
 
 for (0..5) { # stress testing: adding, retracting, re-adding, all right-hand side
 
@@ -126,10 +126,10 @@ for (0..5) { # stress testing: adding, retracting, re-adding, all right-hand sid
 	new TM::Tau ("file:$tmp1 > tm:/ramsti/");
     }
 
-    ok ($MyPersistentMapSphereFilter::ms->mids ('rumsti'),                       'mem persistent mapsphere: map still mounted');
-    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/rumsti/')->mids ('aaa'), 'mem persistent mapsphere: map has still values');
-    ok ($MyPersistentMapSphereFilter::ms->mids ('ramsti'),                       'mem persistent mapsphere: new map mounted');
-    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/ramsti/')->mids ('aaa'), 'mem persistent mapsphere: new map has values');
+    ok ($MyPersistentMapSphereFilter::ms->tids ('rumsti'),                       'mem persistent mapsphere: map still mounted');
+    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/rumsti/')->tids ('aaa'), 'mem persistent mapsphere: map has still values');
+    ok ($MyPersistentMapSphereFilter::ms->tids ('ramsti'),                       'mem persistent mapsphere: new map mounted');
+    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/ramsti/')->tids ('aaa'), 'mem persistent mapsphere: new map has values');
     
 #warn Dumper $MyPersistentMapSphereFilter::ms;
     $MyPersistentMapSphereFilter::ms->umount ('/ramsti/');
@@ -141,8 +141,8 @@ for (0..5) {
 	new TM::Tau ("tm:/rumsti/ > tm:/remsti/");
     }
 
-    ok ($MyPersistentMapSphereFilter::ms->mids ('remsti'),                       'mem persistent mapsphere: copied map mounted');
-    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/remsti/')->mids ('aaa'), 'mem persistent mapsphere: copied map has values');
+    ok ($MyPersistentMapSphereFilter::ms->tids ('remsti'),                       'mem persistent mapsphere: copied map mounted');
+    ok ($MyPersistentMapSphereFilter::ms->is_mounted ('/remsti/')->tids ('aaa'), 'mem persistent mapsphere: copied map has values');
 
     $MyPersistentMapSphereFilter::ms->umount ('/remsti/');
 }
@@ -154,6 +154,6 @@ __END__
     my $tm = new TM::Tau ("file:$tmp > tm:/test/");
     $tm->{map}->sync_out;
 
-    like ($tm->{mapsphere}->{maps}->{'/test/'}->mids ('aaa'), qr/aaa$/, 'map established in mapsphere');
+    like ($tm->{mapsphere}->{maps}->{'/test/'}->tids ('aaa'), qr/aaa$/, 'map established in mapsphere');
 }
 
