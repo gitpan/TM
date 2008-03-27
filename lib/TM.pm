@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.34';
+our $VERSION  = '1.35';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -100,21 +100,25 @@ TM - Topic Maps, Base Class
                                 roles   => [ 'tm://whatever/aaa', 'tm://whatever/bbb' ]);
 
     # specialized search patterns (see TM::Axes)
-    my @cs = $tm->match_forall (type    => 'tm://whatever/is-subclass-of', 
-			        arole   => 'tm://whatever/superclass', 
+    my @cs = $tm->match_forall (type    => 'is-subclass-of', 
+			        arole   => 'superclass', 
 			        aplayer => 'tm://whatever/rumsti', 
-			        brole   => 'tm://whatever/subclass');
+			        brole   => 'subclass');
 
-    my @ds = $tm->match_forall (type    => 'tm://whatever/person'
-                                instance=> 1);
+    my @ds = $tm->match_forall (type    => 'isa',
+                                class   => 'tm://whatever/person');
 
     # perform merging, cleanup, etc.
     $tm->consolidate;
 
-    # taxonomy stuff
-    warn "%-|" if $tm->is_a ($tm->tids ('gw_bush', 'moron')); # what a subtle joke
+    # check internal consistency of the data structure
+    die "panic" if $tm->insane;
 
-    die unless $tm->is_subclass ($tm->tids ('politician', 'moron');
+    # taxonomy stuff
+    warn "what a subtle joke" if $tm->is_a ($tm->tids ('gw_bush', 'moron'));
+
+    die "what a subtle joke"
+        unless $tm->is_subclass ($tm->tids ('politician', 'moron'));
 
     # returns Mr. Spock if Volcans are subclassing Aliens
     warn "my best friends: ". Dumper [ $tm->instancesT ($tm->tids ('alien')) ];
@@ -158,7 +162,7 @@ two. Accordingly, there are only following types of data structures
 =item Toplets:
 
 These are like TMDM topics, but only contain addressing information (subject identifiers and subject
-addresses) along an internal identifier.
+addresses) along with an internal identifier.
 
 =item Assertions:
 
@@ -217,15 +221,16 @@ C<isa>, C<class> or C<us> (universal scope).
 
 These identifiers are always the same in all maps this package system manages. That implies that if
 you use such an identifier, then you cannot attach a local meaning to it. And it implies that at
-merging time, toplet with these identifiers will merge. Even if there are no subject indicators or
-addresses.
+merging time, toplets with these identifiers will merge. Even if there were no subject indicators or
+addresses involved.
 
 It is probably a good idea to leave such toplets alone as the software is relying on the stability
-of the local identifiers.
+of the sacrosanct identifiers.
 
 =item assertion identifiers
 
-You will hardly experience them.
+Each assertion also has an (internal) identifier. It is a function from the content, so it
+is characteristic for the assertion.
 
 =back
 
@@ -240,10 +245,6 @@ consistency conditions are met:
 
 Every identifier appearing in some assertion as type, scope, role or player is also registered as
 toplet.
-
-=item B<A2> (fixed on)
-
-Every assertion in the map is also a registered toplet.
 
 =item B<Indicator_based_Merging> (default: on)
 
@@ -269,17 +270,18 @@ use constant {
 
 =pod
 
-While the first two (A1, A2) are related with the internal consistency of the data structure, the
-others are a choice the application can make (See method C<consistency>).
+While A1 is related with the internal consistency of the data structure (see C<insane>), the others
+are a choice the application can make (see C<consistency>).
 
 I<Consistency> is not automatically provided when a map is modified by the application. It is the
-applications responsibility to trigger the process to consolidate the map.
+applications responsibility to trigger the process to consolidate the map. As that may be
+potentially expensive, the control remains at the application.
 
 When an IO driver is consuming a map from a resource, say, loading from an XTM file, then that
 driver will ensure that the map is consolidated according to the current settings before it hands it
 to the application. The application is then in full control of the map as it can change, add and
-delete toplets and assertions. This implies that that can become unconsolidated in this process. The
-method C<consolidate> reinstates consistency again.
+delete toplets and assertions. The map can become unconsolidated in this process. The method
+C<consolidate> reinstates consistency again.
 
 You can change these defaults by (a) providing an additional option to the constructor
 
@@ -296,7 +298,7 @@ or (b) by later using the accessor C<consistency> (see below).
 I<$tm> = new TM (...)
 
 The constructor will create an empty map, or, to be more exact, it will fill the map with the
-taxonomy from L<TM::PSI> which covers basic concepts such as I<topic> or I<associations>.
+taxonomy from L<TM::PSI> which covers basic Topic Maps concepts such as I<topic> or I<associations>.
 
 The constructor understands a number of key/value pair parameters:
 
@@ -304,21 +306,14 @@ The constructor understands a number of key/value pair parameters:
 
 =item C<baseuri> (default: C<tm://nirvana/>)
 
-Every item in the map has an unique local identifier (e.g. C<shoesize>). The C<baseuri> parameter
+Every toplet in the map has an unique local identifier (e.g. C<shoesize>). The C<baseuri> parameter
 controls how an absolute URI is built from this identifier.
 
 =item C<consistency> (default: [ Subject_based_Merging, Indicator_based_Merging ])
 
 This controls the consistency settings. They can be changed later with the C<consistency> method.
 
-=item C<psis>
-
-If you need to roll your own taxonomy to bootstrap with, you can pass in a structure which has
-exactly the same structure as that in L<TM::PSI>.
-
 =back
-
-TODO: phase out psis parameter (no one needs that really)
 
 =cut
 
@@ -384,8 +379,8 @@ sub DESTROY {}                                                                  
 
 I<$bu> = I<$tm>->baseuri
 
-This methods retrieves/sets the base URI component of the map. This is a read-only method. The base
-URI is B<always> defined.
+This methods retrieves the base URI component of the map. This is a read-only method. The base URI
+is B<always> defined.
 
 =cut
 
@@ -404,9 +399,8 @@ I<$tm>->consistency (I<@list_of_consistency_constants>)
 
 This method provides read/write access to the consistency settings.
 
-If no parameters are provided, then the current list of consistency settings is returned.  If
-parameters are provided, that list must consist of the constants defined above (see
-L</Consistency>).
+If no parameters are provided, then the current list of consistency settings is returned. If
+parameters are provided, that list must consist of the constants defined under L</Consistency>.
 
 B<NOTE>: Changing the consistency does B<NOT> automatically trigger C<consolidate>.
 
@@ -424,7 +418,7 @@ sub consistency {
 
 =item B<last_mod>
 
-Returns the UNIX date of last modifying the map content. This comes as a L<Time::HiRes> time.
+Returns the L<Time::HiRes> date of last time the map has been modified (content-wise).
 
 =cut
 
@@ -666,8 +660,8 @@ B<not> touched (or re-generated) in any way and that any shorthands (without a b
 remain valid when using C<tids>. Secondly, LIDs in the added map will be attempted to blend into
 B<this> map by changing simply their prefix. If that newly generated LID is already taken by
 something in B<this> map, then the original LID will be used. That allows many added LIDs be used
-together with C<tids> without change in code. Of course, the only reliable way to reach a topic is a
-subject locator or an indicator.
+together with C<tids> without (much) change in code. Of course, the only reliable way to reach a
+topic is a subject locator or an indicator. This is all about convenience.
 
 B<NOTE>: This procedure implies that some assertions are recomputed, so that also their LID will
 change!
@@ -747,38 +741,38 @@ I<$diff> = I<$new_tm>->diff (I<$old_tm>)
 I<$diff> = TM::diff (I<$new_tm>, I<$old_tm>)
 
 I<$diff> = TM::diff (I<$new_tm>, I<$old_tm>, 
-                     {consistency => [TM->Subject_based_Merging], 
+                     {consistency => \ @list_of_consistency_consts,
                       include_changes => 1})
 
 C<diff> compares two topic maps and returns their differences as a hash reference. While it works on
-any two maps, it is most useful when one map (the I<old map>) is modified into a I<new map>.
+any two maps, it is most useful after one map (the I<old map>) is modified into a I<new map>.
 
 If C<diff> is used in OO-style, the current map is interpreted as the I<new> map and the map in the
 arguments as I<the old one>.
 
 By default, the toplet and assertion identifiers for any changes are returned; the option
-C<include_changes> causes the return of the actual toplets and assertions themselves. The option
-makes C<diff>'s output more self-contained: with this option enabled, one can fully (re)create the
-new map from the old one using the diff (or vice versa).
+C<include_changes> causes the return of the actual toplets and assertions themselves. This option
+makes C<diff>'s output more self-contained: enabled, one can fully (re)create the new map from the
+old one using the diff (or vice versa).
 
 The C<consistency> option uses the same format as the TM constructor (see L</Constructor>) and
-describes how corresponding toplets in the two maps are to be identified.  Toplets with the same ids
-are always considered equal. If I<subject based consistency> is active, toplets with the same I<subject
-locator> are considered equal (overriding the topic identities).  If I<indicator based consistency> is
-active, toplets with a matching I<subject indicator> are considered equal (overriding the previous
-identities).
+describes how corresponding toplets in the two maps are to be identified.  Toplets with the same
+internal ids are always considered equal. If I<subject based consistency> is active, toplets with
+the same I<subject locator> are considered equal (overriding the topic identities).  If I<indicator
+based consistency> is active, toplets with a matching I<subject indicator> are considered equal
+(overriding the previous identities).
 
-Note that this overriding of previous conditions for identity is necessary to keep the equality
-relationship unique and one-to-one.  As an example, consider the following scenario: a toplet I<a> in
-the old map is split into multiple new toplets I<a> and I<b> in the new map. If I<a> had a locator or
-identifier that is moved to I<b> (and if consistency options were active), then the identity detector
-will consider I<b> to be equal to I<a>, and B<not> I<a> in the new map to correspond to I<a> in the
-old map.  However, this will never lead to loss of information: I<a> in the new map is flagged as
-completely new toplet.
+B<NOTE>: This overriding of previous conditions for identity is necessary to keep the equality
+relationship unique and one-to-one.  As an example, consider the following scenario: a toplet I<a>
+in the old map is split into multiple new toplets I<a> and I<b> in the new map. If I<a> had a
+locator or identifier that is moved to I<b> (and if consistency options were active), then the
+identity detector will consider I<b> to be equal to I<a>, and B<not> I<a> in the new map to
+correspond to I<a> in the old map.  However, this will never lead to loss of information: I<a> in
+the new map is flagged as completely new toplet.
 
-The differences between old and new map are returned beneath the keys I<plus>, I<minus>,
+The differences between old and new map are returned underneath the keys I<plus>, I<minus>,
 I<identities> and I<modified>. If C<include_changes> is on, the extra keys I<plus_midlets>,
-I<minus_midlets> and I<assertions> are populated. The values of all these keys are hashes
+I<minus_midlets> and I<assertions> are populated. The values of all these keys are hash references
 themselves.
 
 =over
@@ -789,9 +783,10 @@ The C<plus> and C<minus> hashes list new or removed toplets, respectively (with 
 keys).  For each toplet, the value of the hash is an array of associated assertion ids. The array is
 empty but defined if there are no associated assertions.
 
-For 'normal' toplets the attached assertions are the usual ones (names, occurrences) and
-class-instance relationships (attached to the instance toplet).  For associations, the assertions
-are attached to the I<type> toplet.
+For toplets the attached assertions are the usual ones (names, occurrences) and class-instance
+relationships (attached to the instance toplet).
+
+For associations, the assertions are attached to the I<type> toplet.
 
 =item I<identities>
 
@@ -1087,7 +1082,7 @@ sub diff {
 
 =pod
 
-=item B<melt>
+=item B<melt> (DEPRECATED)
 
 I<$tm>->melt (I<$tm2>)
 
@@ -1122,6 +1117,9 @@ each toplet has a LID which points to a toplet with the same address
 =back
 
 It returns a string with a message or C<undef> if everything seems fine.
+
+TODO: add test whether all variant entries have a proper LID (and toplet)
+
 
 =cut
 
@@ -1163,6 +1161,7 @@ represented by an array (struct) with the following fields:
 =cut
 
 struct 'Toplet' => [
+    lid         => '$',
     saddr       => '$',
     sinds       => '$',
 ];
@@ -1171,6 +1170,11 @@ struct 'Toplet' => [
 
 =over
 
+=item C<lid> (index: C<LID>)
+
+The internal identifier. Mostly it repeats the key in the toplet hash, but also aliased identifiers
+may exist.
+
 =item C<saddr> (index: C<ADDRESS>)
 
 It contains the B<subject locator> (address) URI, if known. Otherwise C<undef>.
@@ -1178,18 +1182,27 @@ It contains the B<subject locator> (address) URI, if known. Otherwise C<undef>.
 =item C<sinds> (index: C<INDICATORS>)
 
 This is a reference to a list containing B<subject identifiers> (indicators). The list can be empty,
-no duplicate removal is attempted.
+no duplicate removal is attempted at this stage.
 
 =back
+
+You can create this structure manually, but mostly you would leave it to C<internalize> to do the
+work.
 
 Example:
 
    # dogmatic way to produce it
-   my $to = Toplet->new (saddr => 'http://subject-address.com/',
+   my $to = Toplet->new (lid   => $baseuri . 'my-lovely-cat',
+                         saddr => 'http://subject-address.com/',
                          sinds => []);
 
    # also good and well
-   my $to = [ 'http://subject-address.com/', [] ];
+   my $to = [ $baseuri . 'my-lovely-cat', 
+              'http://subject-address.com/',
+               [] ];
+
+   # better
+   my $to = $tm->internalize ('my-lovely-cat' => 'http://subject-address.com/');
 
 To access the individual fields, you can either use the struct accessors C<saddr> and C<sinds>, or
 use the constants defined above for indices into the array:
@@ -1206,7 +1219,7 @@ use constant {
 
 Example:
 
-   warn "indicators: ", join (", ", @{$to->saddr});
+   warn "indicators: ", join (", ", @{$to->sinds});
 
    warn "locator:    ", $to->[TM->ADDRESS];
 
@@ -1235,10 +1248,13 @@ The following cases are covered:
 =item C<ID =E<gt> undef>
 
 If the ID is already an absolute URI and contains the C<baseuri> of the map as prefix, then this URI
-is used. If the ID is some other URI, then a toplet with that URI as subject locator is searched in
-the map. If such a toplet already exists, then nothing special needs to happen.  If no such toplet
-existed, a new URI, based on the C<baseuri> and a random number will be created and the original URI
-is used as subject address.
+is used as internal toplet identifier. If the ID is some other URI, then a toplet with that URI as
+subject locator is searched in the map. If such a toplet already exists, then nothing special needs
+to happen.  If no such toplet existed, a new URI, based on the C<baseuri> and a random number will
+be created for the internal identifier and the original URI is used as subject address.
+
+B<NOTE>: Using C<URI =E<gt> URI> implies that you use two different URIs as subject addresses. This
+will result in an error.
 
 =item C<ID =E<gt> URI>
 
@@ -1246,22 +1262,21 @@ Like above, only that the URI is directly interpreted as subject address.
 
 =item C<ID =E<gt> \ URI> (reference to string)
 
-Like above, only that the URI is used as another subject identifier. If the toplet already existed,
+Like above, only that the URI is interpreted as another subject identifier. If the toplet already existed,
 then this subject identifier is simply added. Duplicates are suppressed (since v1.31).
 
 =item C<undef =E<gt> URI>
 
-Like above, only that the internal identifier has to be created if there is no toplet with the URI
+Like above, only that the internal identifier is auto-created if there is no toplet with the URI
 as subject address.
 
 =item C<undef =E<gt> \ URI>
 
-Like above, only that the internal identifier has to be (maybe) created and the URI us used as
-subject identifier.
+Like above, only that the URI us used as subject identifier.
 
 =item C<undef =E<gt> undef>
 
-A topic with a generated ID will be inserted. Not sure what this is good for.
+A toplet with an auto-generated ID will be inserted.
 
 =back
 
@@ -1372,16 +1387,16 @@ I<@mids> = I<$tm>->toplets (I<@list_of_ids>)
 
 I<@mids> = I<$tm>->toplets (I<$selection_spec>)
 
-This function returns toplet id(s) from the map.
+This function returns toplet structures from the map. B<NOTE>: This has changed from v 1.13. Before
+you got ids.
 
-If no parameter is provided, all I<things> are returned. This includes really everything also
-infrastructure toplets.
-
-If an explicit list is provided as parameter, the only exciting thing which will happen is that
-these IDs are absolutized.
+If no parameter is provided, all toplets are returned. This includes really everything also
+infrastructure toplets. If an explicit list is provided as parameter, then all toplets with these
+identifiers are returned.
 
 If a search specification is used, it has to be passed in as string reference. That string contains
-the selection specification using the following simple language:
+the selection specification using the following simple language (curly brackets mean repetition,
+round bracket grouping, vertical bar alternatives):
 
     specification -> { ( '+' | '-' ) group }
 
@@ -1482,22 +1497,22 @@ returned if no such can be constructed. Can be used in scalar and list context.
 
 =item *
 
-If the passed in identifier is a relative URI, so it is made absolute by prefixing it with the map
+If the passed-in identifier is a relative URI, so it is made absolute by prefixing it with the map
 C<baseuri> and then we look for a toplet with that internal identifier.
 
 =item *
 
-If the passed in identifier is an absolute URI, where the C<baseuri> is a prefix, then that URI will
+If the passed-in identifier is an absolute URI, where the C<baseuri> is a prefix, then that URI will
 be used as internal identifier to look for a toplet.
 
 =item *
 
-If the passed in identifier is an absolute URI, where the C<baseuri> is B<NOT> a prefix, then that
+If the passed-in identifier is an absolute URI, where the C<baseuri> is B<NOT> a prefix, then that
 URI will be used as subject locator and such a toplet will be looked for.
 
 =item *
 
-If the passed in identifier is a reference to an absolute URI, then that URI will be used as subject
+If the passed-in identifier is a reference to an absolute URI, then that URI will be used as subject
 identifier and such a toplet will be looked for.
 
 =back
@@ -1555,8 +1570,8 @@ sub tids {
 
 I<$tm>->externalize (I<$some_id>, ...)
 
-This function simply deletes the toplet entry for the given internal identifier(s). See C<tids> to
-find these. The function returns all deleted toplet entries.
+This function simply deletes the toplet entry for the given internal identifier(s). The function
+returns all deleted toplet entries.
 
 B<NOTE>: Assertions in which this topic is involved will B<not> be removed. Use C<consolidate> to
 clean up all assertion where non-existing toplets still exist.
@@ -1589,7 +1604,7 @@ struct 'Assertion' => [
     lid         => '$',
     scope       => '$',
     type        => '$',
-    kind        => '$', # argh, redundant, but very useful
+    kind        => '$', # redundant, but very useful
     roles       => '$',
     players     => '$',
     canon       => '$',
@@ -1613,8 +1628,8 @@ Assertions consist of the following components:
 
 =item I<lid> (index C<LID>):
 
-Every assertion is also a thing in the map, so it has an identifier. It is a unique identifier
-generated from a canonicalized form of the assertion itself.
+Every assertion has an identifier. It is a unique identifier generated from a canonicalized form of
+the assertion itself.
 
 =item I<scope> (index: C<SCOPE>)
 
@@ -1694,18 +1709,52 @@ Example:
    warn $a->scope . " is the same as " . $a->[TM->SCOPE];
 
    # create a name
+   use TM::Literal;
    $n = Assertion->new (kind    => TM->NAME,
                         type    => 'name',
                         scope   => 'us', 
                         roles   => [ 'thing', 'value' ],
-                        players => [ 'rumsti', new TM::Literal ('AAA') ])
+                        players => [ 'rumsti', 
+                                     new TM::Literal ('AAA') ]);
 
    # create an occurrence
+   use TM::Literal;
    $n = Assertion->new (kind    => TM->OCC,
                         type    => 'occurrence',
                         scope   => 'us',
                         roles   => [ 'thing', 'value' ],
-                        players => [ 'rumsti', new TM::Literal ('http://whatever/') ])
+                        players => [ 'rumsti', 
+                                     new TM::Literal ('http://whatever/') ]);
+
+=head2 Special Assertions
+
+This package adopts the following conventions to store certain assertions:
+
+=over
+
+=item C<is-subclass-of>
+
+Associations of this type should have one role C<subclass> and another C<superclass>. The scope
+should always be C<us>.
+
+=item C<isa>
+
+Associations of this type should have one role C<instance> and another C<class>. The scope should
+always be C<us>.
+
+=item C<NAME>
+
+Assertions for names should have the C<KIND> component set to it and use the C<TYPE> component to
+store the name type. The two roles to use are C<value> for the value and C<thing> for the toplet
+carrying the name.
+
+=item C<OCC>
+
+Assertions for occurrences should have the C<KIND> component set to it and use the C<TYPE> component
+to store the occurrence type. The two roles to use are C<value> for the value and C<thing> for the
+toplet carrying the name.
+
+=back
 
 =head2 Methods
 
@@ -1713,24 +1762,33 @@ Example:
 
 =item B<assert>
 
-I<$tm>->assert (I<@list-of-assertions>)
+I<@as> = I<$tm>->assert (I<@list-of-assertions>)
 
 This method takes a list of assertions, canonicalizes them and then injects them into the map. If
 one of the newly added assertions already existed in the map, it will be ignored.
 
-In this process, all assertions will be completed (if fields are missing). If an assertion does not
-have a type, it will default to C<$TM::PSI::THING>. If an assertion does not have a scope, it
-defaults to C<$TM::PSI::US>. Any assertion not having an LID will get one.
+In this process, all assertions will be completed (if fields are missing). 
+
+=over
+
+=item If an assertion does not have a type, it will default to C<$TM::PSI::THING>.
+
+=item If an assertion does not have a scope, it defaults to C<$TM::PSI::US>.
+
+=back
 
 Then the assertion will be canonicalized (unless it already was). This implies that
-non-canonicalized assertions will be modified, in that the role/player lists change.
+non-canonicalized assertions will be modified, in that the role/player lists change.  Any assertion
+not having an LID will get one.
 
-The method returns a list of all asserted assertions (sic).
+The method returns a list of all asserted assertions.
 
 Example:
 
   my $a = Assertion->new (type => 'rumsti');
   $tm->assert ($a);
+
+B<NOTE>: Maybe the type will default to I<association> in the future.
 
 =cut
 
@@ -1796,7 +1854,8 @@ sub retrieve {
 I<@assertions> = I<$tm>->asserts (I<$selection_spec>)
 
 If a search specification is used, it has to be passed in as string reference. That string contains
-the selection specification using the following simple language:
+the selection specification using the following simple language (curly brackets mean repetition,
+round bracket grouping, vertical bar alternatives):
 
     specification -> { ( '+' | '-' ) group }
 
@@ -1911,8 +1970,8 @@ I<$tm>->retract (I<@list_of_assertion_ids>)
 This methods expects a list of assertion IDs and will remove the assertions from the map. If an ID
 is bogus, it will be ignored.
 
-Only these particular assertions will be deleted. Any toplets mentioned in these assertions will
-remain. Use C<consolidate> to remove unnecessary toplets.
+B<NOTE>: Only these particular assertions will be deleted. Any toplets mentioned in these assertions
+will remain. Use C<consolidate> to remove unnecessary toplets.
 
 =cut
 
@@ -1969,7 +2028,8 @@ Example:
 
 Any combination of assertion components can be used, all are optional, with the only constraint that
 the number of roles must match that for the players. All involved IDs should be absolutized before
-matching.
+matching. If you use C<undef> for a role or a player, then this is interpreted as I<dont-care>
+(wildcard). 
 
 =item Specialized Search
 
@@ -1980,6 +2040,8 @@ listed in L<TM::Axes>.
 
 B<NOTE>: Some combinations will be very fast, while others quite slow. If you experience
 problems, then it might be time to think about indexing (see L<TM::Index>).
+
+B<NOTE>: For the assertion type and the role subclassing is honored.
 
 =cut
 
@@ -2023,7 +2085,7 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are subclasses of a given toplet',
-			    params => { 'type' => 'which toplet should be the superclass', subclass => '1'}
+			    params => { 'type' => 'is-subclass-of', subclass => 'which toplet should be the superclass'}
 			},
 			
 			'superclass.type' => {
@@ -2038,7 +2100,7 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are superclasses of a given toplet',
-			    params => { 'type' => 'which toplet should be the subclass', superclass => '1'}
+			    params => { 'type' => 'is-subclass-of', superclass => 'which toplet should be the subclass'}
 			},
 
 			'class.type' => {
@@ -2053,7 +2115,7 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are instances of a given toplet',
-			    params => { type => 'which toplet should be the class', class => '1'}
+			    params => { type => 'isa', class => 'which toplet should be the class'}
 			},
 
 			'instance.type' => {
@@ -2068,7 +2130,7 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are classes of a given toplet',
-			    params => { type => 'which toplet should be the instance', instance => '1'}
+			    params => { type => 'isa', instance => 'which toplet should be the instance'}
 			},
 #--
 			'char.irole' => {
@@ -2289,7 +2351,7 @@ sub _allinone {
     my $exists   = shift;
     my $template = Assertion->new (@_);                              # we create an assertion on the fly
 #warn "allinone ".Dumper $template;
-#			   $self->absolutize   ($template);  
+    $self->absolutize   ($template);  
 #warn "allinone2".Dumper $template;
     $self->canonicalize ($template);                                # of course, need to be canonicalized
 #warn "allinone3".Dumper $template;
@@ -2299,22 +2361,27 @@ sub _allinone {
   ASSERTION:
     foreach my $m (values %{$self->{assertions}}) {                 # arbitrary AsTMa! queries TBD, can be faster as well
 	
-	next if defined $template->[KIND]  && $m->[KIND]  ne $template->[KIND];         # does kind match?
+	next if defined $template->[KIND]  &&                       # is kind defined
+                $m->[KIND]  ne $template->[KIND];                   #    and does it match?
 #warn "after kind";
-	next if defined $template->[SCOPE] && $m->[SCOPE] ne $template->[SCOPE];        # does scope match?
+	next if defined $template->[SCOPE] && 
+                $m->[SCOPE] ne $self->tids ($template->[SCOPE]);    # does scope match?
 #warn "after scope";
-	next if defined $template->[TYPE]  && !$self->is_subclass ($m->[TYPE], $template->[TYPE]);         # does type match?
+	next if defined $template->[TYPE]  &&                       
+                !$self->is_subclass ($m->[TYPE], $self->tids ($template->[TYPE]));         # does type match (including subclassing)?
 #warn "after type";
 			       
 	my ($rm, $rc) = ($m->[ROLES],   $template->[ROLES]);
 	push @mads, $m and next ASSERTION             if ! @$rc;     # match ok, if we have no roles
 #warn "after push roles";
-	next if @$rm != @$rc;                                        # quick check: roles must be of equal length
+	next ASSERTION if @$rm != @$rc;                              # quick check: roles must be of equal length
 #warn "after roles";
 	my ($pm, $pc) = ($m->[PLAYERS], $template->[PLAYERS]);
 	push @mads, $m and next ASSERTION             if ! @$pc;     # match ok, if we have no players
 	next if @$pm != @$pc;                                        # quick check: roles and players must be of equal length
-#warn "after players";
+#warn "after players equal length ".Dumper ($pm, $pc);
+
+#######	$pm = [ $self->tids (@$pm) ];                                
 	for (my $i = 0; $i < @{$rm}; $i++) {                         # order is canonicalized, would not want to test all permutations
 #warn "before role tests : is $rm->[$i] subclass of $rc->[$i]?";
 	    next ASSERTION if defined $rc->[$i] && !$self->is_subclass ($rm->[$i], $rc->[$i]);              # go to next assertion if that does not match
@@ -2550,7 +2617,7 @@ sub is_x_role {
 
 I<@role_ids> = get_roles (I<$tm>, I<$assertion>, I<$player>)
 
-This function returns a list of roles a particular player plays in a given assertion
+This function returns a list of roles a particular player plays in a given assertion.
 
 =cut
 
@@ -2698,13 +2765,12 @@ sub mklabel {
 
 =head1 TAXONOMICS AND SUBSUMPTION
 
-The following methods provide useful basic, ontological functionality around subclassing (also
-transitive) between classes and instance/type relationships.
+The following methods provide useful basic, ontological functionality around transitive subclassing
+between classes and instance/type relationships.
 
-Deriving classes may want to consider to overload/redefine these methods better suitable for their
-representation of the a map. Saying this, the methods below are not optimized for speed.
+B<NOTE>: Everything is a subclass of C<thing> (changed in v1.35).
 
-B<NOTE>: There are NO subclasses of the C<thing>. But everything is an instance of C<thing>.
+B<NOTE>: Everything is an instance of C<thing>.
 
 B<NOTE>: See L<TM::PSI> for predefined things.
 
@@ -2736,11 +2802,11 @@ sub is_subclass {
 	('isa', 'us', 'thing', 'is-subclass-of', 'subclass', 'superclass', 'instance', 'class');
 
 #warn "is_subclass?: class $class   super $super , thing $THING, $SUBCLASSES, $SUPERCLASS";
-    return 1 if $super eq $THING;                                            # everything is a topic
+    return 1 if $super eq $THING;                                            # everything subclasses thing
 # but not if the class is one of the predefined things, yes, there is a method to this madness
     return 0 if $class eq $ISA;
     return 0 if $class eq $US;
-    return 0 if $class eq $THING;
+    return 0 if $class eq $THING;                                            # thing would only subclass itself and that is covered above
     return 0 if $class eq $SUBCLASSES;
     return 0 if $class eq $SUBCLASS;
     return 0 if $class eq $SUPERCLASS;
@@ -2770,7 +2836,7 @@ sub is_subclass {
 I<$bool> = I<$tm>->is_a (I<$something_lid>, I<$class_lid>)
 
 This method returns C<1> if the thing referenced by the first parameter is an instance of the class
-referenced by the second. The method honors transitive subclassing and B<everything> is a C<thing>.
+referenced by the second. The method honors transitive subclassing.
 
 =cut
 
@@ -2811,7 +2877,7 @@ I<@lids> = I<$tm>->subclasses  (I<$lid>)
 
 I<@lids> = I<$tm>->subclassesT (I<$lid>)
 
-C<subclasses> returns all B<direct> subclasses of the thing identified by C<$lid>. If the thing does
+C<subclasses> returns all B<direct> subclasses of the toplet identified by C<$lid>. If the toplet does
 not exist, the list will be empty. C<subclassesT> is a variant which honors the transitive
 subclassing (so if A is a subclass of B and B is a subclass of C, then A is also a subclass of C).
 
@@ -2842,8 +2908,8 @@ I<@lids> = I<$tm>->superclasses  (I<$lid>)
 
 I<@lids> = I<$tm>->superclassesT (I<$lid>)
 
-The method C<superclasses> returns all direct superclasses of the thing identified by C<$lid>. If
-the thing does not exist, the list will be empty. C<superclassesT> is a variant which honors
+The method C<superclasses> returns all direct superclasses of the toplet identified by C<$lid>. If
+the toplet does not exist, the list will be empty. C<superclassesT> is a variant which honors
 transitive subclassing.
 
 =cut
@@ -2872,7 +2938,7 @@ I<@lids> = I<$tm>->types  (I<$lid>)
 
 I<@lids> = I<$tm>->typesT (I<$lid>)
 
-The method C<types> returns all direct classes of the thing identified by C<$lid>. If the thing does
+The method C<types> returns all direct classes of the toplet identified by C<$lid>. If the toplet does
 not exist, the list will be empty. C<typesT> is a variant which honors transitive subclassing (so if
 I<a> is an instance of type I<A> and I<A> is a subclass of I<B>, then I<a> is also an instance of
 I<B>).
@@ -2907,7 +2973,7 @@ I<@lids> = I<$tm>->instances  (I<$lid>)
 I<@lids> = I<$tm>->instancesT (I<$lid>)
 
 These methods return the direct (C<instances>) and also indirect (C<instancesT>) instances of the
-thing identified by C<$lid>.
+toplet identified by C<$lid>.
 
 =cut
 
@@ -2941,13 +3007,13 @@ sub instancesT {
 
 Quite often one needs to walk through a list of things to determine whether they are instances (or
 types, subtypes or supertypes) of some concept. This list of functions lets you do that: you pass in
-a list and the function behaves as filter.
+a list (reference) and the function behaves as filter, returning a list reference.
 
 =over
 
 =item B<are_instances>
 
-I<@ids> = I<$tm>->are_instances (I<$class_id>, I<@list_of_ids>)
+I<@id> = I<$tm>->are_instances (I<$class_id>, I<@list_of_ids>)
 
 Returns all those ids where the topic is an instance of the class provided.
 
@@ -2960,7 +3026,7 @@ sub are_instances {
     my ($THING, $ISA, $CLASS) = ('thing', 'isa', 'class');
 
     my @rs;
-    foreach my $thing (@{$_[0]}) {                                               # we work through all the things we got
+    foreach my $thing (@_) {                                                     # we work through all the things we got
 #warn "checking $thing";
 	push @rs, $thing and next                                                # we happily take one if
 	    if $class eq $THING and                                              #     is the class = 'thing' ? and
@@ -2980,7 +3046,7 @@ sub are_instances {
                            $self->match_forall (type => $ISA, instance => $thing));
         # nothing                                                                # otherwise we do not push
     }
-    return \@rs;
+    return @rs;
 }
 
 =pod
@@ -2994,7 +3060,8 @@ Returns all those ids where the topic is a type of the instance provided.
 =cut
 
 sub are_types {
-    $log->logdie ("not implemented function");
+    $log->logwarn ("# not implemented function");
+    return 0;
 }
 
 =pod
@@ -3008,7 +3075,8 @@ Returns all those ids where the topic is a supertype of the class provided.
 =cut
 
 sub are_supertypes {
-    $log->logdie ("not implemented function");
+    $log->logwarn ("# not implemented function");
+    return 0;
 }
 
 =pod
@@ -3022,7 +3090,8 @@ Returns all those ids where the topic is a subtype of the class provided.
 =cut
 
 sub are_subtypes {
-    $log->logdie ("not implemented function");
+    $log->logwarn ("# not implemented function");
+    return 0;
 }
 
 =pod
@@ -3043,7 +3112,7 @@ In the case that the handed-in assertion is internally reified in the map, this 
 the internal identifier of the reifying toplet. Or C<undef> if there is none.
 
 In the case that the handed-in URL is used as subject address of a toplet, this method will return
-the internal identifier of the externally reifying toplet. Or C<undef> if there is none.
+the internal identifier of the reifying toplet. Or C<undef> if there is none.
 
 =cut
 

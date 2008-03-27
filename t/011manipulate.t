@@ -241,20 +241,28 @@ use TM;
     ok ($tm->is_a  ('tm://nirvana/aaa',  'tm://nirvana/BBB'),   'is_a 5');
     ok ($tm->is_a  ('tm://nirvana/aaa',  'tm://nirvana/CCC'),   'is_a 6');
 
-    ok (eq_set ($tm->are_instances ('tm://nirvana/XXX', [ map { $_->[TM->LID] } $tm->toplets ]),
+    ok (eq_set ([ $tm->are_instances ('tm://nirvana/XXX', map { $_->[TM->LID] } $tm->toplets ) ],
 		[  'tm://nirvana/yyy',
 		   'tm://nirvana/xxx'  ]),                           'are_instance: XXX');
 
-    ok (eq_set ($tm->are_instances ('tm://nirvana/AAA', [ map { $_->[TM->LID] } $tm->toplets ]),
+    ok (eq_set ([ $tm->are_instances ('tm://nirvana/AAA', map { $_->[TM->LID] } $tm->toplets ) ],
 		[  'tm://nirvana/aaa',
 		   'tm://nirvana/yyy',
                    'tm://nirvana/xxx' ]),                            'are_instance: AAA');
 
-    ok (eq_set ($tm->are_instances ('tm://nirvana/BBB', [ map { $_->[TM->LID] } $tm->toplets ]),
+    ok (eq_set ([ $tm->are_instances ('tm://nirvana/BBB', map { $_->[TM->LID] } $tm->toplets ) ],
 		[  'tm://nirvana/aaa',
 		   'tm://nirvana/bbb',
 		   'tm://nirvana/yyy',
                    'tm://nirvana/xxx' ]),                            'are_instance: BBB');
+
+  TODO: {
+      local $TODO = "are_types, ....";
+      ok ($tm->are_types,      'filter: are types');
+      ok ($tm->are_supertypes, 'filter: are supertypes');
+      ok ($tm->are_subtypes,   'filter: are subtypes');
+  }
+
 
 
     ok ($tm->is_subclass ('tm://nirvana/AAA', 'thing'),              'subclass thing');

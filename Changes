@@ -2,6 +2,13 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.35  Do 27. Mär 18:52:36 CET 2008
+	- TM: more documentation fixes (rho)
+	- TM: constructor psis parameter now not any long official (rho)
+	! TM: everything is a subclass of 'thing' (rho, it was actually always the case)
+	- added examples directory
+	! TM: are_instances operates now on lists and not anymore on references (rho)
+
 1.34  Mo 24. Mär 10:50:05 CET 2008
 	- fixed: spurious error message in t/096 because of whacky tmp file creation (rho)
 	- fixed: deactivated speed test for indices (rho), TODO systematic test

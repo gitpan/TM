@@ -16,7 +16,7 @@ have been implemented specifically. These are listed below.
 
 =head1 SEARCH SPECIFICATIONS
 
-Automatically generated from TM (1.31)
+Automatically generated from TM (1.35)
 
 =over
 
@@ -84,15 +84,15 @@ return all assertions which are characteristics for some topic of a given value
 
 returns all assertions where there are instances of a given toplet
 
-          'class' => '1',
-          'type' => 'which toplet should be the class'
+          'class' => 'which toplet should be the class',
+          'type' => 'isa'
 
 =item Code:instance.type
 
 returns all assertions where there are classes of a given toplet
 
-          'type' => 'which toplet should be the instance',
-          'instance' => '1'
+          'type' => 'isa',
+          'instance' => 'which toplet should be the instance'
 
 =item Code:iplayer
 
@@ -151,15 +151,15 @@ returns all associations (so no names or occurrences)
 
 returns all assertions where there are subclasses of a given toplet
 
-          'subclass' => '1',
-          'type' => 'which toplet should be the superclass'
+          'subclass' => 'which toplet should be the superclass',
+          'type' => 'is-subclass-of'
 
 =item Code:superclass.type
 
 returns all assertions where there are superclasses of a given toplet
 
-          'superclass' => '1',
-          'type' => 'which toplet should be the subclass'
+          'superclass' => 'which toplet should be the subclass',
+          'type' => 'is-subclass-of'
 
 =item Code:type
 

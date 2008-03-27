@@ -87,4 +87,8 @@ lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm
 bin/tm
 support/mkaxespod.pl
+examples/01_low_level.pl
+examples/02_astma.pl
+examples/03_mldbm.pl
+examples/04_mldbm2.pl
 

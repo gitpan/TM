@@ -223,7 +223,7 @@ in: bla has oc: http:www
 
 #warn Dumper $ms;
 
-  is (scalar $ms->match (TM->FORALL,                                   irole => 'thing',    iplayer => 'tm:aaa' ), 4, 'chars/assoc for aaa');
+  is (scalar $ms->match (TM->FORALL,                                irole => 'thing',    iplayer => 'tm:aaa' ), 4, 'chars/assoc for aaa');
   is (scalar $ms->match (TM->FORALL, type => 'characteristic',      irole => 'thing',    iplayer => 'tm:aaa' ), 4, 'chars for aaa');
   is (scalar $ms->match (TM->FORALL, type => 'occurrence',          irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'occurrences for aaa');
   is (scalar $ms->match (TM->FORALL, type => 'name',                irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'basenames for aaa');

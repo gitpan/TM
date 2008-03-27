@@ -2,7 +2,6 @@ package TM::Materialized::MLDBM;
 
 use TM;
 use base qw (TM);
-#use Class::Trait qw(TM::Synchronizable::MLDBM TM::Synchronizable TM::ResourceAble);
 use Class::Trait qw(TM::Synchronizable::MLDBM);
 
 =pod
