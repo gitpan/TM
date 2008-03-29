@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.35';
+our $VERSION  = '1.36';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -1057,8 +1057,16 @@ sub diff {
 	# (assertions are fine, their names always reflect their content uniquely)
 
 	my (%plusm,%minusm,%ass,$a);
-	map { $plusm{$_} =$newmap->toplet($_); $a=$newmap->retrieve($_) and $ass{$_}=$a; } (keys %plus);
-	map { $minusm{$_}=$oldmap->toplet($_); $a=$oldmap->retrieve($_) and $ass{$_}=$a; } (keys %minus);
+	map { $plusm{$_} = $newmap->toplet($_) } keys %plus;
+	map { $ass{ $_->[TM->LID] } = $_ }
+  	   map { $newmap->retrieve($_) }
+           map { @$_ }
+           values %plus;
+	map { $minusm{$_} = $oldmap->toplet($_) } keys %minus;
+	map { $ass{ $_->[TM->LID] } = $_ }
+  	   map { $oldmap->retrieve($_) }
+           map { @$_ }
+           values %minus;
 
 	for my $k (keys %modified)
 	{

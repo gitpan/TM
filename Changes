@@ -2,6 +2,10 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.36  Sa 29. Mär 15:58:42 CET 2008
+	- README: overhaul
+	- TM: diff: added missing differential assertions (fix, rho), TODO: this all needs more test cases
+
 1.35  Do 27. Mär 18:52:36 CET 2008
 	- TM: more documentation fixes (rho)
 	- TM: constructor psis parameter now not any long official (rho)

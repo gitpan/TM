@@ -7,17 +7,20 @@ This base package contains Perl extensions for Topic Maps
 With it you can
 
   - manipulate topic maps via an API
+  - navigate through TMs via a TMDM-like API (almost TMAPI)
   - read AsTMa 1.x and 2.x resources
+  - create virtualized topic maps
+  - use a topic map backend store
+  - add drivers for your own native store
+  - add indices to speed up things
+  - query topic maps via TMQL (query language, in the working)
+  - a command line driven workbench (tm)
+  - and more
 
 Future releases will add (please bear with me until I have this all
 consolidated and documented):
 
   - read/write XTM files (TODO)
-  - read LTM resources
-  - query topic maps via TMQL (query language, in the working)
-  - create virtual topic maps
-  - use a topic map backend store
-  - a command line driven workbench (tm) (TODO).
 
 Prerequisites
 -------------
@@ -48,6 +51,8 @@ Documentation
 You can learn about Topic Maps in general at
 
   http://www.isotopicmaps.org/  (standards)
+  http://kill.devc.at/taxonomy/term/22 (my blog)
+
   http://topicmaps.bond.edu.au/ (tutorials, other stuff)
   http://easytopicmaps.com/     (tutorials, lotta links and hints)
 
@@ -58,12 +63,12 @@ Support
 
 You can either
 
-  - mail to the author (rho@bigpond.net.au), or
+  - mail to the author (rho@devc.at), or
   - discuss this in one of the topicmap mailing lists, or
   - find me in the freenode #topicmaps IRC channel (clever choice), or
   - create a bug entry in rt.cpan.org (preferred)
 
-Copyright 200[1-6] Robert Barta, rho@bigpond.net.au
+Copyright 200[1-8] Robert Barta, rho@devc.at
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

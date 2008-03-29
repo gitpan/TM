@@ -398,7 +398,7 @@ TM::DM - Topic Maps, read-only TMDM layer
    my @os = $adam->occurrence;
 
    # similar for assocs
-   my @as = $topicmmap->associations (iplayer => 'adam');
+   my @as = $topicmap->associations (iplayer => 'adam');
    $as[0]->type;
    $as[0]->parent;
    my @rs = $as[0]->roles;

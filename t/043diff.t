@@ -217,7 +217,7 @@ ok(exists $d1->{plus_midlets} && exists $d1->{minus_midlets} && keys %{$d1->{plu
 
 ok(exists $d1->{plus_midlets}->{$base."t3"},"new midlet is included in changes");
 ok(exists $d1->{minus_midlets}->{$base."t2"},"lost midlet is included in changes");
-is(2,keys %{$d1->{assertions}},"only modified assertions are included");
+is(4,keys %{$d1->{assertions}},"only modified assertions are included");
 
 
 # assoc: new assoc of same/different type, removed sole assoc of a type, removed assoc but not type
