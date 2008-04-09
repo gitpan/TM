@@ -29,7 +29,8 @@ TM:
 
 	- differences between two maps
 
-          $tm3 = $tm1->subtract ($tm2);
+	  more test cases
+	  does this work with assertions coming and going?
 
 	- equivalence of two maps
 
@@ -179,11 +180,6 @@ TM::Tree:
 	- test: works on virtual map?
 	- check: VERSION
 
-TM::Bulk
-	- to be readded
-	- add name resolution
-	- vortex (plus scoped)
-	- reorg as trait
 
 #-- mapsphere ------------------------------------------------------------------------------
 

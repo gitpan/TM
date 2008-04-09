@@ -57,6 +57,7 @@ www : www
 rumsti = http://rumsti.org/ramsti
 bn: Rumsti
 sin: http://rumsti.org/remsti
+sin: urn:x-whatever:remsti
 
 rimsti ~ http://rumsti.org/rimsti
 bn: Rimsti
@@ -1005,12 +1006,12 @@ bbb >> characteristics homepage >> atomify << atomify
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-http://something2 << atomify << characteristics homepage
+<http://something2> << atomify << characteristics homepage
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-http://something2 \ homepage
+<http://something2> \ homepage
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1034,6 +1035,7 @@ http://something2 \ homepage
 	   </input>
 	   <output type="list">
 "http://rumsti.org/remsti"
+"urn:x-whatever:remsti"
 	   </output>
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
@@ -1053,12 +1055,17 @@ http://something2 \ homepage
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://rumsti.org/remsti << indicators )
+( <http://rumsti.org/remsti> << indicators )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://rumsti.org/remsti ~ )
+( <http://rumsti.org/remsti> ~ )
+]]></code>
+	 </solution>
+	 <solution language="tmql" style="pe" operational="yes">
+	   <code><![CDATA[
+( http://rumsti.org/remsti )
 ]]></code>
 	 </solution>
        </query>
@@ -1072,12 +1079,12 @@ http://something2 \ homepage
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://does.not.exist/ << indicators )
+( <http://does.not.exist/> << indicators )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://does.not.exist/ ~ )
+( <http://does.not.exist/> ~ )
 ]]></code>
 	 </solution>
        </query>
@@ -1110,12 +1117,12 @@ http://something2 \ homepage
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://rumsti.org/ramsti << locators )
+( "http://rumsti.org/ramsti" << locators )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://rumsti.org/ramsti = )
+( "http://rumsti.org/ramsti" = )
 ]]></code>
 	 </solution>
        </query>
@@ -1129,12 +1136,12 @@ http://something2 \ homepage
 	 </interface>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://does.not.exist/ << locators )
+( "http://does.not.exist/" << locators )
 ]]></code>
 	 </solution>
 	 <solution language="tmql" style="pe" operational="yes">
 	   <code><![CDATA[
-( http://does.not.exist/ = )
+( "http://does.not.exist/" = )
 ]]></code>
 	 </solution>
        </query>

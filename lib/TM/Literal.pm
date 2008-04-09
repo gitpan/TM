@@ -71,7 +71,7 @@ our $grammar = q{
     literal                   : decimal                               { $return = new TM::Literal  ($item[1], TM::Literal->DECIMAL); }
                               | integer                               { $return = new TM::Literal  ($item[1], TM::Literal->INTEGER); }
                               | boolean                               { $return = new TM::Literal  ($item[1], TM::Literal->BOOLEAN); }
-                              | uri                                   { $return = new TM::Literal  ($item[1], TM::Literal->URI); }
+                              | wuri                                  { $return = new TM::Literal  ($item[1], TM::Literal->URI); }
                               | string
 # TODO | date
 
@@ -85,7 +85,9 @@ our $grammar = q{
 
     boolean                   : 'true' | 'false'
 
-    uri                       : /(\w+:[^\s)\]]+)/
+    wuri                      : '<' uri '>'                           { $item[2] }
+
+    uri                       : /(\w+:[^\"\s)\]\>]+)/
 # an option? the official pattern -> perldoc URI
 #                  uri : m|^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?|;
 

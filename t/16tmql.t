@@ -45,13 +45,13 @@ foreach my $testdb (map { $tests->{database}->{$_} } (
 #warn Dumper $tm; exit;
 
     foreach my $u (sort { $a->{qid} cmp $b->{qid} } @{$testdb->{'use-case'}}) {
-#	warn "testing ".$u->{qid};
+#	warn "testing '".$u->{qid} ."'";
 	next if         $u->{qid} =~ /^\*/;
-	next if $UC and $u->{qid} ne $UC;
+	next if (defined $UC and $u->{qid} ne $UC);
 #	next unless $u->{qid} =~ /^s/;
 	my $d = $u->{title} || "";
 	$d =~ s/\n//g;
-	
+
 	my $sol_ctr = 0;
 	foreach my $q (@{$u->{query}}) {
 	    
@@ -109,6 +109,7 @@ foreach my $testdb (map { $tests->{database}->{$_} } (
 #or (warn $_ and 0)
 					      or $_ =~ /\[([a-f0-9]{32})\]/        and $1
 					      or $_ =~ /"(http:.*)"/   and $_ = $1 and new TM::Literal ($_, 'xsd:anyURI')
+					      or $_ =~ /"(urn:.*)"/    and $_ = $1 and new TM::Literal ($_, 'xsd:anyURI')
 					      or $_ =~ /"(.*)"/   and $_ = $1      and new TM::Literal ($_, 'xsd:string')
 					      or $_ =~ /(\-?\d+(\.\d+))/           and new TM::Literal ($1, 'xsd:decimal')
 					      or $_ =~ /(\-?\d+)/                  and new TM::Literal ($1, 'xsd:integer')

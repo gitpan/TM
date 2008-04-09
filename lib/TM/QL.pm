@@ -303,18 +303,18 @@ our $grammar = q{
     constant                  : literal
                               | item_reference                        { $return = new PEti (tid => $item[1]); }
 
-    item_reference            : identifier
-
-#    item_reference            : prefix(?) identifier                  { $return = $item[1]->[0] ? $item[1]->[0] . $item[2] : $item[2]; }
+    item_reference            : uri                                   { $return = \ $item[1]; }
+                              | identifier
 
     identifier                : /([\w\#\_][\w\-\.]*)/
+                              | '*'                                   { $return = 'thing'; }
 
 
+#    item_reference            : prefix(?) identifier                  { $return = $item[1]->[0] ? $item[1]->[0] . $item[2] : $item[2]; }
 #    item_reference            : (/[=~]/)(?)  uri_or_qname             { $return = ($item[1]->[0] and $item[1]->[0] eq '~')
 #									    ? \ $item[2]              # a reference indicates, uhm, indication :-)
 #									    : $item[2];               # otherwise it is a subject locator
 #                                                                        }
-                              | '*'                                   { $return = 'thing'; }
 # TODO: as shorthand
 
     uri_or_qname              : prefix(?) identifier                  { $return = $item[1]->[0] ? $item[1]->[0] . $item[2] : $item[2]; }
@@ -458,7 +458,7 @@ my $macros = {
                                                                                => ' << atomify << characteristics ~~~item_reference_1~~~ ~~~navigation_op_1~~~',
 
 ## TODO
-##  q{_09_path_l0_expression  : '//' ~~~item_reference_1~~~ ~~~postfix_op_1~~~} => ' %_ // ~~~item_reference_1~~~ ~~~postfix_op_1~~~ ',
+##    q{_09_path_l0_expression  : '//' ~~~item_reference_1~~~ ~~~postfix_op_1~~~} => ' %_ // ~~~item_reference_1~~~ ~~~postfix_op_1~~~ ',
 
 # @@@, unfortunately this below will not work, because the current algorithm would try to swap then/else inside the constants
 #    q{_12_boolean_primitive   : 'forall' ~~~variable_associations_1~~~

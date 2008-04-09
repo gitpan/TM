@@ -1216,6 +1216,7 @@ sub _eval_val {
 ##@@@@@@@@
 	my $tm  =  _eval_var ($cs, '%_');
 	my $tid = $tm->tids ($va->tid) ;
+#warn "tid after $tid";
 	return $tid ? [ [ $tid ] ]                                       # by definition flattened
                     : [          ];                                      # very, very empty
 
