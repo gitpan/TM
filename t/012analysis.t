@@ -241,6 +241,14 @@ child: candrews
 
 candrews (halb-lustiger)
 
+(forgets)
+forgetter: candrews
+fact: everything
+
+(forgets)
+forgetter: everything
+fact: nothing
+
 (begets)
 parent: adam eve
 child: abel
@@ -306,6 +314,10 @@ child: noam
 # test begets | bigots
                   'candrews' => [ [ 'begets', 'bigots' ] ],
                   'imorriso' => (bless [ [ 'begets', 'bigots' ] ], '*'),
+
+                  'everything' => [ [ 'bigots' ], [ 'forgets' ] ],
+                  'nothing'    => [ [ 'bigots' ], [ 'forgets' ], [ 'forgets' ] ],
+                  'nothing'    => [ [ 'bigots' ], [ bless [ [ 'forgets' ] ],'*' ] ],
                 );
 
 
@@ -313,14 +325,10 @@ child: noam
       next if $p =~ /\*/;
       ok ($tm->is_path ([ 'adam' ], $paths{$p}, $p),  'stories which start bad, end bad '. Dumper $paths{$p});
    }
-exit;
-
 
 #warn Dumper $tm;
 
 }
-
-exit;
 
 { # statistics
     use TM;
@@ -331,8 +339,8 @@ exit;
     my $stats1 = $tm1->statistics;
 #warn Dumper $stats1;
 
-    is ($stats1->{'nr_maplets'},  8, 'nr_maplets');
-    is ($stats1->{'nr_midlets'},  scalar $tm1->midlets, 'nr_midlets');
+    is ($stats1->{'nr_asserts'},  8, 'nr_asserts');
+    is ($stats1->{'nr_toplets'},  scalar $tm1->toplets, 'nr_toplets');
     is ($stats1->{'nr_clusters'}, 15, 'nr_clusters');
 
     use TM::Materialized::AsTMa;
@@ -349,8 +357,8 @@ bbb is-a ccc
     my $stats2 = $tm2->statistics;
 #warn Dumper $stats;
 
-    is ($stats2->{'nr_maplets'},  $stats1->{'nr_maplets'} + 2,     'nr_maplets');
-    is ($stats2->{'nr_midlets'},  $stats1->{'nr_midlets'} + 3 + 2, 'nr_midlets');
+    is ($stats2->{'nr_asserts'},  $stats1->{'nr_asserts'} + 2,     'nr_asserts');
+    is ($stats2->{'nr_toplets'},  $stats1->{'nr_toplets'} + 3,     'nr_toplets');
     is ($stats2->{'nr_clusters'}, 15,                              'nr_clusters');
     
 }

@@ -23,9 +23,12 @@ TM::Graph - Topic Maps, trait for graph-like operations
   # find groups of topics connected
   print Dumper $tm->clusters;
 
-  print "friends of Mr. Cairo: ".Dumper [
-     $tm->frontier ('mr-cairo', [ [ 'foaf' ] ])
-  ];
+
+  # use association types to compute a hull
+  print "friends of Mr. Cairo: ".
+   Dumper [
+       $tm->frontier ([ $tm_>tid ('mr-cairo') ], [ [ $tm->tids ('foaf') ] ])
+   ];
 
   # see whether there is a link (direct
   print "I always knew it" 
@@ -118,14 +121,14 @@ sub clusters {
 I<@hull> = I<$tm>->frontier (I<\@start_lids>, I<$path_spec>)
 
 This method computes a I<qualified hull>, i.e. a list of all topics which are reachable from
-I<start_lids> via a path specified by I<path_spec>. The path specification is a (recursive) data
+I<@start_lids> via a path specified by I<$path_spec>. The path specification is a (recursive) data
 structure, describing sequences, alternatives and repetition (the C<*> operator), all encoded as
-lists of lists.
+lists of lists. The topics in that path specification are interpreted as assertion types.
 
 Example:
 
    # a single step: start knows ...
-   [             ]            # outer level: sequence (there is only one
+   [             ]            # outer level: sequence (there is only one)
      [ 'knows' ]              # inner level: alternatives (there is only one)
 
    # two subsequent steps: start knows ... isa ...
@@ -209,8 +212,10 @@ sub _frontier_step {
     my $vs = shift;                                                                 # what have we visited so far, hash ref
     my $s  = shift;                                                                 # the step
 
-    if (ref ($s)) {                                                                 # something more complex, can only be sequence
-	return _frontier_seq ($tm, $as, $vs, $s);
+    if (ref ($s) eq '*') {                                                          # something more complex, can only be sequence
+	return _frontier_star ($tm, $as, $vs, $s);
+    } elsif (ref ($s)) {                                                            # something more complex, can only be sequence
+	return _frontier_seq  ($tm, $as, $vs, $s);
     } else {                                                                        # atomic step
 	my @as = grep { $vs->{$_}->{$s}++ == 0 } @$as;                              # get rid of those where we already followed that axis
 	if ($s eq 'isa') {                                                          # instance of, easy
@@ -262,14 +267,14 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[7] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[78] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
 =cut
 
-our $VERSION  = 0.1;
+our $VERSION  = 0.2;
 our $REVISION = '$Id: Graph.pm,v 1.1 2007/07/28 16:40:31 rho Exp $';
 
 

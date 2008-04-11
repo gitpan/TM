@@ -91,4 +91,6 @@ examples/01_low_level.pl
 examples/02_astma.pl
 examples/03_mldbm.pl
 examples/04_mldbm2.pl
-
+examples/05_traits.pl
+examples/old_testament.atm
+examples/06_diff.pl
