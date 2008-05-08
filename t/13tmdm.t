@@ -278,6 +278,8 @@ eval {
     is (scalar $tm->topics,            scalar $atm->toplets, 'spec: empty, all topics there');
     is (scalar $tm->topics (\ '+all'), scalar $atm->toplets, 'spec: expl, all topics there');
 
+    ok (eq_set ([ map { $_->id } $tm->topics],
+		[ map { $_->[TM->LID] } $atm->toplets]), 'same identifiers');
 }
 
 __END__

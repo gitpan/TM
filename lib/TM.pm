@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.38';
+our $VERSION  = '1.39';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -2881,94 +2881,111 @@ sub is_a {
 
 =item B<subclasses>, B<subclassesT>
 
-I<@lids> = I<$tm>->subclasses  (I<$lid>)
+I<@lids> = I<$tm>->subclasses  (I<$lid>, ...)
 
-I<@lids> = I<$tm>->subclassesT (I<$lid>)
+I<@lids> = I<$tm>->subclassesT (I<$lid>, ...)
 
 C<subclasses> returns all B<direct> subclasses of the toplet identified by C<$lid>. If the toplet does
 not exist, the list will be empty. C<subclassesT> is a variant which honors the transitive
 subclassing (so if A is a subclass of B and B is a subclass of C, then A is also a subclass of C).
 
+Duplicates are suppressed.
+
 =cut
 
 sub subclasses {
     my $self = shift;
-    my $lid  = shift;
 
     my ($SUBCLASSES) = ('is-subclass-of');
-    return map { $_->[PLAYERS]->[0] } $self->match_forall (type => $SUBCLASSES, superclass => $lid);
+    my @sc = map { $_->[PLAYERS]->[0] }
+             map { $self->match_forall (type => $SUBCLASSES, superclass => $_) }
+             @_;
+    my %dup;
+    return map { $dup{$_}++ ? () : $_ } @sc;
 }
 
 sub subclassesT {
     my $self = shift;
-    my $lid  = shift;
 
-    my @sc = $self->subclasses ($lid);
+    my @sc = map { $self->subclasses ($_) } @_;
+    push @sc, @_, map { $self->subclassesT ($_) } @sc; # laziness equals recursion
     my %dup;
-    return map { $dup{$_}++ ? () : $_ } ($lid), (@sc), (map { $self->subclassesT ($_) } @sc);
+    return map { $dup{$_}++ ? () : $_ } @sc; 
 }
 
 =pod
 
 =item B<superclasses>, B<superclassesT>
 
-I<@lids> = I<$tm>->superclasses  (I<$lid>)
+I<@lids> = I<$tm>->superclasses  (I<$lid>, ...)
 
-I<@lids> = I<$tm>->superclassesT (I<$lid>)
+I<@lids> = I<$tm>->superclassesT (I<$lid>, ...)
 
 The method C<superclasses> returns all direct superclasses of the toplet identified by C<$lid>. If
 the toplet does not exist, the list will be empty. C<superclassesT> is a variant which honors
 transitive subclassing.
 
+Duplicates are suppressed.
+
 =cut
 
 sub superclasses {
     my $self = shift;
-    my $lid  = shift;
+
     my ($SUBCLASSES) = ('is-subclass-of');
-    return map { $_->[PLAYERS]->[1] } $self->match_forall (type => $SUBCLASSES, subclass => $lid);
+    my @sc = map { $_->[PLAYERS]->[1] }
+             map { $self->match_forall (type => $SUBCLASSES, subclass => $_) }
+             @_;
+    my %dup;
+    return map { $dup{$_}++ ? () : $_ } @sc;
 }
 
 sub superclassesT {
     my $self = shift;
-    my $lid  = shift;
 
-    my @sc = $self->superclasses ($lid);
+    my @sc = map { $self->superclasses ($_) } @_;
+    push @sc, @_, map { $self->superclassesT ($_) } @sc; # laziness equals recursion
     my %dup;
-    return map { $dup{$_}++ ? () : $_ } ($lid), (@sc), (map { $self->superclassesT ($_) } @sc); # laziness equals recursion
+    return map { $dup{$_}++ ? () : $_ } @sc; 
 }
 
 =pod
 
 =item B<types>, B<typesT>
 
-I<@lids> = I<$tm>->types  (I<$lid>)
+I<@lids> = I<$tm>->types  (I<$lid>, ...)
 
-I<@lids> = I<$tm>->typesT (I<$lid>)
+I<@lids> = I<$tm>->typesT (I<$lid>, ...)
 
 The method C<types> returns all direct classes of the toplet identified by C<$lid>. If the toplet does
 not exist, the list will be empty. C<typesT> is a variant which honors transitive subclassing (so if
 I<a> is an instance of type I<A> and I<A> is a subclass of I<B>, then I<a> is also an instance of
 I<B>).
 
+Duplicates will be suppressed.
+
 =cut
 
 sub types {
     my $self = shift;
-    my $lid  = shift;
-
-    if (my $a = $self->retrieve ($lid)) { return ($a->[TYPE]) };
-    my ($ISA) = ('isa');
-    return (map { $_->[PLAYERS]->[0] }  $self->match_forall (type => $ISA, instance => $lid));
+    my $ISA  = ('isa');
+    my $a;
+    my @types = map { ($a = $self->retrieve ($_))
+		      ? $a->[TYPE]
+		      : ( map { $_->[PLAYERS]->[0] }  $self->match_forall (type => $ISA, instance => $_) )
+		     }
+                @_;
+    my %dup;
+    return map { $dup{$_}++ ? () : $_ } @types;
 }
 
 sub typesT {
     my $self = shift;
-    my $lid  = shift;
 
-    my @sc = $self->types ($lid);
+    my @types = map { $self->types ($_) } @_;
+    push @types, map { $self->superclassesT ($_) } @types;
     my %dup;
-    return map { $dup{$_}++ ? () : $_ } (@sc), (map { $self->superclassesT ($_) } @sc);
+    return map { $dup{$_}++ ? () : $_ } @types;
 }
 
 
@@ -2976,35 +2993,41 @@ sub typesT {
 
 =item B<instances>, B<instancesT>
 
-I<@lids> = I<$tm>->instances  (I<$lid>)
+I<@lids> = I<$tm>->instances  (I<$lid>, ...)
 
-I<@lids> = I<$tm>->instancesT (I<$lid>)
+I<@lids> = I<$tm>->instancesT (I<$lid>, ...)
 
 These methods return the direct (C<instances>) and also indirect (C<instancesT>) instances of the
 toplet identified by C<$lid>.
+
+Duplicates are suppressed.
 
 =cut
 
 sub instances {
     my $self = shift;
-    my $lid  = shift;
 
-    warn Dumper [ caller ] unless $lid;
+    warn Dumper [ caller ] unless @_;
 
     my ($ISA, $THING) = ('isa', 'thing');
 
-    return map { $_->[TM->LID] } $self->toplets if $lid eq $THING;
-
-    return  (map { $_->[LID ] }         $self->match_forall (type => $lid)),                  # all assocs of this type
-            (map { $_->[PLAYERS]->[1] } $self->match_forall (type => $ISA, class => $lid))    # all topics which are direct instances
-	;
+    my @instances = map {
+	           $_ eq $THING
+		       ? map { $_->[TM->LID] } $self->toplets
+		       : 
+		       (map { $_->[LID ] }         $self->match_forall (type => $_)),                 # all assocs of this type
+		       (map { $_->[PLAYERS]->[1] } $self->match_forall (type => $ISA, class => $_))   # all direct instances
+                  } @_;
 }
 
 sub instancesT {
     my $self = shift;
-    my $lid  = shift;
 
-    return map { $self->instances ($_) }   $self->subclassesT ($lid);
+    my @instances = map { $self->instances ($_) }
+                    map { $self->subclassesT ($_) } 
+                    @_;
+    my %dup;
+    return map { $dup{$_}++ ? () : $_ } @instances;
 }
 
 =pod

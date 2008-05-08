@@ -125,7 +125,7 @@ I<@start_lids> via a path specified by I<$path_spec>. The path specification is 
 structure, describing sequences, alternatives and repetition (the C<*> operator), all encoded as
 lists of lists. The topics in that path specification are interpreted as assertion types.
 
-Example:
+Example (reformatting for better reading):
 
    # a single step: start knows ...
    [             ]            # outer level: sequence (there is only one)
@@ -143,6 +143,13 @@ Example:
    [                      ]   # outer level: one entry
      [ 'knows', 'hates' ]     # inner level: alternatives
 
+   # nesting: first follow an 'eats', then any number of 'begets'
+   [                                              ]
+     [ 'eats' ], [                              ]
+                    bless [              ], '*'
+                            [ 'begets' ]
+
+B<NOTE>: All tids have to be made map-absolute with C<tids>.
 
 B<NOTE>: Cycles are detected.
 
@@ -274,7 +281,7 @@ itself.
 
 =cut
 
-our $VERSION  = 0.2;
+our $VERSION  = 0.3;
 our $REVISION = '$Id: Graph.pm,v 1.1 2007/07/28 16:40:31 rho Exp $';
 
 

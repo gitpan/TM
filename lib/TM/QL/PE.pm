@@ -5,6 +5,7 @@ use strict;
 use Data::Dumper;
 
 use TM::Literal;
+use XML::LibXML;
 use TM::QL::TS;
 
 use Class::Struct;

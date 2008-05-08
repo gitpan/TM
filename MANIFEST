@@ -40,6 +40,7 @@ t/100mapsphere.t
 t/101mapsphere.t
 t/102mapsphere.t
 t/13tmdm.t
+t/14workbench.t
 t/16tmql.t
 lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
@@ -66,6 +67,7 @@ lib/TM/Overview.pm
 lib/TM/FAQ.pm
 lib/TM/PSI.pm
 lib/TM/QL.pm
+lib/TM/QL/CParser.pm
 lib/TM/QL/PE.pm
 lib/TM/QL/TS.pm
 lib/TM/ResourceAble.pm
@@ -85,6 +87,9 @@ lib/TM/Tau.pm
 lib/TM/Tree.pm
 lib/TM/Utils.pm
 lib/TM/Utils/TreeWalker.pm
+lib/TM/Workbench/Plugin.pm
+lib/TM/Workbench/Plugin/Test.pm
+lib/TM/Workbench/Plugin/Tau.pm
 bin/tm
 support/mkaxespod.pl
 examples/01_low_level.pl
@@ -94,3 +99,4 @@ examples/04_mldbm2.pl
 examples/05_traits.pl
 examples/old_testament.atm
 examples/06_diff.pl
+examples/08_tmdm.pl

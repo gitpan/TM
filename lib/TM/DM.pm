@@ -23,7 +23,7 @@ sub topics {
 				     tmdm  => $self->{tmdm},
 				     sad   =>      $_->[TM->ADDRESS],
 				     sids  => [ @{ $_->[TM->INDICATORS] } ],
-				     mid   => $_
+				     mid   => $_->[TM->LID]
 				     )
 		 } $map->toplets (@_);
 }
@@ -395,7 +395,7 @@ TM::DM - Topic Maps, read-only TMDM layer
    $adam->subjectIdentifiers;
    $adam->parent;
    my @ns = $adam->names;
-   my @os = $adam->occurrence;
+   my @os = $adam->occurrences;
 
    # similar for assocs
    my @as = $topicmap->associations (iplayer => 'adam');
@@ -483,8 +483,8 @@ role items do not have an identity, so they also cannot be reified
 =head2 Modus Operandi
 
 Before you can use the TMDM layer, you need TM information in the form of a L<TM> object. Any
-subclass should do, materialized and non-materialized maps both should be fine. Only with such
-a map you can instantiate a layer:
+subclass should do, materialized and non-materialized maps should both be fine. Only with such
+a map you can instantiate a TMDM layer:
 
   use TM::Materialized::AsTMa;
   my $tm = new TM::Materialized::AsTMa (file => 'test.atm');
@@ -496,8 +496,8 @@ Probably the first thing you need to do is to get a handle on the whole topic ma
 
   my $topicmap = $tmdm->topicmap;
 
-That is delivered as an instance of TM::DM::TopicMap as described below. From then you start to
-extract topics and associations and that way drill down.
+That is delivered as an instance of TM::DM::TopicMap as described below. From there you start to
+extract topics and associations and that way you then further drill down.
 
 =head2 Implementation Notes
 
@@ -551,7 +551,7 @@ sub new {
 
 I<$topicmap> = I<$tmdm>->topicmap
 
-This method generates a Topic Map item. See TM::DM::TopicMap
+This method generates a Topic Map item. See L<TM::DM::TopicMap|/TM::DM::TopicMap> .
 
 =cut
 
@@ -641,13 +641,13 @@ Returns a TM::DM::TopicMap item in which this topic is embedded.
 
 I<@names> = I<$topic>->names
 
-Returns a list of name items.
+Returns a list of TMDM name items.
 
 =item B<occurrences>
 
 I<@occurrences> = I<$topic>->occurrences
 
-Returns a list of occurrences items.
+Returns a list of TMDM occurrences items.
 
 =item B<roles>
 
@@ -672,8 +672,8 @@ This is always defined.
 
 =item B<scope>
 
-Returns the scope of the association in the form of a single TM::DM::Topic
-item. This is always defined.
+Returns the scope of the association in the form of a single TM::DM::Topic item. This is always
+defined as for the I<unconstrained scope> the topic C<us> is used (see L<TM::PSI>).
 
 =item B<roles>
 
@@ -706,8 +706,7 @@ object.
 
 =item B<type>
 
-Returns a TM::DM::Topic item which is the type of the occurrence
-This is always defined.
+Returns a TM::DM::Topic item which is the type of the occurrence.  This is always defined.
 
 =item B<scope>
 
@@ -780,14 +779,14 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[68] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
 =cut
 
-our $VERSION  = '0.02';
+our $VERSION  = '0.03';
 our $REVISION = '$Id: DM.pm,v 1.5 2006/12/13 10:46:58 rho Exp $';
 
 1;

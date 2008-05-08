@@ -203,7 +203,13 @@ fetches all topics which are also a direct instance of any of the (direct) types
 
 =item I<peers*> (<n,m>):
 
-fetches all topics which are also a (direct or indirect) instances of any of the (direct) types of this topic
+fetches all topics which are also a (direct or indirect) instances of any of the (direct) types of
+this topic
+
+=item I<peers**> (<n,m>):
+
+fetches all topics which are also a (direct or indirect) instances of any of the (direct or
+indirect) types of this topic
 
 =back
 
@@ -268,15 +274,14 @@ sub vortex {
 	            grep { $_->[TM->KIND] == TM->ASSOC }
                     @as;
 
-          } elsif ($w eq 'peers') { # TODO! test cases
-              @is = grep { $_ ne $alid }
-                    map { $self->instances ($_) }
-	            $self->types ($alid);
+          } elsif ($w eq 'peers') {
+              @is = grep { $_ ne $alid } $self->instances ($self->types ($alid));
 
           } elsif ($w eq 'peers*') {
-              @is = grep { $_ ne $alid }
-	            map { $self->instancesT ($_) }
-	            $self->types ($alid);
+              @is = grep { $_ ne $alid }  $self->instancesT ($self->types ($alid)) ;
+
+          } elsif ($w eq 'peers**') {
+              @is = grep { $_ ne $alid } $self->instancesT ($self->typesT ($alid)) ;
 
 	  } elsif ($w eq 'associations') { # TODO! test case
 sub _morph {

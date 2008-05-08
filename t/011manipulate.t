@@ -186,9 +186,8 @@ use TM;
 
     ok (eq_set ([ $tm->instances  ('scope') ],         [ 'us' ]),                          'subsumption: instances 2');
 #warn Dumper [ $tm->instancesT ('thing') ];
-
     ok (eq_set ([$tm->instances  ('thing')], [map { $_->[TM->LID]} $tm->toplets]),         'instances of thing');
-    ok (eq_set ([$tm->instancesT ('thing')], [map { $_->[TM->LID]} $tm->toplets]),         'instances of thing');
+    ok (eq_set ([$tm->instancesT ('thing')], [map { $_->[TM->LID]} $tm->toplets]),         'instances of thing *');
 
     ok (eq_set ([$tm->instances ('isa') ], [
 					    'c667ce5f4e485b45698c75621bc63893',
@@ -205,17 +204,23 @@ use TM;
 	is ($tm->retrieve ($a)->[TM->TYPE], 'is-subclass-of',                             'subsumption assertions instances')
     }
 
-    ok (eq_set ([$tm->types ('isa')],  [ 'assertion-type']),                           'subsumption: types 1');
-    ok (eq_set ([$tm->typesT ('isa')], [ 'assertion-type',  'class' ]),             'subsumption: typesT 1');
+    ok (eq_set ([$tm->types ('isa')],  [ 'assertion-type']),                              'subsumption: types 1');
+    ok (eq_set ([$tm->typesT ('isa')], [ 'assertion-type',  'class' ]),                   'subsumption: typesT 1');
+
+    ok (eq_set ([$tm->types ('us', 'us', 'isa')],
+		[ 'scope', 'assertion-type' ]),                                           'subsumption, several types, unique');
 
 
     ok (eq_set ([ $tm->subclasses ('thing') ],        [  ]),                              'subsumption: subclasses 1');
     ok (eq_set ([ $tm->subclasses ('characteristic') ],
-                [ 'occurrence', 'unique-characteristic', 'name' ]),                 'subsumption: subclasses 2');
+                [ 'occurrence', 'unique-characteristic', 'name' ]),                       'subsumption: subclasses 2');
 
     ok (eq_set ([ $tm->subclassesT ('characteristic') ],
                 [ 'characteristic', 'occurrence', 
 		  'unique-characteristic', 'name' ]),                                  'subsumption: subclassesT 1');
+
+
+
 }
 
 { # testing taxonometric functions
@@ -262,7 +267,6 @@ use TM;
       ok ($tm->are_supertypes, 'filter: are supertypes');
       ok ($tm->are_subtypes,   'filter: are subtypes');
   }
-
 
 
     ok ($tm->is_subclass ('tm://nirvana/AAA', 'thing'),              'subclass thing');

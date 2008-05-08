@@ -1,11 +1,5 @@
 package TM::Utils;
 
-# sub last_mod {
-#     my $url     = shift;
-#     my $default = shift || time;
-#     die;
-# }
-
 sub xmlify_hash {
     my $hash = shift;
 
@@ -28,7 +22,7 @@ sub is_xml {
     }; $@ ? 0 : 1;
 }
 
-our $VERSION  = '1.03';
+our $VERSION  = '1.04';
 our $REVISION = '$Id: Utils.pm,v 1.5 2006/11/13 08:02:33 rho Exp $';
 
 

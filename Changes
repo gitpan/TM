@@ -2,6 +2,17 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.39  ?????????????????????????????
+	- add:    TM::Graph: improved documentation
+	- fix:    TM::DM: doc
+	- change: tm workbench got plugin infrastructure
+	- add:    TM::Bulk: added vortex axes peers* and peers**, plus test cases
+	- add:    TM: methods types, typesT, instances, ... generalized to handle lists of tids
+	- fix:    AsTMa 1.x deserializer did not allow identifiers with _- to reify assocs
+	- fix:    TM::QL::PE needed to load XML::LibXML if use it loose context
+	- add:    precompiled CParser version for TM::QL (reduces start-up time by 10 secs)
+	- fix:    bug in TM::DM::toplets when using local identifiers
+
 1.38  Fri Apr 11 21:45:50 CEST 2008
 	- TM::Graph: doc fixes, fixed bug for nesting repeats
 	- TM::* : analysis: fixed missing test cases

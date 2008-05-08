@@ -88,6 +88,9 @@ ccc: hhh
                              'bbb'  => [ 'subclasses' ],
                              'bbb*' => [ 'subclasses*' ],
                              'rrr'  => [ 'roles' ],
+                             'eee'   => [ 'peers' ],
+                             'eee*'  => [ 'peers*' ],
+                             'eee**' => [ 'peers**' ],
 ##                             'lll'  => [ 'players' ],
                              }
                              );
@@ -97,6 +100,21 @@ ccc: hhh
   ok (ref ($vortex->{ttt}) eq 'ARRAY' &&
       ! defined $vortex->{ttt}->[TM->ADDRESS] &&
       eq_array ($vortex->{ttt}->[TM->INDICATORS], [ 'http://aaa/' ]), 'vortex: midlet complete');
+
+  ok (eq_set ($vortex->{'eee'},
+              [
+               'tm:vvv'
+               ]), 'vortex: peers');
+
+  ok (eq_set ($vortex->{'eee*'},
+              [
+               'tm:vvv'
+               ]), 'vortex: peers*');
+
+  ok (eq_set ($vortex->{'eee**'},
+              [
+               'tm:vvv',
+               ]), 'vortex: peers**');
 
   ok (eq_set ($vortex->{'iii'},
               [

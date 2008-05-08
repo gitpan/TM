@@ -293,10 +293,10 @@ association_definition     : LPAREN ID RPAREN scope reification_indication EOL
 					  # (assoc) is-reified-by xxx   means
 					  #     1) assoc is added as thing (is done already)
 					  #     2) the local identifier is added as thing with the abs URL of the assoc as subject address
-					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^\w+$/;
+					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^[A-Za-z][A-Za-z0-9_-]+$/;
 					  $ms->internalize ($_[5]->[1] => $a);
 				      } else { # this would be 'indication' but we do not want that here
-					  die "indication for association are undefined";
+					  die "indication for associations are undefined";
 				      }
 				  }
 			      }

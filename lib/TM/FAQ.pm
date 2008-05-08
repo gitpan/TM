@@ -13,29 +13,14 @@ TM::FAQ - Topic Maps, Frequently Angering Quirks
 =item
 
 Q: How can I get rid of these annoying topics C<occurrence>, C<name>, etc. which I have not put into
-the map in the first place, but which are in there in all cases?
+the map in the first place. They seem to be in each map I create.
 
-A: These infrastructure topics are needed to make the map I<complete> (everything used is defined). If
-you want to filter these out, you can get them first via
+A: These infrastructure topics are needed to make the map I<complete> (everything used is
+defined). Per se, you cannot remove them and, seriously you probably do not want that to happen.
 
-    my @infra = $tm->mids (keys %{$TM::PSI::topicmaps->{mid2iid}})
+But you can filter these out when you retrieve a list of toplets:
 
-To deduct them from the list of all topics
-
-    my @all = $tm->midlets;
-
-You can do:
-
-    # make lookup for speed
-    my %infra;
-    @infra{ @infra } = (1) x @infra;
-
-    my @non_infra = grep (!$infra{$_}
-                       && !$tm->retrieve ($_),
-                    $tm->midlets);
-
-The C<retrieve> looks up whether the topic is an assertion. Most likely, you would not want these as
-well then.
+   my @ts   = $tm->toplets (\ '+all -infrastructure');
 
 =item
 
@@ -44,52 +29,46 @@ Q: How can I get all names and/or occurrences of a topic?
 A: If you have a topic identifier C<mytopic> in your hand, then you can get all characteristics (=
 names and occurrences, but not associations) with
 
-    my @cs = $tm->match_forall (char => 1, irole => $tm->mids ('mytopic'));
+    my @cs = $tm->match_forall (char => 1, irole => $tm->tids ('mytopic'));
 
 Then you can filter occording the type, the scope, the data type value or the C<KIND>. The latter
 tells you whether an assertion is a name or occurrence. For example those occurrences which are
 C<occurrence>s and not anything specials as, say, C<homepage>:
 
-    my @occs  = map { $_->[0] } map { TM::get_x_players ($tm, $_, 'tm://value') } grep ($_->[TM->TYPE] eq 'tm://occurrence', @cs);
+    my @occs  = map  { $_->[0] } 
+                map  { TM::get_x_players ($tm, $_, 'value') }
+                grep { $_->[TM->TYPE] eq 'occurrence' } @cs;
 
 =item
 
-Q: How do these C<get_x_role> functions work? What does I<does not honor subclassing> mean?
+A: Some of these maps I create have the trait C<ResourceAble> and import therefore a method
+C<mtime>. How does this work?
 
-A: @@@@@@@@@@@@@
+Q: Every map which is attached to an external resource is said to be I<resourceable>, hence the
+trait with the same name. You, the developer, decide which copy of the map is the I<authoritative>,
+i.e. what should happen should the map infrastructure be forced to synchronize the content.
 
-(is-father-of)
-father: godzilla
-child:  kidzilla
+While the synchronization (and when that is triggered) is handled by the trait
+L<TM::Synchronizable>, the infrastructure needs to know (a) when the in-memory copy of the map was
+last modified and (b) when the resource to which it is attached has been modified last. This is the
+reasons for timestamps on the memory-stored map.
 
-father subclasses parent
-
-dann kriegst du mit
-
-  get_x_role ($tm, $a, '...father')     =======> godzilla
-  get_x_role ($tm, $a, '...parent')     =======> nix
-  get_role   ($tm, $a, '...parent')     =======> godzilla
-
-
-
-=item 
-
-Timestamps of resources
-
-@@@ files have UNIX time resolution (second), TM uses HiRes::Time @@@@
+The resources themselves also have these timestamps; when the resource is a file on a file system,
+then the "last modified" timestamps are take from there. The only complication is that L<TM> is
+using a much higher time resolution as most file systems (L<HiRes::Time>).
 
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[3-6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[3-68] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
 =cut
 
-our $VERSION  = 0.3;
+our $VERSION  = 0.4;
 our $REVISION = '$Id: FAQ.pm,v 1.1 2006/11/30 08:38:10 rho Exp $';
 
 1;

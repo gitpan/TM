@@ -30,12 +30,17 @@ Class::Trait->apply ('TM' => 'TM::ResourceAble');
     my $tm = new TM (baseuri => 'tm:');
 
     is ($tm->url ('http://whatever'), $tm->url, 'url setter');
+
+    my $t = time;
     $tm->url ('io:stdin');
-    ok (time <= $tm->mtime && $tm->mtime <= time + 2, 'io:stdin time');
+    ok ($t <= $tm->mtime,     'io:stdin time');
+
     $tm->url ('io:stdout');
-    is ($tm->mtime, 0,                                'io:stdout time');
+    is ($tm->mtime, 0,        'io:stdout time');
+
+    $t = time;
     $tm->url ('inline:xxx');
-    ok (time <= $tm->mtime && $tm->mtime <= time + 2, 'inline: time');
+    ok ($t <= $tm->mtime,      'inline: time');
 }
 
 __END__

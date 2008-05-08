@@ -37,7 +37,7 @@ package MY;
 sub depend {
     return <<MAKE
 
-cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm
+cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm  lib/TM/QL/CParser.pm
 
 lib/TM/AsTMa/Fact.pm: yapp/astma-fact.yp yapp/YappTemplate.pm
 	yapp -m TM::AsTMa::Fact -t yapp/YappTemplate.pm -o lib/TM/AsTMa/Fact.pm yapp/astma-fact.yp
@@ -48,12 +48,21 @@ lib/TM/AsTMa/Fact2.pm: yapp/astma2-fact.yp yapp/YappTemplate.pm
 lib/TM/AsTMa/PathCParser.pm: lib/TM/AsTMa/Path.pm
 	perl -Ilib -MTM::AsTMa::Path -e 'print \$\$TM::AsTMa::Path::ap_grammar' > /tmp/grammar
 	perl -MParse::RecDescent - /tmp/grammar TM::AsTMa::PathCParser
+	rm /tmp/grammar
 	mv PathCParser.pm lib/TM/AsTMa/
 
 lib/TM/LTM/CParser.pm: lib/TM/LTM/Parser.pm
 	perl -Ilib -MTM::LTM::Parser -e 'print \$\$TM::LTM::Parser::ltm_grammar' > /tmp/grammar
 	perl -MParse::RecDescent - /tmp/grammar TM::LTM::CParser
+	rm /tmp/grammar
 	mv CParser.pm lib/TM/LTM/
+
+lib/TM/QL/CParser.pm: lib/TM/QL.pm
+	perl -Ilib -MTM::QL      -e 'print \$\$TM::QL::grammar'      >  /tmp/grammar
+	perl -Ilib -MTM::Literal -e 'print \$\$TM::Literal::grammar' >> /tmp/grammar
+	perl -MParse::RecDescent - /tmp/grammar TM::QL::CParser
+	rm /tmp/grammar
+	mv CParser.pm lib/TM/QL/
 
 axespod:
 	perl -Ilib support/mkaxespod.pl > lib/TM/Axes.pm
