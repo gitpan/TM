@@ -2,7 +2,11 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
-1.39  ?????????????????????????????
+1.40  Mon May 12 21:18:12 CEST 2008
+	- add:    XTM 1.0 serialize/deserialize support (based on az-ware)
+	- add:    XTM 2.0 preliminary support (serialize, deserialize)
+
+1.39  Thu May  8 08:11:29 CEST 2008
 	- add:    TM::Graph: improved documentation
 	- fix:    TM::DM: doc
 	- change: tm workbench got plugin infrastructure

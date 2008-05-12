@@ -471,6 +471,8 @@ if (! defined $mapsphere) {                                               # not 
 $TM::Tau::filters{'^tm:/.*'} = 'MyPersistentMapSphereFilter';
 $TM::Tau::sources{'^tm:/.*'} = 'MyPersistentMapSphere';
 
+# TODO: XTM?
+
 #-- plugins ------------------------------------------------------------------------------
 
 my @plugins = (new TM::Workbench::Plugin::Null,                              # native plugins are there in any case

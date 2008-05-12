@@ -29,12 +29,14 @@ my @PODs = qw(
 	      lib/TM/Serializable.pm
 	      lib/TM/Serializable/AsTMa.pm
 	      lib/TM/Serializable/LTM.pm
+	      lib/TM/Serializable/XTM.pm
 	      lib/TM/MapSphere.pm
 	      lib/TM/Materialized/Stream.pm
 	      lib/TM/Materialized/AsTMa.pm
 	      lib/TM/Materialized/LTM.pm
 	      lib/TM/Materialized/MLDBM.pm
 	      lib/TM/Materialized/MLDBM2.pm
+	      lib/TM/Materialized/XTM.pm
 	      lib/TM/Tau.pm
 	      lib/TM/Tau/Filter.pm
 	      lib/TM/Tau/Filter/Analyze.pm

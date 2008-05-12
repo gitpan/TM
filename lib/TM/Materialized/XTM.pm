@@ -1,34 +1,40 @@
-package TM::Materialized::AsTMa;
+package TM::Materialized::XTM;
+
+use strict;
+use warnings;
 
 use TM::Materialized::Stream;
 use base qw (TM::Materialized::Stream);
 
-use Class::Trait qw(TM::Serializable::AsTMa);
+use Class::Trait qw(TM::Serializable::XTM);
 use Data::Dumper;
 
 =pod
 
 =head1 NAME
 
-TM::Materialized::AsTMa - Topic Maps, Parsing of AsTMa instances.
+TM::Materialized::XTM - Topic Maps, Parsing and dumping of XTM instances.
 
 =head1 SYNOPSIS
 
-  use TM::Materialized::AsTMa;
-  my $tm = new TM::Materialized::AsTMa (inline => '....astma code here...');
+  use TM::Materialized::XTM;
+  my $tm = new TM::Materialized::XTM (inline => '....xtm here...');
   $tm->sync_in;
   # ...
 
   # or
-  my $tm = new TM::Materialized::AsTMa (file => 'test.atm');
+  my $tm = new TM::Materialized::XTM (file => 'test.xtm');
   # ...
   $tm->sync;
 
+  # or
+  my $tm  = ... however you arrive at a map
+  my $xml = $tm->sync_out;
+
 =head1 DESCRIPTION
 
-This package provides parsing functionality for AsTMa= instances. AsTMa= is a textual shorthand
-notation for Topic Map authoring. Currently, AsTMa= 1.3 and the (experimental) AsTMa= 2.0 is
-supported. See L<TM::Serializable::AsTMa> for details.
+This package provides parsing and dumping functionality for XTM 1.0 instances.
+See L<TM::Serializable::XTM> for details.
 
 =head1 INTERFACE
 
@@ -53,16 +59,13 @@ L<TM>, L<TM::Materialized::Stream>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[1-6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 200[1-68], Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.18';
-our $REVISION = '$Id: AsTMa.pm,v 1.19 2006/11/23 10:02:55 rho Exp $';
+our $VERSION = 0.02;
 
 1;
-
-__END__

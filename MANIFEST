@@ -31,6 +31,9 @@ t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
 t/054ltm.t
+t/061xtm.t
+t/062xtm.t
+t/063xtm.t
 t/072bulk.t
 t/091taufilter.t
 t/092taufederate.t
@@ -42,6 +45,7 @@ t/102mapsphere.t
 t/13tmdm.t
 t/14workbench.t
 t/16tmql.t
+schemas/xtm20.dtd
 lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
@@ -62,6 +66,7 @@ lib/TM/Materialized/MLDBM2.pm
 lib/TM/Materialized/MLDBM.pm
 lib/TM/Materialized/Null.pm
 lib/TM/Materialized/Stream.pm
+lib/TM/Materialized/XTM.pm
 lib/TM.pm
 lib/TM/Overview.pm
 lib/TM/FAQ.pm
@@ -75,6 +80,7 @@ lib/TM/Serializable/AsTMa.pm
 lib/TM/Serializable/Dumper.pm
 lib/TM/Serializable/LTM.pm
 lib/TM/Serializable/Summary.pm
+lib/TM/Serializable/XTM.pm
 lib/TM/Serializable.pm
 lib/TM/Synchronizable/MapSphere.pm
 lib/TM/Synchronizable/MLDBM.pm

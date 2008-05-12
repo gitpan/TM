@@ -454,7 +454,7 @@ All items have an I<item id> and all (except the map) have a parent
 which links back to where the item belongs.
 
 This package implements for each of the above a class and access methods to retrieve actual
-structure and values from an existing map. Nota bene, there are some deviations:
+structure and values from an existing map. Nota bene, there are some deviations from TMDM:
 
 =over
 
@@ -775,7 +775,7 @@ Returns a TM::DM::Association item of the association where this role is in.
 
 =head1 SEE ALSO
 
-L<TM>
+L<TM>, L<TM::Easy>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -786,8 +786,8 @@ itself.
 
 =cut
 
-our $VERSION  = '0.03';
-our $REVISION = '$Id: DM.pm,v 1.5 2006/12/13 10:46:58 rho Exp $';
+our $VERSION  = '0.04';
+our $REVISION = '$Id$';
 
 1;
 

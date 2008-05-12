@@ -1,13 +1,14 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         TM
-version:      1.39
+version:      1.40
 version_from: lib/TM.pm
 installdirs:  site
 requires:
     BerkeleyDB:                    0.26
     Class::Trait:                  0.22
     Config::General:               2.26
+    IO::String:                    1.08
     Log::Log4perl:                 0.5
     LWP::Simple:                   1.41
     MLDBM:                         2.01
@@ -23,6 +24,7 @@ requires:
     URI::file:                     4.14
     XML::LibXML:                   1.58
     XML::Simple:                   2.13
+    XML::Writer:                   0.602
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.30_01
