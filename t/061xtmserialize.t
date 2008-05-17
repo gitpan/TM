@@ -40,6 +40,7 @@ winner: nobody
 
 thistop reifies http://rumsti
 bn: reification
+in: reification
 sin: http://nowhere.never.ever
 sin: http://nowhere.ever.never
 
@@ -60,6 +61,10 @@ can_ok $tm, 'serialize';
     use XML::LibXML;
     my $xp  = XML::LibXML->new();
     my $doc = $xp->parse_string($content);
+
+#   use XML::LibXML::Dtd;
+    my $dtd = XML::LibXML::Dtd->new("-//TopicMaps.Org//DTD XML Topic Map (XTM) 1.0//EN",'schemas/xtm10.dtd');
+    ok ( $doc->validate($dtd), 'validates XTM 1.0');
     
     ok (eq_set ([
 		 map { "tm://$_" }
@@ -71,7 +76,7 @@ can_ok $tm, 'serialize';
     
     is ('#ctop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@xlink:href'), 'instance btop');
 
-    ok ($doc->findnodes('/topicMap/association[@id="068ce15eb7cf7cc4536d504c73a4c05c"]/instanceOf/topicRef[@xlink:href="#sucks-more-than"]'),
+    ok ($doc->findnodes('/topicMap/association[@id="a068ce15eb7cf7cc4536d504c73a4c05c"]/instanceOf/topicRef[@xlink:href="#sucks-more-than"]'),
 	'found assoc');
     
     ok (
@@ -80,7 +85,7 @@ can_ok $tm, 'serialize';
 		 ],
 		[
 		 map { $_->nodeValue }
-		 $doc->findnodes('/topicMap/association[@id="4abe49897cefeb950e4affaab0418e4f"]/member[roleSpec/topicRef/@xlink:href = "#winner"]/topicRef/@xlink:href')]), 'found assoc');
+		 $doc->findnodes('/topicMap/association[@id="a4abe49897cefeb950e4affaab0418e4f"]/member[roleSpec/topicRef/@xlink:href = "#winner"]/topicRef/@xlink:href')]), 'found assoc');
 
     ok (
 	eq_set ([
@@ -133,7 +138,7 @@ can_ok $tm, 'serialize';
 
     my ($aid) = map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="atop"]/subjectIdentity/topicRef/@xlink:href');
 
-    ok ($aid =~ /^\#.{32}$/, 'internal reification');
+    ok ($aid =~ /^\#a.{32}$/, 'internal reification');
 
     $aid =~ s/\#//;
 
@@ -227,71 +232,29 @@ can_ok $tm, 'serialize';
 #    warn Dumper $diff;
 }
 
-{ # xtm default namespace
-    my $content = q|<topicMap
-   xmlns="http://www.topicmaps.org/xtm/1.0/"
-   xmlns:xlink="http://www.w3.org/1999/xlink">
-  <topic id="rumsti" />
-</topicMap>
-|;
 
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'default namespace: topic found');
+{ #-- create name reification
+    my ($name, $occ) = $tm->match_forall (char => 1, topic => $tm->tids ('thistop'));
+    $tm->internalize ('thistop_name' => $name->[TM->LID]);  # create a reification
+    $tm->internalize ('thistop_occ'  => $occ->[TM->LID]);   # create a reification
 }
 
-{ # explicit namespace + prefix
-    my $content = q|<xtm:topicMap
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:xtm="http://www.topicmaps.org/xtm/1.0/"
->
-  <xtm:topic id="rumsti" />
-</xtm:topicMap>
-|;
+{ # version 1.0 cannot deal with name reification?
+    my $tm2 = new TM;
+    Class::Trait->apply ($tm2, 'TM::Serializable::XTM');
 
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'prefixed namespace: xtm: topic found');
+    my $c = $tm->serialize (version => '1.0');
+#    warn $c;
+    $tm2->deserialize ($c);
+
+  TODO: {
+      local $TODO = "name/occ reification support for XTM 1.0";
+      is_deeply( $tm->{mid2iid},    $tm2->{mid2iid},    'toplet structure identical' ); 
+      is_deeply( $tm->{assertions}, $tm2->{assertions}, 'asserts structure identical' );
+  }
 }
-
-{ # explicit namespace + prefix
-    my $content = q|<bamsti:topicMap
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:bamsti="http://www.topicmaps.org/xtm/1.0/"
->
-  <bamsti:topic id="rumsti" />
-</bamsti:topicMap>
-|;
-
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'prefixed namespace: bamsti: topic found');
-}
-
 
 __END__
 
-
 TODO: variants
 
-
-
-
-use TM::Materialized::XTM;
-require_ok( 'TM::Materialized::XTM' );
-
-
-
-# now do the round trip
-my $rt=TM::Materialized::XTM->new(baseuri=>"tm://", inline=>$content);
-$rt->sync_in;
-ok($rt,"deserialization works");
-
-cmp_deeply($tm,noclass{%{$rt},variants=>ignore(),
-last_mod=>ignore(),created=>ignore(),url=>ignore()},"deserialized and original maps are the same");

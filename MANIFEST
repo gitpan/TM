@@ -31,8 +31,10 @@ t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
 t/054ltm.t
-t/061xtm.t
-t/062xtm.t
+t/061xtmserialize.t
+t/061xtmdeserialize.t
+t/062xtmserialize.t
+t/062xtmdeserialize.t
 t/063xtm.t
 t/072bulk.t
 t/091taufilter.t
@@ -46,6 +48,8 @@ t/13tmdm.t
 t/14workbench.t
 t/16tmql.t
 schemas/xtm20.dtd
+schemas/xtm10.dtd
+schemas/xtm11.dtd
 lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm

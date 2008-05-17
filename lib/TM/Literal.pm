@@ -33,6 +33,7 @@ This is quite a chore, especially since the data types adopted here are the XML 
   DOUBLE   http://www.w3.org/2001/XMLSchema#double
   STRING   http://www.w3.org/2001/XMLSchema#string
   URI      http://www.w3.org/2001/XMLSchema#anyURI
+  ANY      http://www.w3.org/2001/XMLSchema#anyType
 
 =head2 Grammar
 
@@ -53,7 +54,8 @@ use constant {
     DOUBLE  => XSD.'double',
     BOOLEAN => XSD.'boolean',
     STRING  => XSD.'string',
-    URI     => XSD.'anyURI'
+    URI     => XSD.'anyURI',
+    ANY     => XSD.'anyType',
     };
 
 sub new {

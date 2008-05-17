@@ -69,13 +69,13 @@ sub new {
 #warn "file exists $file?";
     if (-e $file) {                                                                 # file does exist already
 	tie %self, 'MLDBM', -Filename => $file
-	    or TM::log->logdie ( "Cannot create DBM file '$file: $!");
+	    or $TM::log->logdie ( "Cannot create DBM file '$file: $!");
                                                                                     # oh, we are done now
     } else {                                                                        # no file yet
 #warn "file not exists $file!";
 	tie %self, 'MLDBM', -Filename => $file,                                     # bind to one
                             -Flags    => DB_CREATE                                  # which we create here
-	    or TM::log->logdie ( "Cannot create DBM file '$file: $!");
+	    or $TM::log->logdie ( "Cannot create DBM file '$file: $!");
 
 	foreach (keys %$whatever) {                                                 # clone all components
 	    $self{$_} = $whatever->{$_};                                            # this makes sure that Berkeley'ed tie picks it up
@@ -97,14 +97,14 @@ L<TM>, L<TM::Materialized::MLDBM>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 200[68], Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.01';
+our $VERSION  = '0.02';
 our $REVISION = '$Id: MLDBM2.pm,v 1.3 2006/11/13 08:02:34 rho Exp $';
 
 1;

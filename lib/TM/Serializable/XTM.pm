@@ -34,6 +34,8 @@ This trait provides parsing and dumping functionality for XTM instances.
 
 =item Version 1.0 : L<http://www.topicmaps.org/xtm/index.html>
 
+=item Version 1.1 : L<http://www.jtc1sc34.org/repository/0495.htm>
+
 =item Version 2.0 : L<http://www.isotopicmaps.org/sam/sam-xtm/>
 
 =back
@@ -51,6 +53,27 @@ document
 
 only a B<single> scope is allowed for (base)names, occurrences and associations.
 
+=item
+
+In XTM 1.1 you cannot host XML content in occurrences.
+
+=item
+
+No reification support in 1.0 or 1.1.
+
+=item
+
+This package does not make any use of I<item identifiers>.
+
+=item
+
+Relative URIs are NOT made absolute via the I<base URI> where the map is loaded from. This may NOT
+be what a user ultimately wants. Also all URI canonicalization is skipped.
+
+=item
+
+The C<xlink:type> attribute is completely ignored.
+
 =back
 
 =head2 TODOs
@@ -59,8 +82,8 @@ only a B<single> scope is allowed for (base)names, occurrences and associations.
 
 =item
 
-E<lt>mergeMapE<gt> is handled, but any scoping topic is ignored. This is related to the above. If
-you use it, it may be a design flaw anyway.
+E<lt>mergeMapE<gt> is handled in 1.0, 1.1, but any scoping topic is ignored. This is related to the
+above.
 
 =item
 
@@ -69,11 +92,23 @@ LTM. This may be fixed in the future.
 
 =item
 
-variants
+No variants are serialized or deserialized.
 
 =item
 
-reification of topic map
+Reification of topic map item is NOT supported.
+
+=item
+
+C<isa> and C<is-subclass-of> associations which are scoped (or reified) are not handled special yet.
+
+=item
+
+Suppress trivia might also suppress homepage << occurrence assertions.
+
+=item
+
+Relative URLs in C<mergeMap> are not made absolute.
 
 =back
 
@@ -95,17 +130,22 @@ sub deserialize {
     my $self = shift;
     my $content = shift;
 
-    if ($content =~  /<(\w+:)?topicMap[^>]+version\s*=\s*["'](.+?)['"]/s) {       # this is a version 2.0 map
+    if ($content =~  /<(\w+:)?topicMap[^>]+version\s*=\s*["'](.+?)['"]/s) {       # this is a version 2.0 or 1.1 map
 	if ($2 eq '2.0') {
 	    return _deserialize_20 ($self, $content);
+	} elsif ($2 eq '1.1') {
+	    return _deserialize_10 ($self, $content);
+	} elsif ($2 eq '1.0') {
+	    return _deserialize_10 ($self, $content);
+
 	} else {
-	    $TM::log->logdie (__PACKAGE__ .': unsupported version');
+	    $TM::log->logdie (__PACKAGE__ .": unsupported version '$2'");
 	}
     } elsif ($content =~ m|(\w+:)?topicMap[^>]+xmlns:xlink|) {
 	return _deserialize_10 ($self, $content);
 
     } else {                                                                    # otherwise we have to assume XTM 1.0
-	$TM::log->logdie (__PACKAGE__ .': unsupported version');
+	$TM::log->logdie (__PACKAGE__ .": unsupported version");
     }
 
 sub _deserialize_20 {
@@ -113,21 +153,25 @@ sub _deserialize_20 {
     my $content = shift;
 
     my $xtmns = XTM_NS;
-    $content =~ s/xmlns\s*=\s*[\'"]$xtmns[\'"]//g;                              # remove all default namespacing with XTM 1.0
+    $content  =~ s/xmlns\s*=\s*[\'"]$xtmns[\'"]//g;                             # remove all default namespacing with XTM 1.0
+#    warn $content;
 
     use XML::LibXML;
-    my $xp = XML::LibXML->new();
+    my $xp   = XML::LibXML->new();
     my $doc  = $xp->parse_string($content);
 
     my $root = $doc->documentElement();
     my $px   = $root->lookupNamespacePrefix( $xtmns ) || '';  $px .= ':' if $px;
+#    warn "px >>$px<<";
+    $doc->findnodes("/${px}topicMap") or $TM::log->logdie (__PACKAGE__ . ": no <topicMap> element found (namespace $xtmns)");
 
+    #-- topics
     foreach my $t ($doc->findnodes("/${px}topicMap/${px}topic")) {
 	my $id   = $t->findvalue('@id')                           or die "missing topic id";
 	$self->internalize ($id);                                               # register topic in any case
-
+        #-- identification
 	map { $self->internalize( $id => \ $_ ); } 
-             map { $_->findvalue('./@href') }                                   # the href attribute
+             map { $_->findvalue('@href') }                                     # the href attribute
              $t->findnodes("${px}subjectIdentifier");                           # find subject indicators
 
 	map { $self->internalize( $id => $_ ); }                                # if there are multiple, it will make kabooom
@@ -148,12 +192,22 @@ sub _deserialize_20 {
 	    (my $type  = $bn->findvalue ("${px}type/${px}topicRef/\@href"))  =~s/^\#//;  # could be empty, too
 	    (my $scope = $bn->findvalue ("${px}scope/${px}topicRef/\@href")) =~s/^\#//;
 	    my ($a) = $self->assert(Assertion->new(kind    => TM->NAME,
-						   type    => 'name',
+						   type    => $type || 'name',
 						   roles   => [ qw(thing value) ],
 						   players => [ $id, 
 								TM::Literal->new($bn->findvalue("${px}value/text()"),
 										 TM::Literal->STRING)],
 						   scope   => $scope));
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'is-subclass-of',
+					 roles   => [ qw(subclass superclass) ],
+					 players => [ $type, 'name' ],
+					 scope   => undef)) if $type && $type ne 'name';
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'isa',
+					 roles   => [ qw(instance class) ],
+					 players => [ $scope, 'scope' ],
+					 scope   => undef)) if $scope && $scope ne 'us';
 	    (my $reifier  = $bn->findvalue('@reifier')) =~ s/^\#//;
 	    $self->internalize ($reifier => $a->[TM->LID]) if $reifier;
 	}
@@ -161,21 +215,40 @@ sub _deserialize_20 {
 	foreach my $oc ($t->findnodes ("${px}occurrence")) {                    # find occurrences
 	    (my $scope = $oc->findvalue ("${px}scope/${px}topicRef/\@href")) =~s/^\#//;  # could be empty
 	    (my $type  = $oc->findvalue ("${px}type/${px}topicRef/\@href"))  =~s/^\#//;  # could be empty, too
-	     my $value = $oc->findvalue("${px}resourceData/text()")             # what kind of occurrence?
-                              ? new TM::Literal ( $oc->findvalue("${px}resourceData/text()"),
-						  $oc->findvalue("${px}resourceData/datatype") )
-                              : new TM::Literal ( $oc->findvalue("${px}resourceRef/\@href"),
-						  TM::Literal->URI );
+
+	    my $value;
+	    if (my ($rr) = $oc->findnodes ("${px}resourceRef")) {
+		$value = new TM::Literal ( $rr->findvalue("\@href"), TM::Literal->URI );
+	    } elsif (my ($rd) = $oc->findnodes ("${px}resourceData")) {
+		my $dtype = $rd->findvalue('@datatype') || TM::Literal->STRING;
+		if ($dtype eq TM::Literal->URI) {
+		    $value = new TM::Literal ( $rd->findvalue("text()"), TM::Literal->URI );
+		} else {
+		    my $s = $rd->toString;
+		    $s =~ s|^<.*?resourceData.*?>(.*)</.*?resourceData>$|$1|s;
+		    $value = new TM::Literal ($s, $dtype);
+		}
+	    }
 	    my ($a) = $self->assert(Assertion->new (kind    => TM->OCC,
 						    type    => $type || 'occurrence',
 						    roles   => [qw(thing value)],
 						    players => [$id, $value ],
 						    scope   => $scope));
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'is-subclass-of',
+					 roles   => [ qw(subclass superclass) ],
+					 players => [ $type, 'occurrence' ],
+					 scope   => undef)) if $type && $type ne 'occurrence';
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'isa',
+					 roles   => [ qw(instance class) ],
+					 players => [ $scope, 'scope' ],
+					 scope   => undef)) if $scope && $scope ne 'us';
 	    (my $reifier  = $oc->findvalue('@reifier')) =~ s/^\#//;
 	    $self->internalize ($reifier => $a->[TM->LID]) if $reifier;
 	}
     }   
-
+    #-- association
     for my $a ($doc->findnodes("/${px}topicMap/${px}association")) {
 #	my $aid    = $a->findvalue('itemIdentity/@href');
 	(my $type  = $a->findvalue("${px}type/${px}topicRef/\@href"))  =~ s/^\#//;
@@ -198,7 +271,40 @@ sub _deserialize_20 {
 	(my $reifier  = $a->findvalue('@reifier')) =~ s/^\#//;
 	$self->internalize ($reifier => $s->[TM->LID]) if $reifier;
     }
+    #-- mergeMap
+    foreach my $mm ($doc->findnodes("/${px}topicMap/${px}mergeMap")) {
+	my $h = $mm->findvalue ("\@href") 
+	    or $TM::log->logdie ( __PACKAGE__ .": conformance error in 'mergeMap': 4.21, required attribute 'href' missing" );
+	my $tm2 = new TM (baseuri => $self->{baseuri});
+	Class::Trait->apply ($tm2, "TM::Serializable::XTM");
+	$tm2->url ($h);
+	$tm2->source_in;
+#warn "store2 is ".Dumper $tm2;
+	$self->add ($tm2);
+    }
+
     return $self;
+}
+
+sub _find_topic_references {
+    my $n = shift; # the node
+    my $p = shift; # path
+    my $x = shift; # prefix
+# topic-reference = topicRef | resourceRef | subjectIndicatorRef
+    my @ts;
+    foreach my $m ($n->findnodes ("${x}${p}*")) {
+	my $h = $m->findvalue ("\@xlink:href");
+	if ($m->nodeName eq 'topicRef') {
+	    $h =~ s/^\#//;
+	    push @ts, $h;
+	} elsif ($m->nodeName eq 'resourceRef') {                     # TODO: make absolute
+	    push @ts, $h;
+	} elsif ($m->nodeName eq 'subjectIndicatorRef') {             # TODO: make absolute
+	    push @ts, \ $h;
+	}
+    }
+#    warn "find trs ".Dumper \@ts;
+    return @ts;
 }
 
 sub _deserialize_10 {
@@ -206,14 +312,21 @@ sub _deserialize_10 {
     my $content = shift;
 
     my $xtmns = XTM10_NS;
-    $content =~ s/xmlns\s*=\s*"$xtmns"//g;                                      # remove all default namespacing with XTM 1.0
+    $content =~ s/xmlns\s*=\s*[\'"]$xtmns[\'"]//g;                              # remove all default namespacing with XTM 1.0
                                                                                 # http://search.cpan.org/~pajas/XML-LibXML-1.65/lib/XML/LibXML/Node.pod
     use XML::LibXML;
-    my $xp = XML::LibXML->new();
-    my $doc  = $xp->parse_string($content);
+    my $xp   = XML::LibXML->new();
+    my $doc  = $xp->parse_string ($content);
 
     my $root = $doc->documentElement();
     my $px   = $root->lookupNamespacePrefix( $xtmns ) || '';  $px .= ':' if $px;
+
+    $doc->findnodes("/${px}topicMap") or $TM::log->logdie (__PACKAGE__ . ": no <topicMap> element found (namespace $xtmns)");
+
+#    warn "10 >>$px<<";
+    if (my $baseuri = $doc->findvalue ("/${px}topicMap/\@xml:base")) {
+	$self->{baseuri} = $baseuri;
+    }
 
     my %reifiedby;                                                              # what by whom, for assocs
     foreach my $t ($doc->findnodes("/${px}topicMap/${px}topic")) {
@@ -232,20 +345,33 @@ sub _deserialize_10 {
 	$reifiedby{ $id } = $reified if $reified;                               # this will have to wait until we cover the assoc
 
 	foreach my $bn ($t->findnodes("${px}baseName")) {                       # find base names
-	    (my $scope = $bn->findvalue("${px}scope/${px}topicRef/\@xlink:href")) =~s/^\#//;
+	    my ($scope) = _find_topic_references ($bn, "scope/", $px);          # could be empty
+	    my ($type)  = _find_topic_references ($bn, "instanceOf/", $px);     # could be empty, too
+
 	    $self->assert(Assertion->new(kind    => TM->NAME,
-					 type    => 'name',
+					 type    => $type || 'name',
 					 roles   => [ qw(thing value) ],
 					 players => [ $id, 
 						      TM::Literal->new($bn->findvalue("${px}baseNameString/text()"),
 								       TM::Literal->STRING)],
 					 scope   => $scope));
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'is-subclass-of',
+					 roles   => [ qw(subclass superclass) ],
+					 players => [ $type, 'name' ],
+					 scope   => undef)) if $type && $type ne 'name';
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'isa',
+					 roles   => [ qw(instance class) ],
+					 players => [ $scope, 'scope' ],
+					 scope   => undef)) if $scope && $scope ne 'us';
 	}
 
 	foreach my $oc ($t->findnodes ("${px}occurrence")) {                    # find occurrences
-	    (my $scope = $oc->findvalue ("${px}scope/${px}topicRef/\@xlink:href"))      =~s/^\#//;  # could be empty
-	    (my $type  = $oc->findvalue ("${px}instanceOf/${px}topicRef/\@xlink:href")) =~s/^\#//;  # could be empty, too
-	     my $value = $oc->findvalue("${px}resourceData/text()")             # what kind of occurrence?
+	    my ($scope) = _find_topic_references ($oc, "scope/", $px);          # could be empty
+	    my ($type)  = _find_topic_references ($oc, "instanceOf/", $px);     # could be empty, too
+
+	    my $value = $oc->findvalue("${px}resourceData/text()")              # what kind of occurrence?
                               ? new TM::Literal ( $oc->findvalue("${px}resourceData/text()"),
 						  TM::Literal->STRING )
                               : new TM::Literal ( $oc->findvalue("${px}resourceRef/\@xlink:href"),
@@ -255,6 +381,16 @@ sub _deserialize_10 {
 					  roles   => [qw(thing value)],
 					  players => [$id, $value ],
 					  scope   => $scope));
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'is-subclass-of',
+					 roles   => [ qw(subclass superclass) ],
+					 players => [ $type, 'occurrence' ],
+					 scope   => undef)) if $type && $type ne 'name';
+	    $self->assert(Assertion->new(kind    => TM->ASSOC,
+					 type    => 'isa',
+					 roles   => [ qw(instance class) ],
+					 players => [ $scope, 'scope' ],
+					 scope   => undef)) if $scope && $scope ne 'us';
 	}
 	    
 	map {                                                                   # create class/instance for every instanceOf we find
@@ -263,22 +399,19 @@ sub _deserialize_10 {
 					  roles   => [qw(class instance)],
 					  players => [$_, $id]));
 	}
-	    map { s/^\#// && $_ }                                               # clean leading #
-	    map { $_->nodeValue }                                               # find the id
-	    $t->findnodes("${px}instanceOf/${px}topicRef/\@xlink:href"); 
-    }   
+	    _find_topic_references ($t, "instanceOf/", $px); 
+    }
 
-    for my $a ($doc->findnodes("/${px}topicMap/${px}association")) {
+    foreach my $a ($doc->findnodes("/${px}topicMap/${px}association")) {
 	my $aid    = $a->findvalue('@id');
-	(my $type  = $a->findvalue("${px}instanceOf/${px}topicRef/\@xlink:href")) =~ s/^\#//;
-	(my $scope = $a->findvalue("${px}scope/${px}topicRef/\@xlink:href"))      =~ s/^\#//;
+	my ($scope) = _find_topic_references ($a, "scope/", $px);          # could be empty
+	my ($type)  = _find_topic_references ($a, "instanceOf/", $px);     # could be empty, too
 
 	my (@roles,@players);
-
-	foreach my $m ($a->findnodes("${px}member")) {
-	    (my $role=$m->findvalue("${px}roleSpec/${px}topicRef/\@xlink:href")) =~ s/^\#//;
-	    foreach my $p ($m->findnodes("${px}topicRef")) {
-		(my $player = $p->findvalue('@xlink:href')) =~ s/^\#//;
+	foreach my $m ($a->findnodes("member")) {
+	    my ($role) = _find_topic_references ($m, "roleSpec/", $px);
+	    $role ||= 'thing';                                                  # we default to thing
+	    foreach my $player (_find_topic_references ($m, "", $px)) {
 		push @roles,   $role;
 		push @players, $player;
 	    }
@@ -291,6 +424,24 @@ sub _deserialize_10 {
 	map { $self->internalize ( $_ => $a->[TM->LID]) }                       # and for those we register the topic as reifying one for our assoc
             grep { $reifiedby{$_} eq $aid }                                     # find those which point to this assoc
 	    keys %reifiedby;                                                    # find all topics which reify something internally
+
+	$self->assert(Assertion->new(kind    => TM->ASSOC,
+				     type    => 'isa',
+				     roles   => [ qw(instance class) ],
+				     players => [ $scope, 'scope' ],
+				     scope   => undef)) if $scope && $scope ne 'us';
+    }
+
+    foreach my $mm ($doc->findnodes("/${px}topicMap/${px}mergeMap")) {
+	$TM::log->warn (__PACKAGE__ .": scoping topics at mergeMap ignored") if $mm->findvalue ("topicRef");
+	my $h = $mm->findvalue ("\@xlink:href") 
+	    or $TM::log->logdie ( __PACKAGE__ .": conformance error in 'mergeMap': 4.21, required attribute 'xlink:href' missing" );
+	my $tm2 = new TM (baseuri => $self->{baseuri});
+	Class::Trait->apply ($tm2, "TM::Serializable::XTM");
+	$tm2->url ($h);
+	$tm2->source_in;
+#warn "store2 is ".Dumper $tm2;
+	$self->add ($tm2);
     }
     return $self;
 }
@@ -328,6 +479,8 @@ sub serialize {
     $opts{version} ||= '2.0';
 
     if ($opts{version} eq '1.0') {
+	return _serialize_10 ($self, %opts);
+    } elsif ($opts{version} eq '1.1') {
 	return _serialize_10 ($self, %opts);
     } elsif ($opts{version} eq '2.0') {
         return _serialize_20 ($self, %opts);
@@ -516,7 +669,7 @@ sub _serialize_10 {
 				 FORCED_NS_DECLS => [XLINK_NS],
 				 NEWLINES   => 1);
     $writer->xmlDecl("iso-8859-1");
-    $writer->startTag("topicMap");
+    $writer->startTag("topicMap", $opts{version} eq '1.1' ? ('version' => '1.1') : ());
 
     my %chars = %{ _chars ($self) };
 
@@ -544,15 +697,15 @@ sub _serialize_10 {
 
 	if (@{ $t->[TM->INDICATORS] } || $t->[TM->ADDRESS]) {
 	    $writer->startTag("subjectIdentity");
-	    map {
-		$writer->emptyTag("subjectIndicatorRef",[XLINK_NS,"href"]=>$_);
-	    } @{ $t->[TM->INDICATORS] };
 
 	    if ($t->[TM->ADDRESS] =~ /^[0-9a-f]{32}$/) {                        # internal reification
-		$writer->emptyTag('topicRef', [XLINK_NS,"href"] => '#'.$t->[TM->ADDRESS] ); 
+		$writer->emptyTag('topicRef', [XLINK_NS,"href"] => '#a'.$t->[TM->ADDRESS] ); 
 	    } else {                                                            # just a subject address
 		$writer->emptyTag('resourceRef', [XLINK_NS,"href"] => $t->[TM->ADDRESS]); 
 	    }
+	    map {
+		$writer->emptyTag("subjectIndicatorRef",[XLINK_NS,"href"]=>$_);
+	    } @{ $t->[TM->INDICATORS] };
 	    $writer->endTag;
 	}
 
@@ -572,14 +725,14 @@ sub _serialize_10 {
 
 	map {                                                                   # find all occurrences
 	    $writer->startTag("occurrence");
-	    unless ($_->[TM->SCOPE] eq 'us') {
-		$writer->startTag("scope");
-		$writer->emptyTag("topicRef",[XLINK_NS,"href"]=>"#".&$debase ($_->[TM->SCOPE]));
-		$writer->endTag;
-	    }
 	    unless ($_->[TM->TYPE] eq 'occurrence') {
 		$writer->startTag("instanceOf");
 		$writer->emptyTag("topicRef",[XLINK_NS,"href"]=>"#".&$debase ($_->[TM->TYPE]));
+		$writer->endTag;
+	    }
+	    unless ($_->[TM->SCOPE] eq 'us') {
+		$writer->startTag("scope");
+		$writer->emptyTag("topicRef",[XLINK_NS,"href"]=>"#".&$debase ($_->[TM->SCOPE]));
 		$writer->endTag;
 	    }
 	    my $v = $_->[TM->PLAYERS]->[1];
@@ -600,7 +753,7 @@ sub _serialize_10 {
     foreach my $a (sort { $a->[TM->LID] cmp $b->[TM->LID] }                           # this is only to guarantee some order for the user
 		   grep { $_->[TM->KIND] == TM->ASSOC && $_->[TM->TYPE] ne 'isa'}     # but only assocs and not isa (as we have handled this)
 		   $self->asserts (\ '+all -infrastructure')) {                       # find all non-infra assertions
-	$writer->startTag("association", id => $a->[TM->LID]);                        # the id attribute is required for reification in xtm 1.0
+	$writer->startTag("association", id => 'a'.$a->[TM->LID]);                    # the id attribute is required for reification in xtm 1.0
 
 	$writer->startTag("instanceOf");
 	$writer->emptyTag("topicRef",[XLINK_NS,"href"] => '#'.&$debase ($a->[TM->TYPE]));
@@ -656,7 +809,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 1;
 

@@ -7,8 +7,24 @@ use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use TM::Materialized::AsTMa;
 
+sub _chomp {
+    my $s = shift;
+    chomp $s;
+    return $s;
+}
+
 #== TESTS ===========================================================================
-my $tm = new TM::Materialized::AsTMa (inline=> '
+
+require_ok ('TM::Materialized::XTM');
+
+{
+    my $tm = new TM::Materialized::XTM;
+    ok ($tm->isa('TM::Materialized::XTM'),     'correct class 1');
+    ok ($tm->isa('TM::Materialized::Stream'),  'correct class 2');
+    ok ($tm->isa('TM'),                        'correct class 3');
+}
+
+my $tm = new TM::Materialized::AsTMa (baseuri=>"tm://", inline=> '
 nackertes_topic 
 
 atop
@@ -39,6 +55,7 @@ winner: nobody
 
 thistop reifies http://rumsti
 bn: reification
+in: reification
 sin: http://nowhere.never.ever
 sin: http://nowhere.ever.never
 
@@ -46,35 +63,26 @@ sin: http://nowhere.ever.never
 winner: nobody
 sucker: nobody
 
-thistop_name
-bn: this will reify the thistop name
-
 ')->sync_in;
 
 Class::Trait->apply ($tm, "TM::Serializable::XTM");
 
-require_ok ('TM::Materialized::XTM');
-
 {
-    my $tm2 = new TM::Materialized::XTM (inline => $tm->serialize)->sync_in;
+    my $tm2 = new TM::Materialized::XTM (baseuri=>"tm://", inline => $tm->serialize)->sync_in;
+
     is_deeply( $tm->{mid2iid},    $tm2->{mid2iid},    'toplet structure identical' );
     is_deeply( $tm->{assertions}, $tm2->{assertions}, 'asserts structure identical' );
 }
 
-{
-    my ($name) = $tm->match_forall (char => 1, topic => $tm->tids ('thistop'));
-    $tm->internalize ('thistop_name' => $name->[TM->LID]);  # create a reification
-}
+eval {
+  my $tm2 = new TM::Materialized::XTM (url => 'file:xxx');
+  $tm2->sync_in;
+}; like ($@, qr/unable to load/, _chomp ($@));
 
-{ # version 1 cannot deal with name reification
-    my $tm2 = new TM::Materialized::XTM (inline => $tm->serialize (version => '1.0'))->sync_in;
-
-  TODO: {
-      local $TODO = "name reification support for XTM 1.0";
-      is_deeply( $tm->{mid2iid},    $tm2->{mid2iid},    'toplet structure identical' );
-  }
-    is_deeply( $tm->{assertions}, $tm2->{assertions}, 'asserts structure identical' );
-}
+eval {
+  my $tm2 = new TM::Materialized::XTM (file => 'xxx.xxx');
+  is ($tm2->url, 'file:xxx.xxx', 'url ok');
+};
 
 eval {
     my $tm2 = new TM::Materialized::XTM (inline => q|<topicMap version="2.1">
@@ -82,258 +90,50 @@ eval {
 |)->sync_in;
 }; like ($@, qr/unsupported/, 'version unsupported');
 
-
 __END__
 
 {
-    my $content = $tm->serialize (version => '2.0');
-#warn $content;
+    my $tm2 = new TM::Materialized::XTM (inline => q|<?xml version="1.0"?>
+<topicMap xmlns='http://www.topicmaps.org/xtm/1.0/' xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
 
-    use XML::LibXML;
-    my $xp  = XML::LibXML->new();
-    my $doc = $xp->parse_string ($content);
-#    use XML::LibXML::Dtd;
-    my $dtd = XML::LibXML::Dtd->new("SOME // Public / ID / 1.0",'schemas/xtm20.dtd');
-    ok ( $doc->validate($dtd), 'validates XTM 2.0');
+<topic id="aaa">
+  <baseName>
+     <instanceOf><topicRef xlink:href="#bbb"/></instanceOf>
+     <baseNameString>AAA</baseNameString>
+  </baseName>
+  <occurrence>
+     <instanceOf><topicRef xlink:href="#bbb"/></instanceOf>
+     <scope><topicRef xlink:href="#sss"/></scope>
+     <resourceData>sldfsdlf</resourceData>
+  </occurrence>
+</topic>
 
-    ok (eq_set ([
-		 map { "tm://$_" }
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic/@id')
-		 ],
-		[
-		 map { $_->[TM->LID] } $tm->toplets (\ '+all -infrastructure')
-		 ]), 'topic ids');
-    is ('2.0', $doc->findvalue ('/topicMap/@version'), 'version');
+<topic id="bbb"/>
 
-    is ('#ctop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@href'), 'instance btop');
-    
-    ok ($doc->findnodes('/topicMap/association[itemIdentity/@href="068ce15eb7cf7cc4536d504c73a4c05c"]/type/topicRef[@href="#sucks-more-than"]'),
-	'found assoc');
-    
-    ok (
-	eq_set ([
-		 '#atop', '#others'
-		 ],
-		[
-		 map { $_->nodeValue }
-		 $doc->findnodes('/topicMap/association[itemIdentity/@href="4abe49897cefeb950e4affaab0418e4f"]/role[type/topicRef/@href = "#winner"]/topicRef/@href')]), 'found assoc II');
+<association>
+  <instanceOf><topicRef xlink:href="#atype"/></instanceOf>
+  <member>
+     <roleSpec><topicRef xlink:href="#role2"/></roleSpec>
+     <topicRef xlink:href="#player1"/>
+  </member>
+  <member>
+     <roleSpec><topicRef xlink:href="#role1"/></roleSpec>
+     <topicRef    xlink:href="#player2"/>
+     <resourceRef xlink:href="http://player3/"/>
+  </member>
+</association>
 
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="btop"]/name/value/text()')
-		 ],
-		['something', 'some other thing' ]), 'name value');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="btop"]/name[scope/topicRef/@href = "#ascope"]/value/text()')
-		 ],
-		['some other thing' ]), 'basename value, scoped');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="ctop"]/occurrence[type/topicRef/@href = "#sometype"]/resourceRef/@href')
-		 ],
-		[
-		 'http://typedoc',
-		 'http://typedandscopedoc'
-		 ]), 'occ value, scoped and unscoped');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="ctop"]/occurrence[type/topicRef/@href = "#sometype"][scope/topicRef/@href = "#ascope"]/resourceRef/@href')
-		 ],
-		[
-		 'http://typedandscopedoc'
-		 ]), 'occ value, scoped');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="thistop"]/subjectIdentifier/@href')
-		 ],
-		[
-		 'http://nowhere.never.ever',
-		 'http://nowhere.ever.never'
-		 ]), 'indicators');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[@id="thistop"]/subjectLocator/@href')
-		 ],
-		[
-		 'http://rumsti'
-		 ]), 'address');
-
-    ok (! $doc->findnodes('/topicMap/topic[@id="ctop"]/subjectLocator'),    'no address');
-    ok (! $doc->findnodes('/topicMap/topic[@id="ctop"]/subjectIdentifier'), 'no indicators');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[count(*) = 0]/@id')
-		 ],
-		[
-		 'nackertes_topic',
-		 'nobody',
-		 'others',
-		 'sometype',
-		 'sucker',
-		 'sucks-more-than',
-		 'winner'
-		 ]), 'empty topics');
-
-    my ($aid) = map { $_->nodeValue } $doc->findnodes('/topicMap/association[@reifier = "atop"]/itemIdentity/@href');
-#    warn $aid;
-
-    ok ($aid =~ /^.{32}$/, 'internal reification');
-
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes(qq|/topicMap/association[itemIdentity/\@href="$aid"]/role
-						          [type/topicRef/\@href = "#winner"]
-						          /topicRef/\@href|)
-		 ],
-		[
-		 '#nobody'
-		 ]), 'reified assoc, role + players');
-    ok (
-	eq_set ([
-		 map { $_->nodeValue } $doc->findnodes(qq|/topicMap/association[itemIdentity/\@href="$aid"]/role
-						          [type/topicRef/\@href = "#sucker"]
-						          /topicRef/\@href|)
-		 ],
-		[
-		 '#nobody'
-		 ]), 'reified assoc, role + players II');
-
-#print Dumper [
-#	      map { $_->nodeValue } $doc->findnodes('/topicMap/topic[count(*) = 0]/@id')
-#	     ];
-}
-
-{
-    my $content = $tm->serialize (omit_trivia => 1, version => '2.0');
-
-    use XML::LibXML;
-    my $xp  = XML::LibXML->new();
-    my $doc = $xp->parse_string($content);
-    
-    ok (eq_set ([
-		 map { "tm://$_" }
-		 (
-		 'nackertes_topic',
-		 'nobody',
-		 'others',
-		 'sometype',
-		 'sucker',
-		 'sucks-more-than',
-		 'winner',
-		  map { $_->nodeValue } $doc->findnodes('/topicMap/topic/@id')
-		  )
-		 ],
-		[
-		 map { $_->[TM->LID] } $tm->toplets (\ '+all -infrastructure')
-		 ]), 'topic ids (trivia)');
-}
-
-{
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    can_ok $tm2, 'deserialize';
-
-    $tm2->deserialize ($tm->serialize (version => '2.0'));
-
-    is_deeply( $tm->{mid2iid},    $tm2->{mid2iid},    'toplet structure identical' );
-#warn Dumper $tm2;
-#    foreach my $a (keys %{ $tm2->{assertions} }) {
-#	warn "checking $a";
-#	ok ($tm->{assertions}->{$a}, $a . " exists in tm");
-#    }
-#    foreach my $a (keys %{ $tm->{assertions} }) {
-#	warn "checking $a";
-#	ok ($tm2->{assertions}->{$a}, $a . " exists in tm2");
-#	warn Dumper $tm->{assertions}->{$a} unless $tm2->{assertions}->{$a};
-#    }
-
-    is_deeply( $tm->{assertions}, $tm2->{assertions}, 'asserts structure identical' );
-}
-
-{
-    my $content = $tm->serialize (version => '2.0');
-
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-    my $content2 = $tm2->serialize;
-    is ($content, $content2, 'round tripping');
-
-#    use Text::Diff;
-#    my $diff = diff \$content, \$content2, { STYLE => "Context" }; #,   \%options;
-#    warn Dumper $diff;
-}
-
-{ # xtm default namespace
-    my $content = q|<topicMap
-   xmlns="http://www.topicmaps.org/xtm/"
-   version="2.0">
-  <topic id="rumsti" />
 </topicMap>
-|;
+|)->sync_in;
 
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'default namespace: topic found');
+warn Dumper $tm2;
+
+warn    $tm2->serialize (version => '2.0');
+
 }
 
-{ # explicit namespace + prefix
-    my $content = q|<xtm:topicMap
-   xmlns:xtm="http://www.topicmaps.org/xtm/" version='2.0'
->
-  <xtm:topic id="rumsti" />
-</xtm:topicMap>
-|;
-
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'prefixed namespace: xtm: topic found');
-}
-
-{ # explicit namespace + prefix
-    my $content = q|<bamsti:topicMap
-   xmlns:bamsti="http://www.topicmaps.org/xtm/" version="2.0"
->
-  <bamsti:topic id="rumsti" />
-</bamsti:topicMap>
-|;
-
-    my $tm2 = new TM (baseuri=>"tm://");
-    Class::Trait->apply ($tm2, "TM::Serializable::XTM");
-    $tm2->deserialize ($content);
-#warn Dumper $tm2;
-    is ($tm2->tids ('rumsti'), 'tm://rumsti', 'prefixed namespace: bamsti: topic found');
-}
 
 
 __END__
 
 
-TODO: variants
-
-
-
-
-use TM::Materialized::XTM;
-require_ok( 'TM::Materialized::XTM' );
-
-
-
-# now do the round trip
-my $rt=TM::Materialized::XTM->new(baseuri=>"tm://", inline=>$content);
-$rt->sync_in;
-ok($rt,"deserialization works");
-
-cmp_deeply($tm,noclass{%{$rt},variants=>ignore(),
-last_mod=>ignore(),created=>ignore(),url=>ignore()},"deserialized and original maps are the same");

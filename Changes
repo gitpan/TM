@@ -2,6 +2,11 @@ Revision history for Perl extension TM
 
 Note: Entries now marked with ! indicate a break of backwards compatibility.
 
+1.41  Sat May 17 13:05:24 CEST 2008
+	- fix:    MLDBM2 did not properly address $TM::log
+	- add:    more test cases for XTM support
+	- add:    DTDs for the zoo of XTM versions
+
 1.40  Mon May 12 21:18:12 CEST 2008
 	- add:    XTM 1.0 serialize/deserialize support (based on az-ware)
 	- add:    XTM 2.0 preliminary support (serialize, deserialize)
