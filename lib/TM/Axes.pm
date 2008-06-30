@@ -1,6 +1,6 @@
 package TM::Axes;
 
-our  = '0.1';
+our  = '0.2';
 
 =pod
 
@@ -16,7 +16,7 @@ have been implemented specifically. These are listed below.
 
 =head1 SEARCH SPECIFICATIONS
 
-Automatically generated from TM (1.35)
+Automatically generated from TM (1.42)
 
 =over
 
@@ -176,7 +176,7 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[8] by Robert Barta, E<lt>drrho.orgE<gt>
+Copyright 200[8] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.

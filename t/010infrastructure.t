@@ -19,7 +19,7 @@ use TM::PSI;
 require_ok ('TM::PSI');
 require_ok ('TM');
 
-&TM::_prime_infrastructure;
+#&TM::_prime_infrastructure;
 ##warn Dumper $TM::infrastructure;
 
 {

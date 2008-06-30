@@ -74,7 +74,7 @@ our $grammar = q{
                               | integer                               { $return = new TM::Literal  ($item[1], TM::Literal->INTEGER); }
                               | boolean                               { $return = new TM::Literal  ($item[1], TM::Literal->BOOLEAN); }
                               | wuri                                  { $return = new TM::Literal  ($item[1], TM::Literal->URI); }
-                              | string
+                              | string 
 # TODO | date
 
     integer                   : /-?\d+/
@@ -82,14 +82,27 @@ our $grammar = q{
     decimal                   : /-?\d+\.\d+/
 # TODO: optional .234?)
 
-    string                    : /\"{3}(.*?)\"{3}/s ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
-                              | /\"([^\n]*?)\"/    ('^^' uri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
+    string                    : /\"{3}(.*?)\"{3}/s ('^^' iri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
+                              | /\"([^\n]*?)\"/    ('^^' iri)(?)      { $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }
+
+#   string                     : quoted_string
+#                              | triple_quoted_string
+#
+#   quoted_string              : '"' /[^\"]*/ '"'                      { $return = $item[2]; }
+#
+#   triple_quoted_string       : '"""' /([^\"]|\"(?!""))*/ '"""'       { $return = $item[2]; }
+
 
     boolean                   : 'true' | 'false'
 
-    wuri                      : '<' uri '>'                           { $item[2] }
+    wuri                      : '<' iri '>'                           { $item[2] }
 
-    uri                       : /(\w+:[^\"\s)\]\>]+)/
+#    uri                       : /(\w+:[^\"\s)\]\>]+)/
+
+    iri                       : /\w[\w\d\+\-\.]+:\/([^\.\s:;]|\.(?!\s)|:(?!\s)|;(?!\s))+/
+# | '<' ... '>'
+                              | qname                                    # other implementation has to provide this!
+
 # an option? the official pattern -> perldoc URI
 #                  uri : m|^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?|;
 

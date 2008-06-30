@@ -351,25 +351,25 @@ our $grammar = q{
 												      );
 								      }
 
-    xml_element               : '<' xml_id xml_attribute(s?) xml_rest
+    xml_element               : '<' xml_id xml_attribute(s?) <skip:'\s*'> xml_rest
                                                                       {
-                                                                        if ($item[4] eq '/>') {                  # no end tag
+                                                                        if ($item[5] eq '/>') {                  # no end tag
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3]);
 									} else {
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3],
-												 end => $item[4]->[1],
-												 con => $item[4]->[0]);
+												 end => $item[5]->[1],
+												 con => $item[5]->[0]);
 									}
 								      }
     xml_id                    : /[:\w]+/
 
-    xml_attribute             : <skip:'\s*'> xml_id '=' '"' <skip:""> xml_fragment['[^\"\{]+'](s) '"'
+    xml_attribute             : <skip:'\s*'> xml_id '=' /[\'\"]/ <skip:""> xml_fragment['[^\"\'\{]+'](s) /[\'\"]/
                                                                       { $return = [ $item[2], $item[6] ]; }
 
     xml_rest                  : '/>'
-                              | '>' <skip:""> xml_segment(s) '</' xml_id '>'
+                              | '>' <skip:""> xml_segment(s?) '</' <skip:'\s*'> xml_id '>'
                                                                       { $return = [ $item[3], $item[5] ]; }
 
     xml_segment               : xml_element | xml_fragment['[^<\{]+']

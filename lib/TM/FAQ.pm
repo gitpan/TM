@@ -41,10 +41,10 @@ C<occurrence>s and not anything specials as, say, C<homepage>:
 
 =item
 
-A: Some of these maps I create have the trait C<ResourceAble> and import therefore a method
+Q: Some of these maps I create have the trait C<ResourceAble> and import therefore a method
 C<mtime>. How does this work?
 
-Q: Every map which is attached to an external resource is said to be I<resourceable>, hence the
+A: Every map which is attached to an external resource is said to be I<resourceable>, hence the
 trait with the same name. You, the developer, decide which copy of the map is the I<authoritative>,
 i.e. what should happen should the map infrastructure be forced to synchronize the content.
 
@@ -57,6 +57,18 @@ The resources themselves also have these timestamps; when the resource is a file
 then the "last modified" timestamps are take from there. The only complication is that L<TM> is
 using a much higher time resolution as most file systems (L<HiRes::Time>).
 
+=item
+
+Q: When using AsTMa (1.x) it is very difficult to figure out where I make a syntax error. Is
+there a convenient and effective way? What about line numbers?
+
+A: One approach is to use the C<%cancel> method: When added to the file, the parser will stop there
+and write a message onto STDERR. Another method is to use C<%trace 1> within the AsTMa stream. Then
+the parser should let you know what it could detect successfully.
+
+Line numbers cannot be used because the file will be massively reduced before the parser actually
+see it.
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
@@ -68,7 +80,7 @@ itself.
 
 =cut
 
-our $VERSION  = 0.4;
+our $VERSION  = 0.5;
 our $REVISION = '$Id: FAQ.pm,v 1.1 2006/11/30 08:38:10 rho Exp $';
 
 1;

@@ -7,6 +7,8 @@ use Test::More qw(no_plan);
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
+use Time::HiRes qw ( time );
+
 #== TESTS ===========================================================================
 
 use TM;
@@ -39,8 +41,11 @@ Class::Trait->apply ('TM' => 'TM::ResourceAble');
     is ($tm->mtime, 0,        'io:stdout time');
 
     $t = time;
+    warn "# time on that platform gives: ".$t;  # get strange errors from Solaris?
     $tm->url ('inline:xxx');
-    ok ($t <= $tm->mtime,      'inline: time');
+    warn "# mtime gives: ". $tm->mtime;
+    ok ($t >= $tm->mtime,             'inline: time');  # must be created
+    ok ($tm->{created} == $tm->mtime, 'inline: time');
 }
 
 __END__

@@ -234,9 +234,9 @@ __END__
     {
 	my $ms = new TM::MapSphere;
 	
-	use TM::Materialized::MLDBM2;
-	$ms->mount ('/'         => new TM::Materialized::MLDBM2 (file => $tmp));
- 	$ms->mount ('/xxx/'     => new TM::Materialized::MLDBM2 (file => $tmp2));
+	use TM::ResourceAble::MLDBM;
+	$ms->mount ('/'         => new TM::ResourceAble::MLDBM (file => $tmp));
+ 	$ms->mount ('/xxx/'     => new TM::ResourceAble::MLDBM (file => $tmp2));
 # they all have to be in there!
 	ok ($ms->is_mounted ('/')->mids ('xxx'),          'again, child map, midlet (xxx)');
 	ok ($ms->is_mounted ('/')->mids ('yyy'),          'again, child map, midlet (yyy)');
@@ -270,8 +270,8 @@ __END__
 	use TM::MapSphere;
 	my $ms = new TM::MapSphere;
 
-	use TM::Materialized::MLDBM2;
-	$ms->mount ('/' => new TM::Materialized::MLDBM2 (file => $tmp3));
+	use TM::ResourceAble::MLDBM;
+	$ms->mount ('/' => new TM::ResourceAble::MLDBM (file => $tmp3));
 
 	_mount_rec ($ms, '/', $db);
 
@@ -282,20 +282,20 @@ __END__
 
 	    foreach my $child (keys %$db) {
 # 		warn "# hooking $child into ". $path . $child . '/';
-		use TM::Materialized::MLDBM2;
+		use TM::ResourceAble::MLDBM;
 		my $path2 = $path . $child . '/';
- 		$ms->mount ($path2 => new TM::Materialized::MLDBM2 (file => $tmp3 . '.' . $child, baseuri => 'tm:'.$path . $child . '/'));
+ 		$ms->mount ($path2 => new TM::ResourceAble::MLDBM (file => $tmp3 . '.' . $child, baseuri => 'tm:'.$path . $child . '/'));
  		_mount_rec ($ms, $path2, $db->{$child});
 	    }
 	}
 
     }
     {
-	use TM::Materialized::MLDBM2;
+	use TM::ResourceAble::MLDBM;
 
 	use TM::MapSphere;
 	my $mt = new TM::MapSphere;
-	$mt->mount ('/' => new TM::Materialized::MLDBM2 (file => $tmp3));
+	$mt->mount ('/' => new TM::ResourceAble::MLDBM (file => $tmp3));
 
 	$mt->sync_in ('/');
 

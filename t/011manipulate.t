@@ -367,6 +367,25 @@ use TM;
     ok (eq_set ([ map { $_->[TM->LID] }  $tm->asserts (\ '+all -names -names') ],
 		[ map { $_->[TM->LID] }  $tm->asserts (\ '+all -names') ]),                                          'asserts spec: - -');
 
+    ok (eq_set ([ map { $_->[TM->LID] }  $tm->asserts ],
+		[
+		 '8858da88a2fed47eff8fd60e9bbc5f67',
+		 'f6cad13ec8543fadf6e3f615ff825bdb',
+		 'c667ce5f4e485b45698c75621bc63893',
+		 '27171f029a95d996c1d95281c2f4a207',
+		 '9aa74da04e36d6f5c05ffe1c91eab7d2',
+		 '4cc6e8f01f478ad4da3e9219d1e325fe',
+		 '99c6df083c9cfa2ad264553f33403d66',
+		 '8168aba8d6a9284c70e9c461a8977892',
+		 '95cbe2f86579c5f6a28fe5a197fc2df4',
+		 '04da9fc6bfb1a1738e6bf6b7d1d99d85',
+		 '7580e0151c0fb1d9aa9eb71f25ff4d64',
+		 '97b634a43b47218b9970e86f61671ce9'
+		 ]),                                                                                                 'asserts: all, enumerate');
+
+    ok (eq_set ([ $tm->asserts ],
+		[ $tm->asserts (\ '+all ') ]),                                                                       'asserts: all, impl = expl');
+
     ok (eq_set ([ map { $_->[TM->LID] }  $tm->asserts (\ '+names +occurrences') ],
 		[ map { $_->[TM->LID] }  $tm->asserts (\ '+occurrences +names') ]),                                  'asserts spec: + commutative');
 #    warn Dumper [map {$_->{mid} } $tm->topics (\ '+all -infrastructure -associations -names -occurrences') ];

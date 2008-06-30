@@ -3,15 +3,9 @@ package TM::Synchronizable::MLDBM;
 use Class::Trait 'base';
 use Class::Trait 'TM::Synchronizable';
 
-##use TM::Synchronizable;
-##use base qw (TM::Synchronizable);
-
 use Data::Dumper;
 
-#use MLDBM qw(DB_File Storable);        # use Storable for serializing
-##use MLDBM qw(Storable);        # use Storable for serializing
-
-use MLDBM qw(MLDBM::Sync::SDBM_File);
+use MLDBM qw(MLDBM::Sync::SDBM_File Storable);
 use MLDBM::Sync;
 use Fcntl qw(:DEFAULT);
 
@@ -65,15 +59,15 @@ L<TM::ResourceAble>, L<TM::Synchronizable>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 200[68], Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.02';
-our $REVISION = '$Id: MLDBM.pm,v 1.2 2006/11/23 10:02:55 rho Exp $';
+our $VERSION  = '0.03';
+our $REVISION = '$Id$';
 
 1;
 

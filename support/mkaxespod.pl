@@ -2,10 +2,12 @@ use TM;
 
 use constant DL => "\n\n";
 
+my $TMVERSION = shift @ARGV || die "no version provided";
+
 print <<EOT;
 package TM::Axes;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 =pod
 
@@ -21,7 +23,7 @@ have been implemented specifically. These are listed below.
 
 =head1 SEARCH SPECIFICATIONS
 
-Automatically generated from TM ($TM::VERSION)
+Automatically generated from TM ($TMVERSION)
 
 EOT
 
@@ -50,7 +52,7 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[8] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 200[8] by Robert Barta, E<lt>drrho\@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.

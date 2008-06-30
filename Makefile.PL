@@ -1,4 +1,4 @@
-use v5.6;
+use v5.8;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -39,7 +39,7 @@ package MY;
 sub depend {
     return <<MAKE
 
-cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm  lib/TM/QL/CParser.pm
+cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm lib/TM/CTM/CParser.pm lib/TM/QL/CParser.pm
 
 lib/TM/AsTMa/Fact.pm: yapp/astma-fact.yp yapp/YappTemplate.pm
 	yapp -m TM::AsTMa::Fact -t yapp/YappTemplate.pm -o lib/TM/AsTMa/Fact.pm yapp/astma-fact.yp
@@ -59,6 +59,13 @@ lib/TM/LTM/CParser.pm: lib/TM/LTM/Parser.pm
 	rm /tmp/grammar
 	mv CParser.pm lib/TM/LTM/
 
+lib/TM/CTM/CParser.pm: lib/TM/CTM/Parser.pm lib/TM/Literal.pm
+	perl -Ilib -MTM::CTM::Parser -e 'print \$\$TM::CTM::Parser::ctm_grammar' >  /tmp/grammar
+	perl -Ilib -MTM::Literal     -e 'print \$\$TM::Literal::grammar'         >> /tmp/grammar
+	perl -MParse::RecDescent - /tmp/grammar TM::CTM::CParser
+	rm /tmp/grammar
+	mv CParser.pm lib/TM/CTM/
+
 lib/TM/QL/CParser.pm: lib/TM/QL.pm
 	perl -Ilib -MTM::QL      -e 'print \$\$TM::QL::grammar'      >  /tmp/grammar
 	perl -Ilib -MTM::Literal -e 'print \$\$TM::Literal::grammar' >> /tmp/grammar
@@ -67,7 +74,7 @@ lib/TM/QL/CParser.pm: lib/TM/QL.pm
 	mv CParser.pm lib/TM/QL/
 
 axespod:
-	perl -Ilib support/mkaxespod.pl > lib/TM/Axes.pm
+	perl -Ilib support/mkaxespod.pl \$(VERSION) > lib/TM/Axes.pm
 
 dependencies:
 	scandeps.pl `grep .pm MANIFEST` `grep bin/ MANIFEST`| grep -v undef

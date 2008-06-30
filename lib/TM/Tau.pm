@@ -24,10 +24,10 @@ TM::Tau - Topic Maps, Tau Expressions
   $tm = new TM::Tau ('test.xtm > test.xtm');
 
   # create empty map at start and then let it automatically flush onto file
-  $tm = new TM::Tau ('null: > test.xtm');
+  $tm = new TM::Tau ('null: > test.xtm'); # or
   $tm = new TM::Tau ('> test.xtm');
 
-  # read-in at the start (=constructor time) and then flush it back
+  # read-in at the start (i.e. constructor time) and then flush it back
   $tm = new TM::Tau ('> test.xtm >');
 
   # load and merge maps at constructor time
@@ -37,202 +37,115 @@ TM::Tau - Topic Maps, Tau Expressions
   $tm = new TM::Tau ('mymap.atm * myontology.ont');
 
   # convert between different formats
-  $tm = new TM::Tau ('test.xtm > test.atm'); # if there were an output driver for AsTMa=
+  $tm = new TM::Tau ('test.xtm > test.atm');
 
 =head1 DESCRIPTION
 
-This package allows you to implement a I<breath-in-breath-out> paradigm when using topic maps coming
-from different provenances. This, for instance, allows you to create a topic map which is read from
-an AsTMa= file when it is instantiated at constructor time and then is saved into an XTM file when
-the topic map object goes out of scope. When, how, or whether at all the in-memory representation of
-the map is synchronized with these external resources, you can control with a simple language,
-presented below.
+When you need to make maps persistent, then you can resort to either using the prefabricated
+packages L<TM::Materialized::*>, or you can build your own persistent forms using any of the
+available synchronizable traits.  In either case your application will have to invoke methods like
+C<sync_in> and C<sync_out> to copy content from the resource into memory and back.
 
-This language also provides two binary operators to combine maps in this process. With C<+> maps can
-be merged, with C<*> a filter can be applied to a map.
+While this gives you great flexibility, in some cases your needs may be much simpler:
+
+=over
+
+=item consumer model:
+
+A map should be sourced into memory when the map object is created.
+
+A typical use case is a web server application which accesses the map on disk with every request and
+which returns parts of the map to an HTTP client.
+
+=item producer model: 
+
+A map is created first in memory and is flushed onto disk at destruction time.
+
+One example here is a script which extracts content from a relational database, puts it into a map
+in memory. At the end all map content is copied onto disk.
+
+=item maintainer model: 
+
+A map is sourced from the disk at map object creation time, you update it
+and it will be flushed back to the same disk location at object destruction.
+
+Your application may be started with with new content to be put into an existing map. So first the
+map will be loaded, the new content added, and after that the map will be written back from where it
+came.
+
+=item translator model: 
+
+A map is sourced from the disk, is translated into some other representation
+and is written back to disk to another location or format.
+
+As an example, you might want to convert between XTM and CTM format.
+
+=item filter model:
+
+A map is sourced from some backend, is transformed and/or filtered before being
+used.
+
+Your application could be one which only needs a particular portion of the map. So before processing
+the map is filtered down to the necessary parts.
+
+=item integration model:
+
+One or more maps are sourced from backends and are merged before
+processing.
+
+If you want to provide a consolidated view over several different data resources, you could first
+bring them all into topic map form, and then merge them before handing it to the application.
+
+=back
+
+What is common to all these cases is that there is a I<breath-in> phase when the map object is
+constructed, and a I<breath-out> phase when it is destroyed. In between theses phases the map
+object is just a normal instance of L<TM>.
 
 =head1 TAU EXPRESSIONS
 
-=head2 Introduction
+=head2 Overview
 
-I<tau> expressions serve several purposes:
+To control what happens in these two phases, this package provides a simple expression language,
+call B<Tau>. With it you can control
 
 =over
 
-=item *
+=item * where maps are supposed to come from, or go to,
 
-First, they allow to address whole maps via a URI.
+Here the language provides a URI mechanism for addressing, such as
 
-=item *
+   file:tm.atm
 
-Then they allow to connect (real or virtual) topic maps together forming bigger maps. In
+or
 
-   # merging two map, one in AsTMa format, another in XTM
+   http://topicmaps/some/map.xtm
+
+=item * when (or how) they should be merged,
+
+To merge two (manifested or virtual) topic maps together the C<+> operator can be used
+
    file:tm.atm + http://topicmaps/some/map.xtm
 
-we use the C<+> operator to I<merge> two maps into one.
+=item * when (or how) they should be transformed,
 
-B<NOTE>: Future versions of this package will use the C<+> operator also between maps and ontologies.
+To transform product data to only something a customer is supposed to see, the C<*> can be used:
 
-=item *
+   product_data.atm * file:customer_view.tmql
 
-Tau expressions are then generalized to filter maps.  Ontologies serve as filters as they are
-interpreted as constraints. Only those parts of the original map which conform to the ontology
-survive the filter process.
-
-   # filter out according to an ontology
-   product_data.atm * file:customer_view.onto
-
-The C<*> operator symbolizes the filtering operation.
-
-=item *
-
-Tau expressions are also used to completely transform maps into other maps (ontological
-transformation).
-
-   file:music.atm * beatles.atq
-   file:music.atm * elvis.atq
-
-Here C<*> symbolizes the transformation and it can be any filter program or a TMQL query.
+=item * when (or whether at all) they should be loaded oder saved
 
 =back
 
-B<NOTE>: Some of this filter functionality may not be yet implemented. This is bleeding edge.
-
-=head2 Map Source URLs
-
-To address maps we use URIs. A map stored in the file system might be addressed as
-
-  file:mydir/somemap.xtm
-
-for a relative URL (relative to an application's current working directory), or via an
-absolute URI such as
-
-  http://myserver/somemap.atm
-
-The package supports all those access methods (file:, http:, ...) which L<LWP::Simple> supports.
-
-=head2 Drivers
-
-Obviously a different deserializer package has to be used for an XTM file than for an AsTMa or LTM
-file. Some topic map content may be in a TM backend database, some content may only exist virtually,
-being emulated by a dedicated package.  While you may be mostly fine with system defaults, in some
-cases you may want to have precise control on how files and other external sources are to be
-interpreted. By their nature, drivers for sources must be subclasses of L<TM>.
-
-A similar consideration applies to filters. Also here the specified URI determines which filter
-actually has to be applied. It also can define where the content eventually is stored to. Drivers
-for filters must be either subclasses of L<TM::Tau::Filter>, or alternatively must be a trait
-providing a method C<sync_out>.
-
-=head2 Binding by Schemes (implicit)
-
-When the Tau expression is parsed, this package tries to identify which driver to use for which part
-of that composite map denoted by the expression. For this purpose a pattern matching approach can be
-used to map regular expression patterns to driver package names. If you would like to learn about
-the current state of affairs do a
-
-   use Data::Dumper;
-   print Dumper \%TM::Tau::sources;
-   print Dumper \%TM::Tau::filters;
-
-Each entry contains as key a regular expression which is matched against the parsed URI and as value
-the name of the driver to be used. There is a distinction made between the namespace of resources
-(residing data) and filters (and transformers).
-
-You can override values there:
-
-   $TM::Tau::sources{'null:'}          = 'TM';
-   $TM::Tau::sources{'tm:server\.com'} = 'My::Private::TopicMap::Driver';
-
-At any time you can modify this hash, introduce new patterns, delete existing ones. The only
-constraint is that the driver package must already be C<require>d into your Perl program.
-
-During parsing of a Tau expression, two cases are distinguised:
-
-=over
-
-=item *
-
-If the URI specifies a I<source>, then this URI will be matched against the regexps in the
-C<TM::Tau::sources> hash. The value of that entry will be used as class name to instantiate an
-object whereby one component (C<uri>) will be passed as parameter like this:
-
-I<$this_class_name>->new (uri => I<$this_uri>, baseuri => I<$this_uri>)
-
-This class should be a subclass of L<TM>.
-
-=item *
-
-If the URI specifies a I<filter>, then you have two options: Either you use as entry the name of a
-subclass of L<TM::Tau::Filter>. Then an object is created like above. Alternatively, the entry is a
-list reference containing names of traits. Then a generic L<TM::Tau::Filter> node is generated first
-and each of the traits are applied like this:
-
-Class::Trait->apply ( $node => I<$trait> => {
-                               exclude => [ 'mtime',
-                                            'sync_out',
-                                            'source_in' ]
-                               } );
-
-=back
-
-If there is no match, this results in an exception.
-
-=cut
-
-our %sources = (
-	        '^null:$'          	     => 'TM::Materialized::Null',
-
-		'^(file|ftp|http):.*\.atm$'  => 'TM::Materialized::AsTMa',
-		'^(file|ftp|http):.*\.ltm$'  => 'TM::Materialized::LTM',
-                '^file:/tmp/.*'              => 'TM::Materialized::AsTMa',
-#		'^(file|ftp|http):.*\.xtm$'  => 'TM::Materialized::XTM',
-		'^inline:.*'       	     => 'TM::Materialized::AsTMa',
-
-		'^io:stdin$'       	     => 'TM::Materialized::AsTMa',
-		'^-$'                        => 'TM::Materialized::AsTMa',                         # in "- > whatever:xxx" the - is the map coming via STDIN
-                );
-
-our %filters = (                                                                                   # TM::Tau::Filter::* packages are supposed to register there
-		'^null:$'                    => [ 'TM::Serializable::Dumper' ],
-
-		'^(file|ftp|http):.*\.atm$'  => [ 'TM::Serializable::AsTMa' ],
-		'^(file|ftp|http):.*\.ltm$'  => [ 'TM::Serializable::LTM' ],
-
-		'^-$'                        => [ 'TM::Serializable::Dumper' ],                    # in "whatever > -" the - is an empty filter
-		'^io:stdout$'      	     => [ 'TM::Serializable::Dumper' ],                    # stdout can be a URL for a filter
-		);
-
-# make sure all registered packages have been loaded
-use TM;
-use TM::Tau::Filter;
-
-# to be removed?
-#use TM::Materialized::AsTMa;
-#use TM::Materialized::LTM;
-#use TM::Materialized::Null;
-#use TM::Materialized::XTM;
-
-=pod
-
-=head2 Binding by Package Pragmas (Explicit)
-
-Another way to define which package should be used for a particular map
-is to specify this directly in the I<tau> expression:
-
-   http://.../map.xtm { My::BrokenXTM }
-
-In this case the resource is loaded and is processed using
-C<My::BrokenXTM> as package to parse it (see L<TM::Materialized::Stream> on how to write
-such a driver).
+B<NOTE>: Later versions of this package will heavily overload the operators to also operate on other
+objects.
 
 =head2 Syntax
 
 The Tau expression language supports two binary operators, C<+> and C<*>. The C<+> operator
 intuitively puts things together, the C<*> applies the right-hand operand to the left-hand operand
 and behaves as a transformer or a filter. The exact semantics depends on the operands. In any case,
-the C<*> binds stronger than the C<+>.
+the C<*> binds stronger than the C<+>, and that precedence order can be overridden with parentheses.
 
 The parser understands the following syntax for Tau expression:
 
@@ -252,6 +165,8 @@ The parser understands the following syntax for Tau expression:
 
 Terms in quotes are terminals, terms inside {} can appear any number of times (also zero), terms
 inside [] are optional. All other terms are non-terminals.
+
+B<NOTE>: Filters are planned to be composite, hence the optional bracketing in the grammar.
 
 =cut
 
@@ -396,80 +311,6 @@ sub _parse {
 
 =pod
 
-=head2 Examples
-
-  # memory-only map
-  null: > null:
-
-  # read at startup, sync out on request of application
-  file:test.atm > file:test.atm
-
-  # copy AsTMa= to XTM
-  file:test.atm > file:test.xtm
-  # this only works if the XTM driver supports outputting
-
-  # using a dedicated driver to load a map, store it onto a file
-  dns:my.dns.server { My::DNS::Driver } > file:dns_snapshot.atm
-  # this will only work if the My::DNS::Driver supports to materialize a map
-
-  # read a map and compute the statistics
-  file:test.atm * http://psi.tm.bond.edu.au/queries/1.0/statistics
-
-=head1 INTERFACE
-
-=head2 Constructor
-
-The constructor accepts a I<tau-expression> parameter defining how the map is supposed to be built.
-If that parameter is missing, C<< null: >> will be assumed which results in an empty map to be
-created. That map, though, contains a memory component, so that things can be added to it after
-that. Otherwise the I<Tau> expression must follow the tau algebra syntax given in L</Syntax>.  If
-not, then an appropriate exception will be raised.
-
-If - during the parsing process - no appropriate driver package for a particular resource can be
-identified, an exception will be raised.
-
-Examples:
-
-   # map only existing in memory
-   my $map = new TM::Tau;
-
-   # map will be loaded as result of this tau expression
-   my $map = new TM::Tau ('file:music.atm * file:beatles.tmql');
-
-
-Apart from the Tau expression the constructor optionally interprets a hash with the following keys:
-
-=over
-
-=item C<sync_in> (default: C<1>)
-
-If non-zero, in-synchronisation at constructor time will happen, otherwise it is suppressed. In that
-case you can trigger in-synchronisation explicitly with the method C<sync_in>.
-
-=item C<sync_out> (default: C<1>)
-
-If non-zero, out-synchronisation at destruction time will happen, otherwise it is suppressed.
-
-=back
-
-Example:
-
-   my $map = new TM::Tau ('test.xtm', sync_in => 0);
-
-Additionally, you can use > to symbolize a conversion process. The > is just a synonym for the C<*>,
-but it is more intuitive to write
-
-   something.atm > something.xtm
-
-than
-
-  ( something.atm ) * something.xtm
-
-Still, in both cases the expression on the right is a I<filter> in that it takes content from the
-left and produces something (even though the content itself is not modified).
-
-
-
 The (pre)parser supports the following shortcuts (I hate unnecessary typing):
 
 =over
@@ -505,12 +346,200 @@ The (pre)parser supports the following shortcuts (I hate unnecessary typing):
 =item *
 
 The URI C<-> as source is interpreted as STDIN (via the L<TM::Serializable::AsTMa> trait).
+Unless you override that.
 
 =item *
 
 The URI C<-> as filter is interpreted as STDOUT (via the L<TM::Serializable::Dumper> trait).
+Unless you override that.
 
 =back
+
+=head2 Examples
+
+  # memory-only map
+  null: > null:
+
+  # read at startup, sync out when map goes out of scope
+  file:test.atm > file:test.atm
+
+  # copy AsTMa= to XTM
+  file:test.atm > file:test.xtm
+
+  # using a dedicated driver to load a map, store it onto a file
+  dns:my.dns.server { My::DNS::Driver } > file:dns_snapshot.atm
+  # this will only work if the My::DNS::Driver supports to materialize
+  # the whole map
+
+  # read a map and compute the statistics
+  file:test.atm * http://psi.tm.bond.edu.au/queries/1.0/statistics
+
+=head2 Map Source URLs
+
+URIs are used to address maps. An XTM map, for example, stored in the file system might be addressed
+as
+
+  file:mydir/somemap.xtm
+
+for a relative URL (relative to an application's current working directory), or via an
+absolute URI such as
+
+  http://myserver/somemap.atm
+
+The package supports all those access methods (file:, http:, ...) which L<LWP> supports.
+
+=head2 Drivers
+
+Obviously a different deserializer package has to be used for an XTM file than for an AsTMa or LTM
+file. Some topic map content may be in a TM backend database, some content may only exist virtually,
+being emulated by a dedicated package.  While you may be mostly fine with system defaults, in some
+cases you may want to have precise control on how files and other external sources are to be
+interpreted. By their nature, drivers for sources must be subclasses of L<TM>.
+
+A similar consideration applies to filters. Also here the specified URI determines which filter
+actually has to be applied. It also can define where the content eventually is stored to. Drivers
+for filters must be either subclasses of L<TM::Tau::Filter>, or alternatively must be a trait
+providing a method C<sync_out>.
+
+=head2 Binding by Schemes (implicit)
+
+When a Tau expression is parsed, the parser tries to identify which driver to use for which part of
+that composite map denoted by the expression. For this purpose a pattern matching approach is used
+to map regular expression patterns to driver package names. If you would like to learn about the
+current state of affairs do a
+
+   use Data::Dumper;
+   print Dumper \%TM::Tau::sources;
+   print Dumper \%TM::Tau::filters;
+
+Obviously, there is a distinction made between the namespace of resources (residing data) and
+filters (and transformers).
+
+Each entry in any of the hashes contains as key a regular expression and as value the name of the
+driver to be used. That key is matched against the parsed URI and the first match wins. Since the
+keys in a hash are not naturally ordered, that is undefined.
+
+At any time you can override values there:
+
+   $TM::Tau::sources{'null:'}          = 'TM';
+   $TM::Tau::sources{'tm:server\.com'} = 'My::Private::TopicMap::Driver';
+
+or delete existing ones. The only constraint is that the driver package must already be C<require>d
+into your Perl program.
+
+During parsing of a Tau expression, two cases are distinguished:
+
+=over
+
+=item *
+
+If the URI specifies a I<source>, then this URI will be matched against the regexps in the
+C<TM::Tau::sources> hash. The value of that entry will be used as class name to instantiate an
+object whereby one component (C<uri>) will be passed as parameter like this:
+
+I<$this_class_name>->new (uri => I<$this_uri>, baseuri => I<$this_uri>)
+
+This class should be a subclass of L<TM>.
+
+=item *
+
+If the URI specifies a I<filter>, then you have two options: Either you use as entry the name of a
+subclass of L<TM::Tau::Filter>. Then an object is created like above. Alternatively, the entry is a
+list reference containing names of traits. Then a generic L<TM::Tau::Filter> node is generated first
+and each of the traits are applied like this:
+
+Class::Trait->apply ( $node => I<$trait> => {
+                               exclude => [ 'mtime',
+                                            'sync_out',
+                                            'source_in' ]
+                               } );
+
+=back
+
+If there is no match, this results in an exception.
+
+=cut
+
+our %sources = (
+	        '^null:$'          	     => 'TM::Materialized::Null',
+
+		'^(file|ftp|http):.*\.atm$'  => 'TM::Materialized::AsTMa',
+		'^(file|ftp|http):.*\.ltm$'  => 'TM::Materialized::LTM',
+		'^(file|ftp|http):.*\.ctm$'  => 'TM::Materialized::CTM',
+                '^file:/tmp/.*'              => 'TM::Materialized::AsTMa',
+		'^(file|ftp|http):.*\.xtm$'  => 'TM::Materialized::XTM',
+		'^inline:.*'       	     => 'TM::Materialized::AsTMa',
+
+		'^io:stdin$'       	     => 'TM::Materialized::AsTMa',
+		'^-$'                        => 'TM::Materialized::AsTMa',                         # in "- > whatever:xxx" the - is the map coming via STDIN
+                );
+
+our %filters = (                                                                                   # TM::Tau::Filter::* packages are supposed to register there
+		'^null:$'                    => [ 'TM::Serializable::Dumper' ],
+
+		'^(file|ftp|http):.*\.atm$'  => [ 'TM::Serializable::AsTMa' ],
+		'^(file|ftp|http):.*\.ltm$'  => [ 'TM::Serializable::LTM' ],
+		'^(file|ftp|http):.*\.xtm$'  => [ 'TM::Serializable::XTM' ],
+		'^(file|ftp|http):.*\.ctm$'  => [ 'TM::Serializable::CTM' ],
+
+		'^-$'                        => [ 'TM::Serializable::Dumper' ],                    # in "whatever > -" the - is an empty filter
+		'^io:stdout$'      	     => [ 'TM::Serializable::Dumper' ],                    # stdout can be a URL for a filter
+		);
+
+# make sure all registered packages have been loaded
+use TM;
+use TM::Tau::Filter;
+
+=pod
+
+=head2 Binding by Package Pragmas (Explicit)
+
+Another way to define which package should be used for a particular map
+is to specify this directly in the I<tau> expression:
+
+   http://.../map.xtm { My::BrokenXTM }
+
+In this case the resource is loaded and is processed using
+C<My::BrokenXTM> as package to parse it (see L<TM::Materialized::Stream> on how to write
+such a driver).
+
+=head1 INTERFACE
+
+=head2 Constructor
+
+The constructor accepts a string following the I<Tau expression> L</Syntax>.  If that string is
+missing, C<< null: >> will be assumed. An appropriate exception will be raised if the syntax is
+violated or one of the mentioned drivers is not preloaded.
+
+Examples:
+
+   # map only existing in memory
+   my $map = new TM::Tau;
+
+   # map will be loaded as result of this tau expression
+   my $map = new TM::Tau ('file:music.atm * file:beatles.tmql');
+
+Apart from the Tau expression the constructor optionally interprets a hash with the following keys:
+
+=over
+
+=item C<sync_in> (default: C<1>)
+
+If non-zero, in-synchronisation at constructor time will happen, otherwise it is suppressed. In that
+case you can trigger in-synchronisation explicitly with the method C<sync_in>.
+
+=item C<sync_out> (default: C<1>)
+
+If non-zero, out-synchronisation at destruction time will happen, otherwise it is suppressed.
+
+=back
+
+Example:
+
+   my $map = new TM::Tau ('test.xtm', 
+                          sync_in => 0); # dont want to let it happen now
+   ....                                  # time passes 
+   $map->sync_in;                        # but now is a good time
 
 =cut
 

@@ -6,6 +6,7 @@ TODO
 META.yml
 maps/dns.atm
 maps/foaf.atm
+maps/tutorials.atm
 yapp/astma-fact.yp
 yapp/astma2-fact.yp
 yapp/YappTemplate.pm
@@ -18,6 +19,7 @@ t/011manipulate.t
 t/012analysis.t
 t/013index.t
 t/014insane.t
+t/021ctmdeserialize.t
 t/031synchronize.t
 t/032serialize.t
 t/03resource.t
@@ -63,9 +65,12 @@ lib/TM/Index/Match.pm
 lib/TM/Literal.pm
 lib/TM/LTM/Parser.pm
 lib/TM/LTM/CParser.pm
+lib/TM/CTM/Parser.pm
+lib/TM/CTM/CParser.pm
 lib/TM/MapSphere.pm
 lib/TM/Materialized/AsTMa.pm
 lib/TM/Materialized/LTM.pm
+lib/TM/Materialized/CTM.pm
 lib/TM/Materialized/MLDBM2.pm
 lib/TM/Materialized/MLDBM.pm
 lib/TM/Materialized/Null.pm
@@ -80,7 +85,9 @@ lib/TM/QL/CParser.pm
 lib/TM/QL/PE.pm
 lib/TM/QL/TS.pm
 lib/TM/ResourceAble.pm
+lib/TM/ResourceAble/MLDBM.pm
 lib/TM/Serializable/AsTMa.pm
+lib/TM/Serializable/CTM.pm
 lib/TM/Serializable/Dumper.pm
 lib/TM/Serializable/LTM.pm
 lib/TM/Serializable/Summary.pm

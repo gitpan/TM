@@ -1,6 +1,24 @@
 Revision history for Perl extension TM
 
-Note: Entries now marked with ! indicate a break of backwards compatibility.
+Note: Entries marked with 
+    - ! indicate a break of backwards compatibility.
+    - ~ indicate a future break of compatibility, marked as deprecated
+
+1.42  Mon Jun 30 21:09:29 CEST 2008
+	- fix:    bug (03resource) made wrong assumption about inline: resources
+	- fix:    bug (TM.pm) getting all assertions ARRAY ref'ed
+	- fix:    version bug when creating the TM::Axes pod
+	~ add:    package TM::Materialized::MLDBM2 is replaced/renamed to TM::ResourceAble::MLDBM (old now deprecated)
+	- change: README updated
+	- fix:    infrastructure was only initialized by first new TM => one could not access it before a dummy instantiation
+	- change: default configuration for Log4Perl does not any longer write a file tm.log, but logs to STDERR
+	- change: TM::Materialized::MLDBM uses Storable for serializing
+	- change: moved smallest working version up to Perl v5.8 (from v5.6)
+	- update: TM::FAQ
+	- fix:    AsTMa= 1.x identifiers could not start with is-a-...., in-, ex-, oc-, bn because of clashes with symbols IN, EX, ...
+	- fix:    AsTMa= 1.x comment chars can now be escaped: \# will suppress comment, \\# will escape the escape
+	- change: $TM::toplet_ctr is now made 'our' instead of 'my'
+	- add:    EXPERIMENTAL read support for CTM
 
 1.41  Sat May 17 13:05:24 CEST 2008
 	- fix:    MLDBM2 did not properly address $TM::log
@@ -352,9 +370,6 @@ Note: Entries now marked with ! indicate a break of backwards compatibility.
 0.04  Sun Dec 31 14:18:45 2000
 	- original version; created by h2xs 1.19
         - cloned from inofficial TM-0.04 version
-
-
-Revision history for Perl extension TM.
 
 0.01  Tue Jul 27 13:27:54 2004
 	- original version; created by h2xs 1.23 with options

@@ -94,6 +94,37 @@ in: blabla bla
   is (scalar $ms->match (TM->FORALL, type => 'occurrence', irole => 'thing',    iplayer => 'tm:aaa' ), 2, 'occurrences for aaa 1');
 }
 
+{ # dangerous IDs
+    my $ms = _parse (q|
+in-a is-a oc-a
+in: aaaa
+
+rd-b is-a ex-a
+rd: bbbb
+
+this.is.a.valid.topic.name
+
+this.is.even-more.so.a_topic
+
+in-line-with-policy
+bn: goals of backup system must be in line with corp policies
+in: eg: no backup of desktops
+
+ex-suggested
+bn: ex-suggested:
+
+(is-a-variant-of)
+ in-a : in-line-with-policy
+ rd-b : ex-suggested
+
+|);
+#warn Dumper $ms;
+
+    foreach (qw(in-a oc-a rd-b ex-a this.is.a.valid.topic.name this.is.even-more.so.a_topic in-line-with-policy ex-suggested is-a-variant-of)) {
+	is ($ms->mids ($_), "tm:$_", "dangerous $_");
+    }
+}
+
 #-- syntactic issues ----------------------------------------------------------------
 
 my $npa = scalar keys %{$TM::infrastructure->{assertions}};
@@ -311,15 +342,19 @@ aaa
 bn: AAA  # comment
 bn: AAA# no-comment
 oc: http://rumsti#no-comment
+in: a hash-bang path like \#!/bin/bash
+in: a hash-bang path like \\\\#!/bin/bash
 |);
-##  warn Dumper $ms;
+#warn Dumper $ms;
 
-  is (scalar $ms->match, $npa+3, 'comment + assertions');
+  is (scalar $ms->match, $npa+5, 'comment + assertions');
   ok (eq_set ([ map { $_->[0] } map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'name', iplayer => 'tm:aaa' ) ] ,
 	      [ 'AAA',
 		'AAA# no-comment' ]), 'getting back commented basename');
   ok (eq_set ([ map { $_->[0] } map { $_->[TM->PLAYERS]->[1] } $ms->match (TM->FORALL, type => 'occurrence', iplayer => 'tm:aaa' ) ] ,
-	      [ 'http://rumsti#no-comment' ]), 'getting back commented occ');
+	      [ 'http://rumsti#no-comment',
+		'a hash-bang path like #!/bin/bash',
+		'a hash-bang path like \\\\#!/bin/bash']), 'getting back commented occ');
 }
 
 #-- structural: assocs ----------------------------------------------------------
@@ -483,6 +518,18 @@ xxx (http://www.topicmaps.org/xtm/1.0/#psi-topic)
   is ($ms->reifies ('tm:aaa'), $a,                   'assoc reified: regained 2');
 }
 
+{
+  my $ms = _parse (q|
+(xxx) is-reified-by is-a.some-thing.which-ex-strange
+  role : player
+
+|);
+  my ($a) = $ms->match (TM->FORALL, type => 'tm:xxx');
+  is_deeply ([ $ms->is_reified ($a) ], [ 'tm:is-a.some-thing.which-ex-strange' ], 'assoc reified: regained');
+  is ($ms->reifies ('tm:is-a.some-thing.which-ex-strange'), $a,                   'assoc reified: regained 2');
+
+};
+
 eval {
   my $ms = _parse (q|
 (xxx) reifies aaa
@@ -507,6 +554,7 @@ eval {
   role : player
 |);
 }; like ($@, qr/local identifier/i, _chomp($@));
+
 
 #-- syntax errors -------------------------------------------------------------------
 

@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.41';
+our $VERSION  = '1.42';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -19,16 +19,26 @@ use TM::PSI;
 
 use Log::Log4perl;
 Log::Log4perl::init( \ q(
-log4perl.rootLogger=DEBUG, LOGFILE
 
-log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
-log4perl.appender.LOGFILE.filename=tm.log
-log4perl.appender.LOGFILE.mode=append
+log4perl.rootLogger=DEBUG, Screen
 
-log4perl.appender.LOGFILE.layout=PatternLayout
-log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n
+log4perl.appender.Screen=Log::Log4perl::Appender::Screen
+log4perl.appender.Screen.layout=Log::Log4perl::Layout::PatternLayout
+log4perl.appender.Screen.layout.ConversionPattern=[%r] %F %L %c - %m%n
+
+#log4perl.rootLogger=DEBUG, LOGFILE
+
+#log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
+#log4perl.appender.LOGFILE.filename=/tmp/tm.log
+#log4perl.appender.LOGFILE.mode=append
+
+#log4perl.appender.LOGFILE.layout=PatternLayout
+#log4perl.appender.LOGFILE.layout.ConversionPattern=[%r] %F %L %c - %m%n
 		       ) );
+
 our $log = Log::Log4perl->get_logger("TM");
+
+our $infrastructure;                                                                    # default set = core + topicmaps_inc + astma_inc
 
 =pod
 
@@ -317,33 +327,6 @@ This controls the consistency settings. They can be changed later with the C<con
 
 =cut
 
-our $infrastructure;                                                                    # default set = core + topicmaps_inc + astma_inc
-
-sub _prime_infrastructure {                                                             # generate a fragmentary TM structure for the infrastructure
-    foreach my $h ($TM::PSI::core,
-		   $TM::PSI::topicmaps_inc,
-		   $TM::PSI::tmql_inc,
-		   $TM::PSI::astma_inc) {
-	foreach my $k (keys %{ $h->{mid2iid} }) {
-	    $infrastructure->{mid2iid}->{$k} = [ $k, undef, $h->{mid2iid}->{$k} ];      # and manifest them as toplets
-	}
-
-	map { $infrastructure->{assertions}->{ $_->[TM->LID] } = $_ }                   # manifest assertions
-##	map { $infrastructure->{mid2iid}->{$_->[TM->LID]} = [ $_->[TM->LID], undef, [] ],  # also as toplets
-##	      $_ }
-	map { $_->[TM->LID] = mklabel ($_);                                             #   after computing the hash LID
-	      $_ }
-	map { canonicalize ( undef, $_ ) }                                              #   after canonicalizing them
-	map { $_->[TM->KIND]  = TM->ASSOC;                                              #   adding defaults
-	      $_->[TM->SCOPE] = TM::PSI::US; 
-	      $_ }
-	map { Assertion->new (type    => $_->[0],                                       #   which is built here
-			      roles   => $_->[1],                                       #     with the roles list
-			      players => $_->[2])}                                      #     with the players list
-	@{ $h->{assertions} };
-    }
-}
-
 sub new {
   my $class = shift;
   my %self  = @_;
@@ -354,14 +337,11 @@ sub new {
 
   my $self = bless \%self, $class;
 
-  unless ($self->{mid2iid}) {                                                     # we need to do fast cloning of basic vocabulary
-      $infrastructure or _prime_infrastructure;
-
+  unless ($self->{mid2iid}) {                                                          # we need to do fast cloning of basic vocabulary
       %{ $self->{mid2iid} }    = %{ $infrastructure->{mid2iid} };                      # shallow clone
       %{ $self->{assertions} } = %{ $infrastructure->{assertions} };                   # shallow clone
   }
-
-  $self->{last_mod} = 0;                                                          # book keeping
+  $self->{last_mod} = 0;                                                               # book keeping
   $self->{created}  = Time::HiRes::time;
 
   return $self;
@@ -681,7 +661,7 @@ sub add {
 	my %changes;                                                           # will contain old -> new internal identifier mappings
 	while (my ($k, $v) = each %{$_->{mid2iid}}) {
 
-	    if ($infrastructure->{mid2iid}->{$k}) { # infrastructure toplets are sacrosanct
+	    if ($infrastructure->{mid2iid}->{$k}) {                            # infrastructure toplets are sacrosanct
 	    } else {
 		(my $k2 = $k) =~ s/^$baseuri2/$baseuri/;                       # replace baseuri2 prefix
 
@@ -717,8 +697,8 @@ sub _relabel {
     foreach my $a (@_) {
 	my ($this, $that);
 #warn "working on ".Dumper $a;
-        $a->[TM->SCOPE]     = $that if $that = $changes->{ $a->[TM->SCOPE] }; $this ||= $that;
-	$a->[TM->TYPE]      = $that if $that = $changes->{ $a->[TM->TYPE]  }; $this ||= $that;
+        $a->[TM->SCOPE]  = $that if $that = $changes->{ $a->[TM->SCOPE] }; $this ||= $that;
+	$a->[TM->TYPE]   = $that if $that = $changes->{ $a->[TM->TYPE]  }; $this ||= $that;
 	
 	map { $_ = $this = $that if $that = $changes->{ $_ } } @{ $a->[TM->ROLES]   };
 	map { $_ = $this = $that if $that = $changes->{ $_ } } @{ $a->[TM->PLAYERS] };
@@ -1293,7 +1273,7 @@ convenience.
 
 =cut
 
-my $toplet_ctr = 0;
+our $toplet_ctr = 0;
 
 sub internalize {
     my $self    = shift;
@@ -1305,7 +1285,7 @@ sub internalize {
     my $mid2iid = $self->{mid2iid};
     while (@_) {
 	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
-#warn "internalize $k, $v";
+#warn "internalize $k, $v" if ! defined $k;
 	# make sure that $k contains a mid
 
 	if (defined $k) {
@@ -1942,7 +1922,7 @@ sub asserts {
 	    return $self->{assertions}->{@_};
 	}
     } else {
-	return @{ $self->{assertions} };
+	return values %{ $self->{assertions} };
     }
 }
 
@@ -3257,6 +3237,35 @@ This library is free software; you can redistribute it and/or modify it under th
 itself.
 
 =cut
+
+#-- this we do when all structures have been defined
+_prime_infrastructure();                                                                # initialize
+# NOTE: BEGIN does not work, because we have to define all 
+
+sub _prime_infrastructure {                                                             # generate a fragmentary TM structure for the infrastructure
+    foreach my $h ($TM::PSI::core,
+		   $TM::PSI::topicmaps_inc,
+		   $TM::PSI::tmql_inc,
+		   $TM::PSI::astma_inc) {
+	foreach my $k (keys %{ $h->{mid2iid} }) {
+	    $infrastructure->{mid2iid}->{$k} = [ $k, undef, $h->{mid2iid}->{$k} ];      # and manifest them as toplets
+	}
+
+	map { $infrastructure->{assertions}->{ $_->[TM->LID] } = $_ }                   # manifest assertions
+	map { $_->[TM->LID] = mklabel ($_);                                             #   after computing the hash LID
+	      $_ }
+	map { canonicalize ( undef, $_ ) }                                              #   after canonicalizing them
+	map { $_->[TM->KIND]  = TM->ASSOC;                                              #   adding defaults
+	      $_->[TM->SCOPE] = TM::PSI::US; 
+	      $_ }
+	map { Assertion->new (type    => $_->[0],                                       #   which is built here
+			      roles   => $_->[1],                                       #     with the roles list
+			      players => $_->[2])}                                      #     with the players list
+	@{ $h->{assertions} };
+    }
+}
+
+
 
 our $REVISION = '$Id: TM.pm,v 1.45 2007/07/17 16:24:00 rho Exp $';
 

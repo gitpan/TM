@@ -24,15 +24,18 @@ my @PODs = qw(
 	      lib/TM/Tree.pm
 	      lib/TM/PSI.pm
 	      lib/TM/ResourceAble.pm
+	      lib/TM/ResourceAble/MLDBM.pm
 	      lib/TM/Synchronizable.pm
 	      lib/TM/Synchronizable/MLDBM.pm
 	      lib/TM/Serializable.pm
 	      lib/TM/Serializable/AsTMa.pm
 	      lib/TM/Serializable/LTM.pm
+	      lib/TM/Serializable/CTM.pm
 	      lib/TM/Serializable/XTM.pm
 	      lib/TM/MapSphere.pm
 	      lib/TM/Materialized/Stream.pm
 	      lib/TM/Materialized/AsTMa.pm
+	      lib/TM/Materialized/CTM.pm
 	      lib/TM/Materialized/LTM.pm
 	      lib/TM/Materialized/MLDBM.pm
 	      lib/TM/Materialized/MLDBM2.pm

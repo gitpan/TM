@@ -17,10 +17,10 @@ sub _chomp {
 
 #== TESTS ===========================================================================
 
-require_ok( 'TM::Materialized::MLDBM2' );
+require_ok( 'TM::ResourceAble::MLDBM' );
 
 eval {
-  my $tm = new TM::Materialized::MLDBM2 ();
+  my $tm = new TM::ResourceAble::MLDBM ();
 }; like ($@, qr/no file/, _chomp ($@));
 
 my ($tmp);
@@ -31,10 +31,10 @@ do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
 END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
 
 {
-     my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
+     my $tm = new TM::ResourceAble::MLDBM (file => $tmp);
     
      ok ($tm->isa('TM'),                       'correct class');
-     ok ($tm->isa('TM::Materialized::MLDBM2'), 'correct class');
+     ok ($tm->isa('TM::ResourceAble::MLDBM'), 'correct class');
  }
 
 unlink ($tmp) || warn "# cannot unlink $tmp file, but that is ok";
@@ -44,7 +44,7 @@ my $whatever2; # just a temp
 my $whatever3; # just a temp
 
 {
-    my $tm = new TM::Materialized::MLDBM2 (file => $tmp, baseuri => 'tm:');
+    my $tm = new TM::ResourceAble::MLDBM (file => $tmp, baseuri => 'tm:');
 # test 1
     $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'ramsti', 'rumsti' ]));
     $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'superclass', 'subclass' ], players => [ 'ramsti', 'rimsti' ]));
@@ -74,7 +74,7 @@ my $whatever3; # just a temp
 }
 
 {
-    my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
+    my $tm = new TM::ResourceAble::MLDBM (file => $tmp);
 #warn Dumper $tm;
 
     is ($tm->url,     "file:$tmp", 'url survived');
@@ -112,7 +112,7 @@ my $whatever3; # just a temp
 }
 
 { # testing taxonometric functions
-    my $tm = new TM::Materialized::MLDBM2 (file => $tmp);
+    my $tm = new TM::ResourceAble::MLDBM (file => $tmp);
 #warn Dumper $tm;
 
     ok (eq_set ([ $tm->instances  ('assertion-type') ],[ 'isa', 'is-subclass-of' ]),                             'subsumption: instances 1');

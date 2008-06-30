@@ -1,4 +1,4 @@
-package TM::Materialized::MLDBM2;
+package TM::ResourceAble::MLDBM;
 
 use TM;
 use base qw (TM);
@@ -7,30 +7,27 @@ use Class::Trait qw(TM::ResourceAble);
 use Data::Dumper;
 
 use BerkeleyDB ;
-use MLDBM qw(BerkeleyDB::Hash) ;
+use MLDBM qw(BerkeleyDB::Hash Storable) ;
 use Fcntl;
 
 =pod
 
 =head1 NAME
 
-TM::Materialized::MLDBM2 - Topic Maps, DBM Storage (synchronous)
+TM::ResourceAble::MLDBM - Topic Maps, DBM Storage (synchronous)
 
 =head1 SYNOPSIS
 
-   NOTE: THIS PACKAGE IS NOW DEPRECATED
-   NOTE: USE TM::ResourceAble::MLDBM INSTEAD
-
-   use TM::Materialized::MLDBM2;
+    use TM::ResourceAble::MLDBM;
    {
-    my $tm = new TM::Materialized::MLDBM2 (file => '/tmp/map.dbm');
+    my $tm = new TM::ResourceAble::MLDBM (file => '/tmp/map.dbm');
     # modify the map here.....
 
     } # it goes out of scope here, and all changes are written back automagically
 
    # later in the game
    {
-    my $tm = new TM::Materialized::MLDBM2 (file => '/tmp/map.dbm');
+    my $tm = new TM::ResourceAble::MLDBM (file => '/tmp/map.dbm');
     # we are back in business, no sync necessary
     }
 
@@ -61,8 +58,6 @@ This contains the file name of the DBM file to tie to.
 =cut
 
 sub new {
-
-    $TM::log->warn (__PACKAGE__ ': this package is deprecated, use TM::ResourceAble::MLDBM instead ');
     my $class = shift;
     my %options = @_;
 

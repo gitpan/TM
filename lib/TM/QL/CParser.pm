@@ -7420,7 +7420,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 	while (!$_matched && !$commit)
 	{
 		local $skip = defined($skip) ? $skip : $Parse::RecDescent::skip;
-		Parse::RecDescent::_trace(q{Trying production: [<skip:'\s*'> xml_id '=' '"' <skip:""> xml_fragment '"']},
+		Parse::RecDescent::_trace(q{Trying production: [<skip:'\s*'> xml_id '=' /[\\'\\"]/ <skip:""> xml_fragment /[\\'\\"]/]},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{xml_attribute},
 					  $tracelevel)
@@ -7514,29 +7514,29 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 		push @item, $item{__STRING1__}=$&;
 		
 
-		Parse::RecDescent::_trace(q{Trying terminal: ['"']},
-					  Parse::RecDescent::_tracefirst($text),
+		Parse::RecDescent::_trace(q{Trying terminal: [/[\\'\\"]/]}, Parse::RecDescent::_tracefirst($text),
 					  q{xml_attribute},
 					  $tracelevel)
 						if defined $::RD_TRACE;
 		$lastsep = "";
-		$expectation->is(q{'"'})->at($text);
+		$expectation->is(q{/[\\'\\"]/})->at($text);
 		
 
-		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A\"//)
+		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A(?:[\'\"])//)
 		{
 			
 			$expectation->failed();
-			Parse::RecDescent::_trace(qq{<<Didn't match terminal>>},
+			Parse::RecDescent::_trace(q{<<Didn't match terminal>>},
 						  Parse::RecDescent::_tracefirst($text))
-							if defined $::RD_TRACE;
+					if defined $::RD_TRACE;
+
 			last;
 		}
 		Parse::RecDescent::_trace(q{>>Matched terminal<< (return value: [}
 						. $& . q{])},
 						  Parse::RecDescent::_tracefirst($text))
-							if defined $::RD_TRACE;
-		push @item, $item{__STRING2__}=$&;
+					if defined $::RD_TRACE;
+		push @item, $item{__PATTERN1__}=$&;
 		
 
 		
@@ -7572,7 +7572,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 					if defined $::RD_TRACE;
 		$expectation->is(q{xml_fragment})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_fragment, 1, 100000000, $_noactions,$expectation,sub { return ['[^\"{]+'] }))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_fragment, 1, 100000000, $_noactions,$expectation,sub { return ['[^\"\'{]+'] }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [xml_fragment]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -7593,29 +7593,29 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 		
 
 
-		Parse::RecDescent::_trace(q{Trying terminal: ['"']},
-					  Parse::RecDescent::_tracefirst($text),
+		Parse::RecDescent::_trace(q{Trying terminal: [/[\\'\\"]/]}, Parse::RecDescent::_tracefirst($text),
 					  q{xml_attribute},
 					  $tracelevel)
 						if defined $::RD_TRACE;
 		$lastsep = "";
-		$expectation->is(q{'"'})->at($text);
+		$expectation->is(q{/[\\'\\"]/})->at($text);
 		
 
-		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A\"//)
+		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A(?:[\'\"])//)
 		{
 			
 			$expectation->failed();
-			Parse::RecDescent::_trace(qq{<<Didn't match terminal>>},
+			Parse::RecDescent::_trace(q{<<Didn't match terminal>>},
 						  Parse::RecDescent::_tracefirst($text))
-							if defined $::RD_TRACE;
+					if defined $::RD_TRACE;
+
 			last;
 		}
 		Parse::RecDescent::_trace(q{>>Matched terminal<< (return value: [}
 						. $& . q{])},
 						  Parse::RecDescent::_tracefirst($text))
-							if defined $::RD_TRACE;
-		push @item, $item{__STRING3__}=$&;
+					if defined $::RD_TRACE;
+		push @item, $item{__PATTERN2__}=$&;
 		
 
 		Parse::RecDescent::_trace(q{Trying action},
@@ -7641,7 +7641,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 		
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: [<skip:'\s*'> xml_id '=' '"' <skip:""> xml_fragment '"']<<},
+		Parse::RecDescent::_trace(q{>>Matched production: [<skip:'\s*'> xml_id '=' /[\\'\\"]/ <skip:""> xml_fragment /[\\'\\"]/]<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{xml_attribute},
 					  $tracelevel)
@@ -7784,7 +7784,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 	while (!$_matched && !$commit)
 	{
 		local $skip = defined($skip) ? $skip : $Parse::RecDescent::skip;
-		Parse::RecDescent::_trace(q{Trying production: ['>' <skip:""> xml_segment '</' xml_id '>']},
+		Parse::RecDescent::_trace(q{Trying production: ['>' <skip:""> xml_segment '</' <skip:'\s*'> xml_id '>']},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{xml_rest},
 					  $tracelevel)
@@ -7855,7 +7855,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 					if defined $::RD_TRACE;
 		$expectation->is(q{xml_segment})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_segment, 1, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_segment, 0, 100000000, $_noactions,$expectation,undef))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [xml_segment]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -7871,7 +7871,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 					  q{xml_rest},
 					  $tracelevel)
 						if defined $::RD_TRACE;
-		$item{q{xml_segment(s)}} = $_tok;
+		$item{q{xml_segment(s?)}} = $_tok;
 		push @item, $_tok;
 		
 
@@ -7899,6 +7899,32 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 						  Parse::RecDescent::_tracefirst($text))
 							if defined $::RD_TRACE;
 		push @item, $item{__STRING2__}=$&;
+		
+
+		
+
+		Parse::RecDescent::_trace(q{Trying directive: [<skip:'\s*'>]},
+					Parse::RecDescent::_tracefirst($text),
+					  q{xml_rest},
+					  $tracelevel)
+						if defined $::RD_TRACE; 
+		$_tok = do { my $oldskip = $skip; $skip='\s*'; $oldskip };
+		if (defined($_tok))
+		{
+			Parse::RecDescent::_trace(q{>>Matched directive<< (return value: [}
+						. $_tok . q{])},
+						Parse::RecDescent::_tracefirst($text))
+							if defined $::RD_TRACE;
+		}
+		else
+		{
+			Parse::RecDescent::_trace(q{<<Didn't match directive>>},
+						Parse::RecDescent::_tracefirst($text))
+							if defined $::RD_TRACE;
+		}
+		
+		last unless defined $_tok;
+		push @item, $item{__DIRECTIVE2__}=$_tok;
 		
 
 		Parse::RecDescent::_trace(q{Trying subrule: [xml_id]},
@@ -7979,7 +8005,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 		
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: ['>' <skip:""> xml_segment '</' xml_id '>']<<},
+		Parse::RecDescent::_trace(q{>>Matched production: ['>' <skip:""> xml_segment '</' <skip:'\s*'> xml_id '>']<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{xml_rest},
 					  $tracelevel)
@@ -15258,8 +15284,8 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 
 	while (!$_matched && !$commit)
 	{
-		
-		Parse::RecDescent::_trace(q{Trying production: ['<' xml_id xml_attribute xml_rest]},
+		local $skip = defined($skip) ? $skip : $Parse::RecDescent::skip;
+		Parse::RecDescent::_trace(q{Trying production: ['<' xml_id xml_attribute <skip:'\s*'> xml_rest]},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{xml_element},
 					  $tracelevel)
@@ -15355,6 +15381,32 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 		
 
 
+		
+
+		Parse::RecDescent::_trace(q{Trying directive: [<skip:'\s*'>]},
+					Parse::RecDescent::_tracefirst($text),
+					  q{xml_element},
+					  $tracelevel)
+						if defined $::RD_TRACE; 
+		$_tok = do { my $oldskip = $skip; $skip='\s*'; $oldskip };
+		if (defined($_tok))
+		{
+			Parse::RecDescent::_trace(q{>>Matched directive<< (return value: [}
+						. $_tok . q{])},
+						Parse::RecDescent::_tracefirst($text))
+							if defined $::RD_TRACE;
+		}
+		else
+		{
+			Parse::RecDescent::_trace(q{<<Didn't match directive>>},
+						Parse::RecDescent::_tracefirst($text))
+							if defined $::RD_TRACE;
+		}
+		
+		last unless defined $_tok;
+		push @item, $item{__DIRECTIVE1__}=$_tok;
+		
+
 		Parse::RecDescent::_trace(q{Trying subrule: [xml_rest]},
 				  Parse::RecDescent::_tracefirst($text),
 				  q{xml_element},
@@ -15393,14 +15445,14 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 		
 
 		$_tok = ($_noactions) ? 0 : do {
-                                                                        if ($item[4] eq '/>') {                  # no end tag
+                                                                        if ($item[5] eq '/>') {                  # no end tag
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3]);
 									} else {
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3],
-												 end => $item[4]->[1],
-												 con => $item[4]->[0]);
+												 end => $item[5]->[1],
+												 con => $item[5]->[0]);
 									}
 								      };
 		unless (defined $_tok)
@@ -15418,7 +15470,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 		
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: ['<' xml_id xml_attribute xml_rest]<<},
+		Parse::RecDescent::_trace(q{>>Matched production: ['<' xml_id xml_attribute <skip:'\s*'> xml_rest]<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{xml_element},
 					  $tracelevel)
@@ -19691,11 +19743,11 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                           'prods' => [
                                                                        bless( {
                                                                                 'number' => '0',
-                                                                                'strcount' => 3,
+                                                                                'strcount' => 1,
                                                                                 'dircount' => 2,
                                                                                 'uncommit' => undef,
                                                                                 'error' => undef,
-                                                                                'patcount' => 0,
+                                                                                'patcount' => 2,
                                                                                 'actcount' => 1,
                                                                                 'items' => [
                                                                                              bless( {
@@ -19721,12 +19773,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'line' => 318
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
-                                                                                                      'pattern' => '"',
-                                                                                                      'hashname' => '__STRING2__',
-                                                                                                      'description' => '\'"\'',
+                                                                                                      'pattern' => '[\\\'\\"]',
+                                                                                                      'hashname' => '__PATTERN1__',
+                                                                                                      'description' => '/[\\\\\'\\\\"]/',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318
-                                                                                                    }, 'Parse::RecDescent::Literal' ),
+                                                                                                      'rdelim' => '/',
+                                                                                                      'line' => 318,
+                                                                                                      'mod' => '',
+                                                                                                      'ldelim' => '/'
+                                                                                                    }, 'Parse::RecDescent::Token' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__DIRECTIVE2__',
                                                                                                       'name' => '<skip:"">',
@@ -19738,7 +19793,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'subrule' => 'xml_fragment',
                                                                                                       'expected' => undef,
                                                                                                       'min' => 1,
-                                                                                                      'argcode' => '[\'[^\\"{]+\']',
+                                                                                                      'argcode' => '[\'[^\\"\\\'{]+\']',
                                                                                                       'max' => 100000000,
                                                                                                       'matchrule' => 0,
                                                                                                       'repspec' => 's',
@@ -19746,12 +19801,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'line' => 318
                                                                                                     }, 'Parse::RecDescent::Repetition' ),
                                                                                              bless( {
-                                                                                                      'pattern' => '"',
-                                                                                                      'hashname' => '__STRING3__',
-                                                                                                      'description' => '\'"\'',
+                                                                                                      'pattern' => '[\\\'\\"]',
+                                                                                                      'hashname' => '__PATTERN2__',
+                                                                                                      'description' => '/[\\\\\'\\\\"]/',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318
-                                                                                                    }, 'Parse::RecDescent::Literal' ),
+                                                                                                      'rdelim' => '/',
+                                                                                                      'line' => 318,
+                                                                                                      'mod' => '',
+                                                                                                      'ldelim' => '/'
+                                                                                                    }, 'Parse::RecDescent::Token' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
@@ -19797,7 +19855,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                   bless( {
                                                                            'number' => '1',
                                                                            'strcount' => 3,
-                                                                           'dircount' => 1,
+                                                                           'dircount' => 2,
                                                                            'uncommit' => undef,
                                                                            'error' => undef,
                                                                            'patcount' => 0,
@@ -19820,11 +19878,11 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                         bless( {
                                                                                                  'subrule' => 'xml_segment',
                                                                                                  'expected' => undef,
-                                                                                                 'min' => 1,
+                                                                                                 'min' => 0,
                                                                                                  'argcode' => undef,
                                                                                                  'max' => 100000000,
                                                                                                  'matchrule' => 0,
-                                                                                                 'repspec' => 's',
+                                                                                                 'repspec' => 's?',
                                                                                                  'lookahead' => 0,
                                                                                                  'line' => 322
                                                                                                }, 'Parse::RecDescent::Repetition' ),
@@ -19835,6 +19893,13 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'lookahead' => 0,
                                                                                                  'line' => 322
                                                                                                }, 'Parse::RecDescent::Literal' ),
+                                                                                        bless( {
+                                                                                                 'hashname' => '__DIRECTIVE2__',
+                                                                                                 'name' => '<skip:\'\\s*\'>',
+                                                                                                 'lookahead' => 0,
+                                                                                                 'line' => 322,
+                                                                                                 'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
+                                                                                               }, 'Parse::RecDescent::Directive' ),
                                                                                         bless( {
                                                                                                  'subrule' => 'xml_id',
                                                                                                  'matchrule' => 0,
@@ -21905,7 +21970,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      bless( {
                                                                               'number' => '0',
                                                                               'strcount' => 1,
-                                                                              'dircount' => 0,
+                                                                              'dircount' => 1,
                                                                               'uncommit' => undef,
                                                                               'error' => undef,
                                                                               'patcount' => 0,
@@ -21938,6 +22003,13 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'line' => 304
                                                                                                   }, 'Parse::RecDescent::Repetition' ),
                                                                                            bless( {
+                                                                                                    'hashname' => '__DIRECTIVE1__',
+                                                                                                    'name' => '<skip:\'\\s*\'>',
+                                                                                                    'lookahead' => 0,
+                                                                                                    'line' => 304,
+                                                                                                    'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
+                                                                                                  }, 'Parse::RecDescent::Directive' ),
+                                                                                           bless( {
                                                                                                     'subrule' => 'xml_rest',
                                                                                                     'matchrule' => 0,
                                                                                                     'implicit' => undef,
@@ -21950,14 +22022,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'lookahead' => 0,
                                                                                                     'line' => 305,
                                                                                                     'code' => '{
-                                                                        if ($item[4] eq \'/>\') {                  # no end tag
+                                                                        if ($item[5] eq \'/>\') {                  # no end tag
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3]);
 									} else {
 									    $return = new PExml (sta => $item[2],
 												 ats => $item[3],
-												 end => $item[4]->[1],
-												 con => $item[4]->[0]);
+												 end => $item[5]->[1],
+												 con => $item[5]->[0]);
 									}
 								      }'
                                                                                                   }, 'Parse::RecDescent::Action' )

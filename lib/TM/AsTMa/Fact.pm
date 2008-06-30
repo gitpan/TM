@@ -867,7 +867,7 @@ sub
 					  # (assoc) is-reified-by xxx   means
 					  #     1) assoc is added as thing (is done already)
 					  #     2) the local identifier is added as thing with the abs URL of the assoc as subject address
-					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^[A-Za-z][A-Za-z0-9_-]+$/;
+					  die "reifier must be local identifier" unless $_[5]->[1] =~ /^[A-Za-z][A-Za-z0-9_\.-]+$/;
 					  $ms->internalize ($_[5]->[1] => $a);
 				      } else { # this would be 'indication' but we do not want that here
 					  die "indication for associations are undefined";
@@ -949,7 +949,7 @@ sub _Lexer {
     my $parser = shift;
     my $refINPUT = \$parser->YYData->{INPUT};
 
-    my $aux;                                                                           # need this to store identifier/uri prefix temporarily (optimization)
+    my $aux;                                                                           # need this to store identifier/uri prefix for optimization
 
     $$refINPUT                                        or  return ('',          undef);
     $$refINPUT =~ s/^[ \t]+//so;
@@ -957,17 +957,17 @@ sub _Lexer {
 #warn "lexer ($parser->{USER}->{string}):>>>".$parser->YYData->{INPUT}."<<<";
 
     $$refINPUT =~ s/^\n//so                           and return ('EOL',       	   undef);
-    $$refINPUT =~ s/^in\b//o                          and return ('IN',        	   undef);
-    $$refINPUT =~ s/^rd\b//o                          and return ('IN',        	   undef);
-    $$refINPUT =~ s/^oc\b//o                          and return ('OC',        	   undef);
-    $$refINPUT =~ s/^ex\b//o                          and return ('OC',        	   undef);
-    $$refINPUT =~ s/^bn\b//o                          and return ('BN',        	   undef);
+    $$refINPUT =~ s/^in\b(?![\.-])//o                 and return ('IN',        	   undef);
+    $$refINPUT =~ s/^rd\b(?![\.-])//o                 and return ('IN',        	   undef);
+    $$refINPUT =~ s/^oc\b(?![\.-])//o                 and return ('OC',        	   undef);
+    $$refINPUT =~ s/^ex\b(?![\.-])//o                 and return ('OC',        	   undef);
+    $$refINPUT =~ s/^bn\b(?![\.-])//o                 and return ('BN',        	   undef);
 
-    $$refINPUT =~ s/^sin\b//o                         and return ('SIN',       	   undef);
-    $$refINPUT =~ s/^is-a\b//o                        and return ('ISA',       	   undef);
-    $$refINPUT =~ s/^reifies\b//o                     and return ('REIFIES',   	   undef);
+    $$refINPUT =~ s/^sin\b(?![\.-])//o                and return ('SIN',       	   undef);
+    $$refINPUT =~ s/^is-a\b(?![\.-])//o               and return ('ISA',       	   undef);
+    $$refINPUT =~ s/^reifies\b(?![\.-])//o            and return ('REIFIES',   	   undef);
     $$refINPUT =~ s/^=//o                             and return ('REIFIES',   	   undef);
-    $$refINPUT =~ s/^is-reified-by\b//o               and return ('ISREIFIED', 	   undef);
+    $$refINPUT =~ s/^is-reified-by\b(?![\.-])//o      and return ('ISREIFIED', 	   undef);
     $$refINPUT =~ s/^~//o                             and return ('ISINDICATEDBY', undef);
 
     if (my $t = $parser->{USER}->{string}) {                                           # parser said we should expect a string now, defaults terminator to \n
@@ -1024,12 +1024,15 @@ sub parse {
 #warn "parse";
     $self->YYData->{INPUT} =~ s/\r\n/\n/sg;
     $self->YYData->{INPUT} =~ s/\r/\n/sg;
-    $self->YYData->{INPUT} =~ s/(?<!\\)\\\n//sg;   # a \, but not a \\
-    $self->YYData->{INPUT} =~ s/ \~ /\n/g;         # replace _~_ with \n
-    $self->YYData->{INPUT} =~ s/ \~\~ / \~ /g;     # stuffed ~~ cleanout
-    $self->YYData->{INPUT} =~ s/^\#.*?\n/\n/mg;    # # at there start of every line -> gone
-    $self->YYData->{INPUT} =~ s/\s+\#.*?\n/\n/mg;  # anything which starts with <blank>#, all blanks are ignored
-    $self->YYData->{INPUT} =~ s/\n\n\n+/\n\n/sg;
+    $self->YYData->{INPUT} =~ s/(?<!\\)\\\n//sg;       # a \, but not a \\
+    $self->YYData->{INPUT} =~ s/ \~ /\n/g;             # replace _~_ with \n
+    $self->YYData->{INPUT} =~ s/ \~\~ / \~ /g;         # stuffed ~~ cleanout
+    $self->YYData->{INPUT} =~ s/^\#.*?\n/\n/mg;        # # at the start of every line -> gone
+    $self->YYData->{INPUT} =~ s/\s\#.*?\n/\n/mg;       # anything which starts with <blank># -> gone
+    $self->YYData->{INPUT} =~ s/(?<!\\)\\\#/\#/g;      # but # can be escaped with a single \, as in \#
+    $self->YYData->{INPUT} =~ s/\n\n\n+/\n\n/sg;       # canonicalize line break (line count is gone already)
+#warn "XXXX ".$self->YYData->{INPUT};
+
 
     # we not only capture what is said EXPLICITELY in the map, we also collect implicit knowledge
     # we could add this immediately into the map at parsing, but it would slow the process down and

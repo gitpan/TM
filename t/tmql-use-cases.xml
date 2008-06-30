@@ -2421,6 +2421,19 @@ thing   </bbb>
    </root>
 ]]></code>
 	 </solution>
+         <solution language="tmql" style="flwr" operational="yes">
+	   <code><![CDATA[
+return
+   <root>
+	<aaa bbb  = "ccc"    >something</aaa>
+        <bbb	xxx
+="yyy"     
+   uuu=
+"vvv"  >  some
+thing   </bbb>
+   </root   >
+]]></code>
+	 </solution>
        </query>
        <query title="semi-static">
          <interface>
@@ -2444,6 +2457,16 @@ return
    for $a in %_ // xxx
    return
    <whatever/>
+}</top>
+]]></code>
+	 </solution>
+         <solution language="tmql" style="flwr" operational="yes">
+	   <code><![CDATA[
+return
+<top>{
+   for $a in %_ // xxx
+   return
+   <whatever></whatever>
 }</top>
 ]]></code>
 	 </solution>

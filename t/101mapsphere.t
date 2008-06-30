@@ -1,7 +1,7 @@
 package MyMapSphere2;
 
-use TM::Materialized::MLDBM2;
-use base qw(TM::Materialized::MLDBM2);
+use TM::ResourceAble::MLDBM;
+use base qw(TM::ResourceAble::MLDBM);
 use Class::Trait qw(TM::MapSphere);
 
 1;
