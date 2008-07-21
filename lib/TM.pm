@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.42';
+our $VERSION  = '1.43';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -772,7 +772,9 @@ For associations, the assertions are attached to the I<type> toplet.
 
 This hash consists of the non-trivial toplet identities that were found. If neither Subject- nor
 Indicator-based merging is active, then this hash is empty. Otherwise, the keys are toplet
-identifiers in the old map, with the corresponding toplet identifier in the new map as value.
+identifiers in the old map, with the corresponding topic identifier in the new map as value. This 
+includes standalone topics as well as assertions and associations that were renamed due to 
+changed player or role identities.
 
 =item I<modified>
 
@@ -865,9 +867,12 @@ sub diff {
     {
 	if ($seen{$t}==2 && !$new2old{$t})
 	{
+	    # identical assertions with new lids are not detected here
+	    # but later (via minusass)
+	    # new assertion-lids happen with identified renamed players (lid is computed over values!)
 	    $newmap->retrieve($t)?$plusass{$t}=1:$plus{$t}=[];
 	}
-	elsif ($seen{$t}==1 && !$old2new{$t})
+	elsif ($seen{$t}==1 && !$old2new{$t}) 
 	{
 	    $oldmap->retrieve($t)?$minusass{$t}=1:$minus{$t}=[];
 	}
@@ -897,28 +902,23 @@ sub diff {
 	    my $ot = $oldmap->toplet($t);
 	    my $nt = $newmap->toplet($old2new{$t});
 
-#warn "$t    --->   ".Dumper ($ot, $nt);
-#warn "   eq -> "._toplets_eq ($ot, $nt);
-
 	    unless (_toplets_eq ($ot, $nt)) {
-#	if (!eq_deeply($oldmap->toplet($t),
-#		       $newmap->toplet($old2new{$t})))
 		$modified{$t}->{identities}=1;
 		$modified{$t}->{plus}||=[];
 		$modified{$t}->{minus}||=[];
 	    }
 
-	    sub _toplets_eq {
-		my $a = shift;
-		my $b = shift;
+	    # note: new toplet() returns internal id as well, which we DON'T want to check on here!
+	    sub _toplets_eq 
+	    {
+		my ($a,$b)=@_;
 		
-		return 0 unless $a->[TM->LID]     eq $b->[TM->LID];                   # different internal ID?
 		my ($A, $B) = ($a->[TM->ADDRESS] ||'', $b->[TM->ADDRESS] ||'');       # just convert undef into ''
 		return 0 unless $A eq $B;                                             # different subject address?
 		my %SIDS;
-		map { $SIDS{$_} } @{$a->[TM->INDICATORS]}, @{$b->[TM->INDICATORS]};   # we KNOW that the lists are UNIQUE, do we?
+		map { ++$SIDS{$_} } @{$a->[TM->INDICATORS]}, @{$b->[TM->INDICATORS]};   # we KNOW that the lists are UNIQUE, do we?
 		return 0 if grep { $_ != 2 } values %SIDS;                            # if it is not exactly 2 (one from a, one from b), then not equal
-		return 1;                                                             # exhaustive
+		return 1; # we're happy: different LIDs don't interest us here
 	    }
 	    
 	}
@@ -927,11 +927,13 @@ sub diff {
 #warn "modified ".Dumper \%modified;
 
     my %old2newid;    
+    my %identities; 
     if ($xlatneeded)
     {
 	# now do the translation for assertions: rebuild old assertions
 	# into new namespace and compute the id
 	# don't waste time: do this only on the assertions that may be required
+	# minusass (or plusass) must be checked to find assertions with renamed-but-identical players
 	for my $t (@checkassertion,keys %minusass)
 	{
 	    my $m=$oldmap->retrieve($t);
@@ -950,13 +952,16 @@ sub diff {
 				 type=>$type,
 				 roles=>\@newroles,players=>\@newplayers);
 	    $newmap->canonicalize($n);
-	    my $newid=$base.TM::mklabel($n);
+	    my $newid=TM::mklabel($n);
 	    $old2newid{$t}=$newid;
 
-	    if ($plusass{$newid})
+	    if ($plusass{$newid}) # we found a matching assertion, wohee!
 	    {
 		delete $plusass{$newid};
 		delete $minusass{$t};
+		# remember that this assertion was re-id'd (directly or indirectly via players)
+		# this is done for standalone assocs just the same as for bn/oc characteristics
+		$identities{$t}=$newid;
 	    }
 	}
     }
@@ -1018,7 +1023,7 @@ sub diff {
 	}
     }
 
-    my %identities; map { $identities{$_}=$old2new{$_} if ($_ ne $old2new{$_}); } (keys %old2new);
+    map { $identities{$_}=$old2new{$_} if ($_ ne $old2new{$_}); } (keys %old2new);
 
     my $returnvalue={
 	    'identities'=>\%identities,

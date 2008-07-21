@@ -196,6 +196,39 @@ cmp_deeply([map { ($tmo->get_x_players($tmo->retrieve($_),"class"))[0] }
 	   _tbag("othertype"),"found correct original for modified topic type");
 
 
+# reification, subject identifiers as attributes
+($d1,$d2,$tmo,$tmn)=_diff(q|
+t1 reifies file://a
+
+t2
+sin: file://b
+
+t3
+
+t4
+|,q|
+t1 reifies file://b
+
+t2
+
+t4 is-reified-by t3
+|,{include_changes=>0});
+
+ok(!%{$d1->{plus}} && !%{$d1->{minus}},"subject identities detected");
+cmp_deeply([keys %{$d1->{modified}}],_tbag(qw(t1 t2 t3)),"found precisely the modified identities");
+cmp_deeply([values(%{$d1->{modified}})],set({plus=>[],minus=>[],'identities'=>1}),"only identities were changed");
+
+cmp_deeply($tmn->midlet($base."t1"), [$base."t1",'file://b',[]],"t1 new sloc ok");
+cmp_deeply($tmn->midlet($base."t2"), [$base."t2",undef,[]],"t2 removed sin ok");
+cmp_deeply($tmn->midlet($base."t3"), [$base."t3",$base."t4",[]],"t3 new sloc ok");
+
+cmp_deeply($tmo->midlet($base."t1"), [$base."t1",'file://a',[]],"t1 old sloc ok");
+cmp_deeply($tmo->midlet($base."t2"), [$base."t2", undef,                                        [
+                                               'file://b'
+                                             ]
+                                           ], "t2 old sin ok");
+cmp_deeply($tmo->midlet($base."t3"), [$base."t3",undef,[]],"t3 old sloc ok");
+
 # include_changes option
 ($d1,$d2,$tmo,$tmn)=_diff(q|
 t1 
@@ -279,16 +312,14 @@ cmp_deeply($d1,{identities=>{},plus=>{$base."p3"=>[]},minus=>{},
 		modified=>{$base."ass"=>{plus=>[ignore],
 			     minus=>[ignore]}}},"new assoc with extra players detected");
 
-__END__
 
-
-# identity matching
+# trivial identity matching: things id'd directly
 my $mold=q|
 told reifies file://somewhere
-in: the old topic is the new topic
+# the old topic is the new topic (no occs yet)
 
+# another identity, this time only ONE of the indicators matches
 tfirst
-in: another identity, this time only ONE of the indicators matches
 sin: file://matches
 sin: file://lost
 
@@ -298,10 +329,8 @@ r2: p2
 |;
 my $mnew=q|
 tnew reifies file://somewhere
-in: the old topic is the new topic
 
 tsecond
-in: another identity, this time only ONE of the indicators matches
 sin: file://matches
 sin: file://a_new_one
 
@@ -314,9 +343,9 @@ r2: p2
 			  {consistency=>undef});
 
 cmp_deeply($d1,{identities=>{},	modified=>{},
-		minus=>{$base."tfirst"=>[ignore],$base."told"=>[ignore],
+		minus=>{$base."tfirst"=>[],$base."told"=>[],
 		    $base."assocold"=>[]},
-		plus=>{$base."tnew"=>[ignore],$base."tsecond"=>[ignore],
+		plus=>{$base."tnew"=>[],$base."tsecond"=>[],
 		       $base."assocnew"=>[]}},
 	   "without consistency parameter, subject identifier and locators are ignored");
 
@@ -332,49 +361,40 @@ cmp_deeply($d1->{modified},{$base."tfirst"=>{plus=>[],minus=>[],
 					     identities=>1}},
 	   "removed and added subject identifiers are detected");
 
-# print Dumper($d1);
-
-
-
-
-
-
-
-__END__
-
-
-# reification, subject identifiers as attributes
+# non-trivial identity matching: assertions that apply to renamed-and-identified topics
 ($d1,$d2,$tmo,$tmn)=_diff(q|
-t1 reifies file://a
+told reifies file://somewhere
+in: the old topic is the new topic
+bn: some name for it
+oc: http://location
 
-t2
-sin: file://b
+(some-assoc)
+arole: told
+brole: other
+|, q|
+tnew reifies file://somewhere
+in: the old topic is the new topic
+bn: some name for it
+oc: http://location
 
-t3
+(some-assoc)
+arole: tnew
+brole: other
+|,{consistency=>[TM->Subject_based_Merging,TM->Indicator_based_Merging]});
 
-t4
-|,q|
-t1 reifies file://b
+# the topic characteristics, cheeeesily sorted by value (to quickly find the matches)
+my @oldass=sort { $a->[TM->PLAYERS]->[1]->[0] cmp $b->[TM->PLAYERS]->[1]->[0] } $tmo->match(TM->FORALL,topic=>$base."told",char=>1);
+my @newass=sort { $a->[TM->PLAYERS]->[1]->[0] cmp $b->[TM->PLAYERS]->[1]->[0] } $tmn->match(TM->FORALL,topic=>$base."tnew",char=>1);
+my @xlats= map { $oldass[$_]->[TM->LID]=>$newass[$_]->[TM->LID] } (0..$#oldass);
 
-t2
+# and the one assoc
+my $oldass=($tmo->match(TM->FORALL,type=>$base."some-assoc"))[0]->[TM->LID];
+my $newass=($tmn->match(TM->FORALL,type=>$base."some-assoc"))[0]->[TM->LID];
+push @xlats, $oldass=>$newass;
 
-t4 #is-reified-by t3
-|,{include_changes=>0});
+cmp_deeply($d1,{plus=>{},minus=>{},modified=>{},
+		identities=>{$base."told"=>$base."tnew", # the topic
+			     @xlats}}, # and the stuff that applies to it
+	   "assertions applying to identical topics are found"); 
 
-ok(!%{$d1->{plus}} && !%{$d1->{minus}},"subject identities detected");
-
-cmp_deeply([keys %{$d1->{modified}}],_tbag(qw(t1 t2 t3)),"found precisely the modified identities");
-cmp_deeply([values(%{$d1->{modified}})],set({plus=>[],minus=>[],'identities'=>1}),"only identities were changed");
-
-
-cmp_deeply($tmn->midlet($base."t1"), ['file://b',[]],"t1 new sloc ok");
-cmp_deeply($tmn->midlet($base."t2"), [undef,[]],"t2 removed sin ok");
-cmp_deeply($tmn->midlet($base."t3"), [$base."t4",[]],"t3 new sloc ok");
-
-cmp_deeply($tmo->midlet($base."t1"), ['file://a',[]],"t1 old sloc ok");
-cmp_deeply($tmo->midlet($base."t2"), [ undef,                                        [
-                                               'file://b'
-                                             ]
-                                           ], "t2 old sin ok");
-cmp_deeply($tmo->midlet($base."t3"), [undef,[]],"t3 old sloc ok");
 

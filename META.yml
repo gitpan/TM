@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                TM
-version:             1.42
+version:             1.43
 abstract:            Topic Maps, Base Class
 license:             ~
 author:              

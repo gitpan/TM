@@ -1,4 +1,4 @@
-use v5.8;
+use 5.008;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -93,7 +93,7 @@ inject:
 	echo "reload index" | cpan
 
 debian:
-	(cd /usr/local/share/packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest)
+	(cd /usr/local/share/packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest --core-ok)
 
 MAKE
 }
