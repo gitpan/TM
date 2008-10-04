@@ -68,6 +68,13 @@ sub _chomp {
     return $s;
 }
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS =====================================================================
 
 use TM;

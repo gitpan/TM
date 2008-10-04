@@ -49,6 +49,13 @@ sub _q_players {
     return \@res;
 }
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS ===========================================================================
 
 my $npa = scalar keys %{$TM::infrastructure->{assertions}};

@@ -76,6 +76,12 @@ lib/TM/QL/CParser.pm: lib/TM/QL.pm
 axespod:
 	perl -Ilib support/mkaxespod.pl \$(VERSION) > lib/TM/Axes.pm
 
+coveragepod:
+	cover -test
+#	HARNESS_PERL_SWITCHES=-MDevel::Cover make disttest
+	cover > /tmp/coverage.txt
+	perl -Ilib support/mkcoveragepod.pl \$(VERSION) > lib/TM/Coverage.pm
+
 dependencies:
 	scandeps.pl `grep .pm MANIFEST` `grep bin/ MANIFEST`| grep -v undef
 # 	egrep -e '(^use | use ).*;' `find t -iname '*.t'; find lib -iname '*.pm'; find bin -iname '*'` | perl -ne '/^.+?:\\s*use ([A-Za-z0-9:]+)/; print "\$\$1\\n"' | egrep -v '(base|Carp|POSIX|vars|strict|constant|warnings|Class::Struct|Fcntl|Data::Dumper|Storable|lib|UNIVERSAL|Digest::MD5|IO::File|File::Temp|File::stat|Getopt::Long)' | egrep -v '^TM' | grep -v '^XTM' | sort -u | perl -ne 's/;//; chomp; next unless \$\$_; print "\\"\$\$_\\"    => "; eval "use \$\$_; print (\\\$\$\$\${_}::VERSION || \\"undef\\")"; print ",\\n"'

@@ -1004,7 +1004,7 @@ sub _Lexer {
                                                       and return ('ID',        sprintf "urn:x-date:%s:%02d:%02d", $1, $3 || 0, $4 || 0); # is a date
 
     $$refINPUT =~ s/^%log\s+(.*?)(?=\n)//so           and return ('LOG',       $1); # positive look-ahead
-    $$refINPUT =~ s/^%cancel(?=\n)//so                and return ('CANCEL',    $1); # positive look-ahead
+    $$refINPUT =~ s/^%cancel\s*(?=\n)//so             and return ('CANCEL',    $1); # positive look-ahead
     $$refINPUT =~ s/^%trace\s+(.*?)(?=\n)//so         and return ('TRACE',     $1); # positive look-ahead
     $$refINPUT =~ s/^%encoding\s+(.*?)(?=\n)//so      and return ('ENCODING',  $1); # positive look-ahead
 

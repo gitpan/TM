@@ -15,6 +15,13 @@ sub _chomp {
     return $s;
 }
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS ===========================================================================
 { # xtm default namespace
     my $content = q|<topicMap
@@ -386,7 +393,7 @@ print $fh q|<topicMap xmlns='http://www.topicmaps.org/xtm/1.0/' xml:base="tm:" x
 eval {
     _parse (q|
 
-<mergeMap xlink:href="rumsti"/>
+<mergeMap xlink:href="file:/tmp/rumsti"/>
 
 |);
     ok (0);

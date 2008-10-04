@@ -15,12 +15,26 @@ sub _chomp {
 
 ##warn "\n# annoying warning about Data::Dumper can be ignored";
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS ===========================================================================
 
 require_ok( 'TM::Materialized::MLDBM' );
 
+my ($tmp);
+use IO::File;
+use POSIX qw(tmpnam);
+do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
+
+END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
+
 {
-    my $tm = new TM::Materialized::MLDBM (file => '/tmp/xxx');
+    my $tm = new TM::Materialized::MLDBM (file => $tmp);
     
     ok ($tm->isa('TM'),                             'correct class');
     ok ($tm->isa('TM::Materialized::MLDBM'),        'correct class');
@@ -31,13 +45,6 @@ require_ok( 'TM::Materialized::MLDBM' );
 eval {
   my $tm = new TM::Materialized::MLDBM ();
 }; like ($@, qr/no file/, _chomp ($@));
-
-my ($tmp);
-use IO::File;
-use POSIX qw(tmpnam);
-do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
-
-END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
 
 {
     my $tm = new TM::Materialized::MLDBM (file => $tmp, baseuri => 'tm:');

@@ -4,6 +4,12 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.44  ????????????????????????
+	- fix:    toplets did not return correct results (rho)
+	- adapt:  new LWP::Simple chokes on non-absolute URLs and causes hiccups (rho)
+	- fix:    TM: synopsis wrong (retrieve, asserts), (rho)
+	- change: test files do not show STDERR messages (rho)
+
 1.43  Mon Jul 21 20:44:09 CEST 2008
 	- change: Makefile.PL adapted to new mcpani version
 	- change: Makefile.PL uses 5.8 (instead of v5.8) to not upset 5.5 interpreters

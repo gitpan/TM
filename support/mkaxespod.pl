@@ -7,7 +7,7 @@ my $TMVERSION = shift @ARGV || die "no version provided";
 print <<EOT;
 package TM::Axes;
 
-our $VERSION = '0.2';
+our \$VERSION = '0.2';
 
 =pod
 

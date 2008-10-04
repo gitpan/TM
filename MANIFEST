@@ -56,6 +56,7 @@ lib/TM/Analysis.pm
 lib/TM/AsTMa/Fact2.pm
 lib/TM/AsTMa/Fact.pm
 lib/TM/Axes.pm
+lib/TM/Coverage.pm
 lib/TM/Bulk.pm
 lib/TM/DM.pm
 lib/TM/Graph.pm
@@ -109,6 +110,7 @@ lib/TM/Workbench/Plugin/Test.pm
 lib/TM/Workbench/Plugin/Tau.pm
 bin/tm
 support/mkaxespod.pl
+support/mkcoveragepod.pl
 examples/01_low_level.pl
 examples/02_astma.pl
 examples/03_mldbm.pl

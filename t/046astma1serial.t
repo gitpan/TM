@@ -7,6 +7,12 @@ use Test::More qw(no_plan);
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
 #== TESTS ===========================================================================
 use TM::Materialized::AsTMa;
 require_ok( 'TM::Serializable::AsTMa' );

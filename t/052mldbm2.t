@@ -15,6 +15,13 @@ sub _chomp {
 
 ##warn "\n# annoying warning about Data::Dumper can be ignored";
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS ===========================================================================
 
 require_ok( 'TM::ResourceAble::MLDBM' );

@@ -1077,6 +1077,20 @@ bbb
 ##warn Dumper $ms;
 }
 
+{ # same, but with trailing blanks
+  my $ms = _parse (q|
+aaa
+
+%cancel   
+
+bbb
+|);
+
+ is (scalar $ms->toplets, $npt+1, 'cancelling (blanks)');
+ ERRexpect ("Cancelled");
+##warn Dumper $ms;
+}
+
 {
   my $ms = _parse (q|
 aaa

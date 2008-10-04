@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.43';
+our $VERSION  = '1.44';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -73,9 +73,11 @@ TM - Topic Maps, Base Class
     my @ts   = $tm->toplets;                             # get all toplets
     my @ts   = $tm->toplets (\ '+all -infrastructure');  # only those you added
 
-    my @as   = $tm->asserts;                             # all assertions
-    my @as   = $tm->asserts ('23ac4637....345');         # only that one
     my @as   = $tm->asserts (\ '+all -infrastructure');  # only those you added
+
+    my @as   = $tm->retrieve;                            # all assertions
+    my $a    = $tm->retrieve ('23ac4637....345');        # returns only that one assertion
+    my @as   = $tm->retrieve ('23ac4637....345', '...'); # returns all these assertions
 
     # create standalone assertion
     my $a = Assertion->new (type    => 'is-subclass-of',
@@ -1435,20 +1437,19 @@ sub toplets {
 
     if ($_[0]) {                                                # if there is some parameter
 	if (ref ($_[0]) ) {                                     # whoohie, a search spec
-	    my $spec = ${$_[0]};
-	    my $l = []; # will be list
-	    while ($spec =~ s/([+-])(\w+)//) {
-#warn "working on $1   $2";
-		if ($2 eq 'all') {
-		    $l = _mod_list ($1 eq '+', $l, values %{$self->{mid2iid}});
-		} elsif ($2 eq 'infrastructure') {
-		    $l = _mod_list ($1 eq '+', $l, values %{$infrastructure->{mid2iid}});
-		} else {
-		    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
-		}
-	    }
-	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-	    return @$l;
+            my $spec = ${$_[0]};
+            my $l = []; # will be list
+            while ($spec =~ s/([+-])(\w+)//) {
+                if ($2 eq 'all') {
+                    $l = _mod_list ($1 eq '+', $l, keys %{$self->{mid2iid}});
+                } elsif ($2 eq 'infrastructure') {
+                    $l = _mod_list ($1 eq '+', $l, keys %{$infrastructure->{mid2iid}});
+                } else {
+                    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
+                }
+            }
+            $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
+            return map { $self->{mid2iid}->{$_} } @$l;
 	} else {
 	    my $m = $self->{mid2iid};
 	    return @$m{$self->tids (@_)};                        # make all these fu**ing identifiers map-absolute

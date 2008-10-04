@@ -9,6 +9,13 @@ $Data::Dumper::Indent = 1;
 
 use Time::HiRes qw ( time );
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS ===========================================================================
 
 use TM;

@@ -122,6 +122,13 @@ sub _verify_chars {
     ok (1, 'chars');
 }
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS =====================================================================
 
 use TM;

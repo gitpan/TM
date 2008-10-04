@@ -41,6 +41,10 @@ require_ok ('TM');
 		[ values %{ $TM::infrastructure->{mid2iid} } ]), 
 	'infrastructure toplets in map');
 
+    ok (eq_set ([ $tm->toplets (\ '+all -infrastructure') ],
+		[  ]), 
+	'all - infrastructure toplets in map');
+
     is (grep (!defined $_, $tm->tids (keys %{$TM::PSI::core->{mid2iid}})), 0, 'no undefined iid (core)');
     ok (eq_array ([
 		   $tm->tids (qw(thing is-subclass-of isa us))

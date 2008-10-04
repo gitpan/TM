@@ -16,6 +16,13 @@ use Test::More qw(no_plan);
 
 use Data::Dumper;
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS =====================================================================
 
 { # structural

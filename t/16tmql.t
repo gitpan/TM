@@ -15,6 +15,13 @@ sub _chomp {
     return $s;
 }
 
+my $warn = shift @ARGV;
+unless ($warn) {
+    close STDERR;
+    open (STDERR, ">/dev/null");
+    select (STDERR); $| = 1;
+}
+
 #== TESTS =====================================================================
 use XML::Simple;
 $XML::Simple::PREFERRED_PARSER = 'XML::LibXML::SAX';
