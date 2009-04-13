@@ -440,6 +440,16 @@ use TM;
 
 }
 
+{
+    use TM;
+    my $tm = new TM (baseuri => 'tm:');
+    $tm->internalize ('aaa');
+    ok (eq_array ( [$tm->tids ('aaa')], [ 'tm:aaa' ]), 'found inserted');
+    $tm->clear;
+    ok (eq_array ([ $tm->tids ('aaa') ], [ undef ]),             'inserted is gone now');
+}
+
+
 __END__
 
 

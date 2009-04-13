@@ -7,6 +7,7 @@ use Parse::RecDescent;
 package Parse::RecDescent::TM::QL::CParser;
 use strict;
 use vars qw($skip $AUTOLOAD  );
+@Parse::RecDescent::TM::QL::CParser::ISA = ();
 $skip = '\s*';
 
 	use Data::Dumper;
@@ -85,7 +86,7 @@ sub Parse::RecDescent::TM::QL::CParser::astma_instance
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'xxx'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -145,7 +146,7 @@ sub Parse::RecDescent::TM::QL::CParser::astma_instance
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -215,7 +216,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri_or_qname
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{prefix});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -246,7 +247,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri_or_qname
 					if defined $::RD_TRACE;
 		$expectation->is(q{})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::prefix, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::prefix, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [prefix]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -316,7 +317,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri_or_qname
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -330,7 +331,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri_or_qname
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -400,7 +401,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_text
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/$arg[0]/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -468,7 +469,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_text
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -482,7 +483,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_text
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -552,7 +553,7 @@ sub Parse::RecDescent::TM::QL::CParser::association_predicate
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -595,7 +596,7 @@ sub Parse::RecDescent::TM::QL::CParser::association_predicate
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 		Parse::RecDescent::_trace(q{Trying subrule: [item_reference]},
@@ -690,7 +691,7 @@ sub Parse::RecDescent::TM::QL::CParser::association_predicate
 					if defined $::RD_TRACE;
 		$expectation->is(q{ellipsis})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::ellipsis, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::ellipsis, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [ellipsis]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -747,7 +748,7 @@ sub Parse::RecDescent::TM::QL::CParser::association_predicate
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -817,7 +818,7 @@ sub Parse::RecDescent::TM::QL::CParser::content
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: content_l0 /(--)/ content_l0>, or '~~~content_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -1071,7 +1072,7 @@ sub Parse::RecDescent::TM::QL::CParser::content
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -1141,7 +1142,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/\\"\{3\}(.*?)\\"\{3\}/s, or /\\"([^\\n]*?)\\"/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -1197,7 +1198,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 					if defined $::RD_TRACE;
 		$expectation->is(q{'^^'})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_string, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_string, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: ['^^']>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -1237,7 +1238,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -1299,7 +1300,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 					if defined $::RD_TRACE;
 		$expectation->is(q{'^^'})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_string, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_string, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: ['^^']>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -1339,7 +1340,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -1353,7 +1354,7 @@ sub Parse::RecDescent::TM::QL::CParser::string
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -1423,7 +1424,7 @@ sub Parse::RecDescent::TM::QL::CParser::flwr_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{for_clause});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -1454,7 +1455,7 @@ sub Parse::RecDescent::TM::QL::CParser::flwr_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::for_clause, 0, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::for_clause, 0, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [for_clause]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -1482,7 +1483,7 @@ sub Parse::RecDescent::TM::QL::CParser::flwr_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{where_clause})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::where_clause, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::where_clause, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [where_clause]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -1566,7 +1567,7 @@ sub Parse::RecDescent::TM::QL::CParser::flwr_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -1580,7 +1581,7 @@ sub Parse::RecDescent::TM::QL::CParser::flwr_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -1650,7 +1651,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_q
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{select_expression, or flwr_expression, or path_expression});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -1829,7 +1830,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_q
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -1899,7 +1900,7 @@ sub Parse::RecDescent::TM::QL::CParser::simple_content
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{anchor});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -1960,7 +1961,7 @@ sub Parse::RecDescent::TM::QL::CParser::simple_content
 					if defined $::RD_TRACE;
 		$expectation->is(q{navigation})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::navigation, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::navigation, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [navigation]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -2000,7 +2001,7 @@ sub Parse::RecDescent::TM::QL::CParser::simple_content
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2014,7 +2015,7 @@ sub Parse::RecDescent::TM::QL::CParser::simple_content
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -2084,7 +2085,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'not', or 'false', or '(', or forall_clause, or exists_clause});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -2182,7 +2183,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2256,7 +2257,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2385,7 +2386,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2464,7 +2465,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2543,7 +2544,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2557,7 +2558,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_primitive
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -2627,7 +2628,7 @@ sub Parse::RecDescent::TM::QL::CParser::exists_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'some'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -2683,7 +2684,7 @@ sub Parse::RecDescent::TM::QL::CParser::exists_clause
 					if defined $::RD_TRACE;
 		$expectation->is(q{variable_association})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::variable_association, 1, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::variable_association, 1, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [variable_association]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -2781,7 +2782,7 @@ sub Parse::RecDescent::TM::QL::CParser::exists_clause
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -2795,7 +2796,7 @@ sub Parse::RecDescent::TM::QL::CParser::exists_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -2865,7 +2866,7 @@ sub Parse::RecDescent::TM::QL::CParser::anchor
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{constant, or variable, or '~~~anchor_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3039,7 +3040,7 @@ sub Parse::RecDescent::TM::QL::CParser::anchor
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -3109,7 +3110,7 @@ sub Parse::RecDescent::TM::QL::CParser::tm_content
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'"""'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3232,7 +3233,7 @@ sub Parse::RecDescent::TM::QL::CParser::tm_content
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -3246,7 +3247,7 @@ sub Parse::RecDescent::TM::QL::CParser::tm_content
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -3316,7 +3317,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{value_l0_expression});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3381,7 +3382,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -3420,6 +3421,193 @@ sub Parse::RecDescent::TM::QL::CParser::value_expression
 }
 
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args)
+sub Parse::RecDescent::TM::QL::CParser::iri
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+	my $thisrule = $thisparser->{"rules"}{"iri"};
+	
+	Parse::RecDescent::_trace(q{Trying rule: [iri]},
+				  Parse::RecDescent::_tracefirst($_[1]),
+				  q{iri},
+				  $tracelevel)
+					if defined $::RD_TRACE;
+
+	
+	my $err_at = @{$thisparser->{errors}};
+
+	my $score;
+	my $score_return;
+	my $_tok;
+	my $return = undef;
+	my $_matched=0;
+	my $commit=0;
+	my @item = ();
+	my %item = ();
+	my $repeating =  defined($_[2]) && $_[2];
+	my $_noactions = defined($_[3]) && $_[3];
+ 	my @arg =        defined $_[4] ? @{ &{$_[4]} } : ();
+	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
+	my $text;
+	my $lastsep="";
+    my $expectation = new Parse::RecDescent::Expectation(q{/\\w[\\w\\d\\+\\-\\.]+:\\/([^\\.\\s:;]|\\.(?!\\s)|:(?!\\s)|;(?!\\s))+/, or qname});
+	$expectation->at($_[1]);
+	
+	my $thisline;
+	tie $thisline, q{Parse::RecDescent::LineCounter}, \$text, $thisparser;
+
+	
+
+	while (!$_matched && !$commit)
+	{
+		
+		Parse::RecDescent::_trace(q{Trying production: [/\\w[\\w\\d\\+\\-\\.]+:\\/([^\\.\\s:;]|\\.(?!\\s)|:(?!\\s)|;(?!\\s))+/]},
+					  Parse::RecDescent::_tracefirst($_[1]),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		my $thisprod = $thisrule->{"prods"}[0];
+		$text = $_[1];
+		my $_savetext;
+		@item = (q{iri});
+		%item = (__RULE__ => q{iri});
+		my $repcount = 0;
+
+
+		Parse::RecDescent::_trace(q{Trying terminal: [/\\w[\\w\\d\\+\\-\\.]+:\\/([^\\.\\s:;]|\\.(?!\\s)|:(?!\\s)|;(?!\\s))+/]}, Parse::RecDescent::_tracefirst($text),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$lastsep = "";
+		$expectation->is(q{})->at($text);
+		
+
+		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A(?:\w[\w\d\+\-\.]+:\/([^\.\s:;]|\.(?!\s)|:(?!\s)|;(?!\s))+)//)
+		{
+			
+			$expectation->failed();
+			Parse::RecDescent::_trace(q{<<Didn't match terminal>>},
+						  Parse::RecDescent::_tracefirst($text))
+					if defined $::RD_TRACE;
+
+			last;
+		}
+		Parse::RecDescent::_trace(q{>>Matched terminal<< (return value: [}
+						. $& . q{])},
+						  Parse::RecDescent::_tracefirst($text))
+					if defined $::RD_TRACE;
+		push @item, $item{__PATTERN1__}=$&;
+		
+
+
+		Parse::RecDescent::_trace(q{>>Matched production: [/\\w[\\w\\d\\+\\-\\.]+:\\/([^\\.\\s:;]|\\.(?!\\s)|:(?!\\s)|;(?!\\s))+/]<<},
+					  Parse::RecDescent::_tracefirst($text),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$_matched = 1;
+		last;
+	}
+
+
+	while (!$_matched && !$commit)
+	{
+		
+		Parse::RecDescent::_trace(q{Trying production: [qname]},
+					  Parse::RecDescent::_tracefirst($_[1]),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		my $thisprod = $thisrule->{"prods"}[1];
+		$text = $_[1];
+		my $_savetext;
+		@item = (q{iri});
+		%item = (__RULE__ => q{iri});
+		my $repcount = 0;
+
+
+		Parse::RecDescent::_trace(q{Trying subrule: [qname]},
+				  Parse::RecDescent::_tracefirst($text),
+				  q{iri},
+				  $tracelevel)
+					if defined $::RD_TRACE;
+		if (1) { no strict qw{refs};
+		$expectation->is(q{})->at($text);
+		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::qname($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
+		{
+			
+			Parse::RecDescent::_trace(q{<<Didn't match subrule: [qname]>>},
+						  Parse::RecDescent::_tracefirst($text),
+						  q{iri},
+						  $tracelevel)
+							if defined $::RD_TRACE;
+			$expectation->failed();
+			last;
+		}
+		Parse::RecDescent::_trace(q{>>Matched subrule: [qname]<< (return value: [}
+					. $_tok . q{]},
+					  
+					  Parse::RecDescent::_tracefirst($text),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$item{q{qname}} = $_tok;
+		push @item, $_tok;
+		
+		}
+
+
+		Parse::RecDescent::_trace(q{>>Matched production: [qname]<<},
+					  Parse::RecDescent::_tracefirst($text),
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$_matched = 1;
+		last;
+	}
+
+
+        unless ( $_matched || defined($score) )
+	{
+		
+
+		$_[1] = $text;	# NOT SURE THIS IS NEEDED
+		Parse::RecDescent::_trace(q{<<Didn't match rule>>},
+					 Parse::RecDescent::_tracefirst($_[1]),
+					 q{iri},
+					 $tracelevel)
+					if defined $::RD_TRACE;
+		return undef;
+	}
+	if (!defined($return) && defined($score))
+	{
+		Parse::RecDescent::_trace(q{>>Accepted scored production<<}, "",
+					  q{iri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$return = $score_return;
+	}
+	splice @{$thisparser->{errors}}, $err_at;
+	$return = $item[$#item] unless defined $return;
+	if (defined $::RD_TRACE)
+	{
+		Parse::RecDescent::_trace(q{>>Matched rule<< (return value: [} .
+					  $return . q{])}, "",
+					  q{iri},
+					  $tracelevel);
+		Parse::RecDescent::_trace(q{(consumed: [} .
+					  Parse::RecDescent::_tracemax(substr($_[1],0,-length($text))) . q{])}, 
+					  Parse::RecDescent::_tracefirst($text),
+					  , q{iri},
+					  $tracelevel)
+	}
+	$_[1] = $text;
+	return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args)
 sub Parse::RecDescent::TM::QL::CParser::query_expression
 {
 	my $thisparser = $_[0];
@@ -3451,7 +3639,7 @@ sub Parse::RecDescent::TM::QL::CParser::query_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{environment_clause});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3482,7 +3670,7 @@ sub Parse::RecDescent::TM::QL::CParser::query_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::environment_clause, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::environment_clause, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [environment_clause]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -3544,7 +3732,7 @@ sub Parse::RecDescent::TM::QL::CParser::query_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -3614,7 +3802,7 @@ sub Parse::RecDescent::TM::QL::CParser::for_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'for'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3827,7 +4015,7 @@ sub Parse::RecDescent::TM::QL::CParser::for_clause
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -3841,7 +4029,7 @@ sub Parse::RecDescent::TM::QL::CParser::for_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -3911,7 +4099,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable_association
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{variable});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -4039,7 +4227,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable_association
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -4053,7 +4241,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable_association
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -4123,7 +4311,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression_or
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: boolean_primitive /\\&/ boolean_primitive>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -4311,7 +4499,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression_or
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -4325,7 +4513,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression_or
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -4395,7 +4583,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/(\\w+:[^\\"\\s)\\]\\>]+)/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -4455,7 +4643,7 @@ sub Parse::RecDescent::TM::QL::CParser::uri
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -4525,7 +4713,7 @@ sub Parse::RecDescent::TM::QL::CParser::forall_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'every'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -4797,7 +4985,7 @@ sub Parse::RecDescent::TM::QL::CParser::forall_clause
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -4811,7 +4999,7 @@ sub Parse::RecDescent::TM::QL::CParser::forall_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -4881,7 +5069,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_f
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{tuple_expression, or roles});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -5003,7 +5191,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_f
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -5073,7 +5261,7 @@ sub Parse::RecDescent::TM::QL::CParser::role
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{role_type});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -5193,7 +5381,7 @@ sub Parse::RecDescent::TM::QL::CParser::role
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -5263,7 +5451,7 @@ sub Parse::RecDescent::TM::QL::CParser::item_reference
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{uri, or identifier, or '~~~item_reference_1~~~', or '~~~item_reference_op_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -5336,7 +5524,7 @@ sub Parse::RecDescent::TM::QL::CParser::item_reference
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -5519,7 +5707,7 @@ sub Parse::RecDescent::TM::QL::CParser::item_reference
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -5533,7 +5721,7 @@ sub Parse::RecDescent::TM::QL::CParser::item_reference
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -5603,7 +5791,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l1
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: content_l2 /(==)/ content_l2>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -5783,7 +5971,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l1
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -5853,7 +6041,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'%_', or '@_', or '$_', or /(\\$\\d+)/, or /[%@\\$][\\w\\#\\_][\\w\\-\\.]*/, or '~~~variable_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -5921,7 +6109,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -5995,7 +6183,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -6069,7 +6257,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -6143,7 +6331,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -6217,7 +6405,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -6283,7 +6471,7 @@ sub Parse::RecDescent::TM::QL::CParser::variable
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -6353,7 +6541,7 @@ sub Parse::RecDescent::TM::QL::CParser::function_invocation
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{item_reference});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -6448,7 +6636,7 @@ sub Parse::RecDescent::TM::QL::CParser::function_invocation
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -6518,7 +6706,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{select_clause});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -6579,7 +6767,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{from_clause})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::from_clause, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::from_clause, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [from_clause]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -6607,7 +6795,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{where_clause})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::where_clause, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::where_clause, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [where_clause]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -6656,7 +6844,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -6670,7 +6858,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -6740,7 +6928,7 @@ sub Parse::RecDescent::TM::QL::CParser::projection_postfix
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{tuple_expression});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -6805,7 +6993,7 @@ sub Parse::RecDescent::TM::QL::CParser::projection_postfix
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -6875,7 +7063,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_c
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'else'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -6965,7 +7153,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_c
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -7035,7 +7223,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_segment
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{xml_element, or xml_fragment});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -7157,7 +7345,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_segment
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -7227,7 +7415,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'true', or 'false'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -7339,7 +7527,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -7409,7 +7597,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -7637,7 +7825,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -7651,7 +7839,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_attribute
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -7721,7 +7909,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'/>', or '>'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -7855,7 +8043,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 					if defined $::RD_TRACE;
 		$expectation->is(q{xml_segment})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_segment, 0, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_segment, 0, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [xml_segment]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -8001,7 +8189,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -8015,7 +8203,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_rest
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -8085,7 +8273,7 @@ sub Parse::RecDescent::TM::QL::CParser::tuple_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'('});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -8323,7 +8511,7 @@ sub Parse::RecDescent::TM::QL::CParser::tuple_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -8337,7 +8525,7 @@ sub Parse::RecDescent::TM::QL::CParser::tuple_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -8407,7 +8595,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_p
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{tuple_expression, or simple_content});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -8529,7 +8717,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_p
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -8599,7 +8787,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_content
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -8681,7 +8869,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_content
 					if defined $::RD_TRACE;
 		$expectation->is(q{xml_element})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_element, 1, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_element, 1, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [xml_element]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -8753,7 +8941,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_content
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -8767,7 +8955,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_content
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -8837,7 +9025,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_fragment
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{xml_text, or '\{'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -9043,7 +9231,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_fragment
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -9057,7 +9245,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_fragment
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -9127,7 +9315,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: boolean_expression_or /\\|/ boolean_expression_or>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -9320,7 +9508,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -9334,7 +9522,7 @@ sub Parse::RecDescent::TM::QL::CParser::boolean_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -9404,7 +9592,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_l0_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{tuple_expression, or simple_content, or '~~~path_l0_expression_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -9465,7 +9653,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_l0_expression
 					if defined $::RD_TRACE;
 		$expectation->is(q{postfix})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::postfix, 0, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::postfix, 0, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [postfix]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -9512,7 +9700,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_l0_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -9578,7 +9766,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_l0_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -9648,7 +9836,7 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'<'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -9659,7 +9847,7 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 	while (!$_matched && !$commit)
 	{
 		
-		Parse::RecDescent::_trace(q{Trying production: ['<' uri '>']},
+		Parse::RecDescent::_trace(q{Trying production: ['<' iri '>']},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{wuri},
 					  $tracelevel)
@@ -9697,17 +9885,17 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 		push @item, $item{__STRING1__}=$&;
 		
 
-		Parse::RecDescent::_trace(q{Trying subrule: [uri]},
+		Parse::RecDescent::_trace(q{Trying subrule: [iri]},
 				  Parse::RecDescent::_tracefirst($text),
 				  q{wuri},
 				  $tracelevel)
 					if defined $::RD_TRACE;
 		if (1) { no strict qw{refs};
-		$expectation->is(q{uri})->at($text);
-		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::uri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
+		$expectation->is(q{iri})->at($text);
+		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::iri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
 		{
 			
-			Parse::RecDescent::_trace(q{<<Didn't match subrule: [uri]>>},
+			Parse::RecDescent::_trace(q{<<Didn't match subrule: [iri]>>},
 						  Parse::RecDescent::_tracefirst($text),
 						  q{wuri},
 						  $tracelevel)
@@ -9715,14 +9903,14 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 			$expectation->failed();
 			last;
 		}
-		Parse::RecDescent::_trace(q{>>Matched subrule: [uri]<< (return value: [}
+		Parse::RecDescent::_trace(q{>>Matched subrule: [iri]<< (return value: [}
 					. $_tok . q{]},
 					  
 					  Parse::RecDescent::_tracefirst($text),
 					  q{wuri},
 					  $tracelevel)
 						if defined $::RD_TRACE;
-		$item{q{uri}} = $_tok;
+		$item{q{iri}} = $_tok;
 		push @item, $_tok;
 		
 		}
@@ -9771,11 +9959,11 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: ['<' uri '>']<<},
+		Parse::RecDescent::_trace(q{>>Matched production: ['<' iri '>']<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{wuri},
 					  $tracelevel)
@@ -9785,7 +9973,7 @@ sub Parse::RecDescent::TM::QL::CParser::wuri
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -9855,7 +10043,7 @@ sub Parse::RecDescent::TM::QL::CParser::constant
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{literal, or item_reference, or '~~~constant_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -9985,7 +10173,7 @@ sub Parse::RecDescent::TM::QL::CParser::constant
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -10051,7 +10239,7 @@ sub Parse::RecDescent::TM::QL::CParser::constant
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -10121,7 +10309,7 @@ sub Parse::RecDescent::TM::QL::CParser::environment_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{tm_content});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -10186,7 +10374,7 @@ sub Parse::RecDescent::TM::QL::CParser::environment_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -10256,7 +10444,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l3_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{content});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -10321,7 +10509,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l3_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -10391,7 +10579,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l1_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: value_l2_expression /([+-])/ value_l2_expression>, or /-/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -10579,7 +10767,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l1_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -10687,7 +10875,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l1_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -10701,7 +10889,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l1_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -10771,7 +10959,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'^^'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -10782,7 +10970,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 	while (!$_matched && !$commit)
 	{
 		
-		Parse::RecDescent::_trace(q{Trying production: ['^^' uri]},
+		Parse::RecDescent::_trace(q{Trying production: ['^^' iri]},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{_alternation_1_of_production_1_of_rule_string},
 					  $tracelevel)
@@ -10820,17 +11008,17 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 		push @item, $item{__STRING1__}=$&;
 		
 
-		Parse::RecDescent::_trace(q{Trying subrule: [uri]},
+		Parse::RecDescent::_trace(q{Trying subrule: [iri]},
 				  Parse::RecDescent::_tracefirst($text),
 				  q{_alternation_1_of_production_1_of_rule_string},
 				  $tracelevel)
 					if defined $::RD_TRACE;
 		if (1) { no strict qw{refs};
-		$expectation->is(q{uri})->at($text);
-		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::uri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
+		$expectation->is(q{iri})->at($text);
+		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::iri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
 		{
 			
-			Parse::RecDescent::_trace(q{<<Didn't match subrule: [uri]>>},
+			Parse::RecDescent::_trace(q{<<Didn't match subrule: [iri]>>},
 						  Parse::RecDescent::_tracefirst($text),
 						  q{_alternation_1_of_production_1_of_rule_string},
 						  $tracelevel)
@@ -10838,20 +11026,20 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 			$expectation->failed();
 			last;
 		}
-		Parse::RecDescent::_trace(q{>>Matched subrule: [uri]<< (return value: [}
+		Parse::RecDescent::_trace(q{>>Matched subrule: [iri]<< (return value: [}
 					. $_tok . q{]},
 					  
 					  Parse::RecDescent::_tracefirst($text),
 					  q{_alternation_1_of_production_1_of_rule_string},
 					  $tracelevel)
 						if defined $::RD_TRACE;
-		$item{q{uri}} = $_tok;
+		$item{q{iri}} = $_tok;
 		push @item, $_tok;
 		
 		}
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: ['^^' uri]<<},
+		Parse::RecDescent::_trace(q{>>Matched production: ['^^' iri]<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{_alternation_1_of_production_1_of_rule_string},
 					  $tracelevel)
@@ -10861,7 +11049,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -10931,7 +11119,7 @@ sub Parse::RecDescent::TM::QL::CParser::decimal
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/-?\\d+\\.\\d+/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -10991,7 +11179,7 @@ sub Parse::RecDescent::TM::QL::CParser::decimal
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -11061,7 +11249,7 @@ sub Parse::RecDescent::TM::QL::CParser::ellipsis
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{','});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -11146,7 +11334,7 @@ sub Parse::RecDescent::TM::QL::CParser::ellipsis
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -11216,7 +11404,7 @@ sub Parse::RecDescent::TM::QL::CParser::predicate_postfix
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'['});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -11339,7 +11527,7 @@ sub Parse::RecDescent::TM::QL::CParser::predicate_postfix
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -11353,7 +11541,7 @@ sub Parse::RecDescent::TM::QL::CParser::predicate_postfix
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -11423,7 +11611,7 @@ sub Parse::RecDescent::TM::QL::CParser::axis
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'epsilon', or 'classes', or 'superclasses', or 'players', or 'roles', or 'characteristics', or 'scope', or 'reifier', or 'atomify', or 'locators', or 'indicators'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -12003,7 +12191,7 @@ sub Parse::RecDescent::TM::QL::CParser::axis
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -12073,7 +12261,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_id
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/[:\\w]+/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -12133,7 +12321,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_id
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -12203,7 +12391,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{decimal, or integer, or boolean, or wuri, or string});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -12276,7 +12464,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -12355,7 +12543,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -12434,7 +12622,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -12513,7 +12701,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -12584,7 +12772,7 @@ sub Parse::RecDescent::TM::QL::CParser::literal
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -12654,7 +12842,7 @@ sub Parse::RecDescent::TM::QL::CParser::postfix
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{predicate_postfix, or projection_postfix});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -12776,7 +12964,7 @@ sub Parse::RecDescent::TM::QL::CParser::postfix
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -12846,7 +13034,7 @@ sub Parse::RecDescent::TM::QL::CParser::step
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'<<', or '>>'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -12937,7 +13125,7 @@ sub Parse::RecDescent::TM::QL::CParser::step
 					if defined $::RD_TRACE;
 		$expectation->is(q{item_reference})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::item_reference, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::item_reference, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [item_reference]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -12980,7 +13168,7 @@ sub Parse::RecDescent::TM::QL::CParser::step
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -12994,7 +13182,7 @@ sub Parse::RecDescent::TM::QL::CParser::step
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13064,7 +13252,7 @@ sub Parse::RecDescent::TM::QL::CParser::identifier
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/([\\w\\#\\_][\\w\\-\\.]*)/, or '*'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -13184,7 +13372,7 @@ sub Parse::RecDescent::TM::QL::CParser::identifier
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -13198,7 +13386,7 @@ sub Parse::RecDescent::TM::QL::CParser::identifier
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13268,7 +13456,7 @@ sub Parse::RecDescent::TM::QL::CParser::integer
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'~~~integer_1~~~', or /-?\\d+/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -13380,7 +13568,7 @@ sub Parse::RecDescent::TM::QL::CParser::integer
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13450,7 +13638,7 @@ sub Parse::RecDescent::TM::QL::CParser::from_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'from'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -13535,7 +13723,7 @@ sub Parse::RecDescent::TM::QL::CParser::from_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13605,7 +13793,7 @@ sub Parse::RecDescent::TM::QL::CParser::startrule
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{query_expression});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -13670,7 +13858,7 @@ sub Parse::RecDescent::TM::QL::CParser::startrule
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13740,7 +13928,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_s
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'^^'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -13751,7 +13939,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_s
 	while (!$_matched && !$commit)
 	{
 		
-		Parse::RecDescent::_trace(q{Trying production: ['^^' uri]},
+		Parse::RecDescent::_trace(q{Trying production: ['^^' iri]},
 					  Parse::RecDescent::_tracefirst($_[1]),
 					  q{_alternation_1_of_production_2_of_rule_string},
 					  $tracelevel)
@@ -13789,17 +13977,17 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_s
 		push @item, $item{__STRING1__}=$&;
 		
 
-		Parse::RecDescent::_trace(q{Trying subrule: [uri]},
+		Parse::RecDescent::_trace(q{Trying subrule: [iri]},
 				  Parse::RecDescent::_tracefirst($text),
 				  q{_alternation_1_of_production_2_of_rule_string},
 				  $tracelevel)
 					if defined $::RD_TRACE;
 		if (1) { no strict qw{refs};
-		$expectation->is(q{uri})->at($text);
-		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::uri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
+		$expectation->is(q{iri})->at($text);
+		unless (defined ($_tok = Parse::RecDescent::TM::QL::CParser::iri($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
 		{
 			
-			Parse::RecDescent::_trace(q{<<Didn't match subrule: [uri]>>},
+			Parse::RecDescent::_trace(q{<<Didn't match subrule: [iri]>>},
 						  Parse::RecDescent::_tracefirst($text),
 						  q{_alternation_1_of_production_2_of_rule_string},
 						  $tracelevel)
@@ -13807,20 +13995,20 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_s
 			$expectation->failed();
 			last;
 		}
-		Parse::RecDescent::_trace(q{>>Matched subrule: [uri]<< (return value: [}
+		Parse::RecDescent::_trace(q{>>Matched subrule: [iri]<< (return value: [}
 					. $_tok . q{]},
 					  
 					  Parse::RecDescent::_tracefirst($text),
 					  q{_alternation_1_of_production_2_of_rule_string},
 					  $tracelevel)
 						if defined $::RD_TRACE;
-		$item{q{uri}} = $_tok;
+		$item{q{iri}} = $_tok;
 		push @item, $_tok;
 		
 		}
 
 
-		Parse::RecDescent::_trace(q{>>Matched production: ['^^' uri]<<},
+		Parse::RecDescent::_trace(q{>>Matched production: ['^^' iri]<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{_alternation_1_of_production_2_of_rule_string},
 					  $tracelevel)
@@ -13830,7 +14018,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_s
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -13900,7 +14088,7 @@ sub Parse::RecDescent::TM::QL::CParser::roles
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: role /,/ role>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -14080,7 +14268,7 @@ sub Parse::RecDescent::TM::QL::CParser::roles
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -14150,7 +14338,7 @@ sub Parse::RecDescent::TM::QL::CParser::ctm_instance
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{astma_instance});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -14215,7 +14403,7 @@ sub Parse::RecDescent::TM::QL::CParser::ctm_instance
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -14285,7 +14473,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l2
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'\{', or 'if', or tm_content, or xml_content});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -14555,7 +14743,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l2
 					if defined $::RD_TRACE;
 		$expectation->is(q{'else'})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_content_l2, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_2_of_rule_content_l2, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: ['else']>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -14598,7 +14786,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l2
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -14726,7 +14914,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l2
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -14796,7 +14984,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{association_predicate, or path_l0_expression, or '~~~path_expression_1~~~', or '~~~path_expression_2~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -15022,7 +15210,7 @@ sub Parse::RecDescent::TM::QL::CParser::path_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -15092,7 +15280,7 @@ sub Parse::RecDescent::TM::QL::CParser::where_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'where'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -15190,7 +15378,7 @@ sub Parse::RecDescent::TM::QL::CParser::where_clause
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -15204,7 +15392,7 @@ sub Parse::RecDescent::TM::QL::CParser::where_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -15274,7 +15462,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'<'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -15360,7 +15548,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 					if defined $::RD_TRACE;
 		$expectation->is(q{xml_attribute})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_attribute, 0, 100000000, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::xml_attribute, 0, 100000000, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [xml_attribute]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -15466,7 +15654,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -15480,7 +15668,7 @@ sub Parse::RecDescent::TM::QL::CParser::xml_element
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -15550,7 +15738,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l0_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: value_l1_expression /(<|<=|=>|>)/ value_l1_expression>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -15738,7 +15926,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l0_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -15752,7 +15940,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l0_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -15822,7 +16010,7 @@ sub Parse::RecDescent::TM::QL::CParser::return_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'return'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -15912,7 +16100,7 @@ sub Parse::RecDescent::TM::QL::CParser::return_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -15982,7 +16170,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l2_expression
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: value_l3_expression /(\\*|div|mod)/ value_l3_expression>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -16170,7 +16358,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l2_expression
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -16184,7 +16372,7 @@ sub Parse::RecDescent::TM::QL::CParser::value_l2_expression
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -16254,7 +16442,7 @@ sub Parse::RecDescent::TM::QL::CParser::role_type
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{item_reference});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -16319,7 +16507,7 @@ sub Parse::RecDescent::TM::QL::CParser::role_type
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -16389,7 +16577,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_clause
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'select'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -16602,7 +16790,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_clause
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -16616,7 +16804,7 @@ sub Parse::RecDescent::TM::QL::CParser::select_clause
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -16686,7 +16874,7 @@ sub Parse::RecDescent::TM::QL::CParser::player
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{path_expression});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -16751,7 +16939,7 @@ sub Parse::RecDescent::TM::QL::CParser::player
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -16821,7 +17009,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l0
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{<leftop: content_l1 /(\\+\\+)/ content_l1>});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -17001,7 +17189,7 @@ sub Parse::RecDescent::TM::QL::CParser::content_l0
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -17071,7 +17259,7 @@ sub Parse::RecDescent::TM::QL::CParser::navigation
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{step, or '~~~navigation_op_1~~~'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -17132,7 +17320,7 @@ sub Parse::RecDescent::TM::QL::CParser::navigation
 					if defined $::RD_TRACE;
 		$expectation->is(q{navigation})->at($text);
 		
-		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::navigation, 0, 1, $_noactions,$expectation,undef))) 
+		unless (defined ($_tok = $thisparser->_parserepeat($text, \&Parse::RecDescent::TM::QL::CParser::navigation, 0, 1, $_noactions,$expectation,sub { \@arg }))) 
 		{
 			Parse::RecDescent::_trace(q{<<Didn't match repeated subrule: [navigation]>>},
 						  Parse::RecDescent::_tracefirst($text),
@@ -17172,7 +17360,7 @@ sub Parse::RecDescent::TM::QL::CParser::navigation
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -17246,7 +17434,7 @@ sub Parse::RecDescent::TM::QL::CParser::navigation
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -17260,7 +17448,7 @@ sub Parse::RecDescent::TM::QL::CParser::navigation
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -17330,7 +17518,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{'<<', or '>>'});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -17442,7 +17630,7 @@ sub Parse::RecDescent::TM::QL::CParser::_alternation_1_of_production_1_of_rule_s
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -17512,7 +17700,7 @@ sub Parse::RecDescent::TM::QL::CParser::prefix
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-	my $expectation = new Parse::RecDescent::Expectation($thisrule->expected());
+    my $expectation = new Parse::RecDescent::Expectation(q{/\\w+/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -17615,7 +17803,7 @@ sub Parse::RecDescent::TM::QL::CParser::prefix
 					  Parse::RecDescent::_tracefirst($text))
 						if defined $::RD_TRACE;
 		push @item, $_tok;
-		$item{__ACTION1__}=$_tok;
+		
 		
 
 
@@ -17629,7 +17817,7 @@ sub Parse::RecDescent::TM::QL::CParser::prefix
 	}
 
 
-        unless ( $_matched || defined($return) || defined($score) )
+        unless ( $_matched || defined($score) )
 	{
 		
 
@@ -17702,7 +17890,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'hashname' => '__STRING1__',
                                                                                                        'description' => '\'xxx\'',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 291
+                                                                                                       'line' => -96
                                                                                                      }, 'Parse::RecDescent::Literal' )
                                                                                             ],
                                                                                  'line' => undef
@@ -17710,7 +17898,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                       ],
                                                            'name' => 'astma_instance',
                                                            'vars' => '',
-                                                           'line' => 289
+                                                           'line' => -98
                                                          }, 'Parse::RecDescent::Rule' ),
                               'uri_or_qname' => bless( {
                                                          'impcount' => 0,
@@ -17739,7 +17927,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'matchrule' => 0,
                                                                                                      'repspec' => '?',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 270
+                                                                                                     'line' => -117
                                                                                                    }, 'Parse::RecDescent::Repetition' ),
                                                                                             bless( {
                                                                                                      'subrule' => 'identifier',
@@ -17747,12 +17935,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'implicit' => undef,
                                                                                                      'argcode' => undef,
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 270
+                                                                                                     'line' => -117
                                                                                                    }, 'Parse::RecDescent::Subrule' ),
                                                                                             bless( {
                                                                                                      'hashname' => '__ACTION1__',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 270,
+                                                                                                     'line' => -117,
                                                                                                      'code' => '{ $return = $item[1]->[0] ? $item[1]->[0] . $item[2] : $item[2]; }'
                                                                                                    }, 'Parse::RecDescent::Action' )
                                                                                           ],
@@ -17761,7 +17949,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                     ],
                                                          'name' => 'uri_or_qname',
                                                          'vars' => '',
-                                                         'line' => 268
+                                                         'line' => -119
                                                        }, 'Parse::RecDescent::Rule' ),
                               'xml_text' => bless( {
                                                      'impcount' => 0,
@@ -17784,14 +17972,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'description' => '/$arg[0]/',
                                                                                                  'lookahead' => 0,
                                                                                                  'rdelim' => '/',
-                                                                                                 'line' => 331,
+                                                                                                 'line' => -56,
                                                                                                  'mod' => '',
                                                                                                  'ldelim' => '/'
                                                                                                }, 'Parse::RecDescent::Token' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 331,
+                                                                                                 'line' => -56,
                                                                                                  'code' => '{ $return = new TM::Literal ($item[1]); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
@@ -17800,7 +17988,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                 ],
                                                      'name' => 'xml_text',
                                                      'vars' => '',
-                                                     'line' => 331
+                                                     'line' => -56
                                                    }, 'Parse::RecDescent::Rule' ),
                               'association_predicate' => bless( {
                                                                   'impcount' => 0,
@@ -17824,7 +18012,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      bless( {
                                                                                                               'hashname' => '__ACTION1__',
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195,
+                                                                                                              'line' => -192,
                                                                                                               'code' => '{ undef; }'
                                                                                                             }, 'Parse::RecDescent::Action' ),
                                                                                                      bless( {
@@ -17833,14 +18021,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                               'implicit' => undef,
                                                                                                               'argcode' => undef,
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195
+                                                                                                              'line' => -192
                                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                                      bless( {
                                                                                                               'pattern' => '(',
                                                                                                               'hashname' => '__STRING1__',
                                                                                                               'description' => '\'(\'',
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195
+                                                                                                              'line' => -192
                                                                                                             }, 'Parse::RecDescent::Literal' ),
                                                                                                      bless( {
                                                                                                               'subrule' => 'roles',
@@ -17848,7 +18036,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                               'implicit' => undef,
                                                                                                               'argcode' => undef,
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195
+                                                                                                              'line' => -192
                                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                                      bless( {
                                                                                                               'subrule' => 'ellipsis',
@@ -17859,14 +18047,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                               'matchrule' => 0,
                                                                                                               'repspec' => '?',
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195
+                                                                                                              'line' => -192
                                                                                                             }, 'Parse::RecDescent::Repetition' ),
                                                                                                      bless( {
                                                                                                               'pattern' => ')',
                                                                                                               'hashname' => '__STRING2__',
                                                                                                               'description' => '\')\'',
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 195
+                                                                                                              'line' => -192
                                                                                                             }, 'Parse::RecDescent::Literal' )
                                                                                                    ],
                                                                                         'line' => undef
@@ -17874,7 +18062,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                              ],
                                                                   'name' => 'association_predicate',
                                                                   'vars' => '',
-                                                                  'line' => 193
+                                                                  'line' => -194
                                                                 }, 'Parse::RecDescent::Rule' ),
                               'content' => bless( {
                                                     'impcount' => 0,
@@ -17951,7 +18139,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'hashname' => '__STRING1__',
                                                                                                 'description' => '\'~~~content_1~~~\'',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 342
+                                                                                                'line' => -45
                                                                                               }, 'Parse::RecDescent::Literal' )
                                                                                      ],
                                                                           'line' => undef
@@ -17985,7 +18173,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'description' => '/\\\\"\\{3\\}(.*?)\\\\"\\{3\\}/s',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 363,
+                                                                                               'line' => -24,
                                                                                                'mod' => 's',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -17998,12 +18186,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'matchrule' => 0,
                                                                                                'repspec' => '?',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 363
+                                                                                               'line' => -24
                                                                                              }, 'Parse::RecDescent::Repetition' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 363,
+                                                                                               'line' => -24,
                                                                                                'code' => '{ $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -18024,7 +18212,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'description' => '/\\\\"([^\\\\n]*?)\\\\"/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 364,
+                                                                                               'line' => -23,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -18037,21 +18225,21 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'matchrule' => 0,
                                                                                                'repspec' => '?',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 364
+                                                                                               'line' => -23
                                                                                              }, 'Parse::RecDescent::Repetition' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 364,
+                                                                                               'line' => -23,
                                                                                                'code' => '{ $return = new TM::Literal  ($1,       $item[2]->[0] || TM::Literal->STRING); }'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
-                                                                         'line' => 364
+                                                                         'line' => -23
                                                                        }, 'Parse::RecDescent::Production' )
                                                               ],
                                                    'name' => 'string',
                                                    'vars' => '',
-                                                   'line' => 361
+                                                   'line' => -26
                                                  }, 'Parse::RecDescent::Rule' ),
                               'flwr_expression' => bless( {
                                                             'impcount' => 0,
@@ -18081,7 +18269,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'matchrule' => 0,
                                                                                                         'repspec' => 's?',
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 97
+                                                                                                        'line' => -290
                                                                                                       }, 'Parse::RecDescent::Repetition' ),
                                                                                                bless( {
                                                                                                         'subrule' => 'where_clause',
@@ -18092,7 +18280,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'matchrule' => 0,
                                                                                                         'repspec' => '?',
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 98
+                                                                                                        'line' => -289
                                                                                                       }, 'Parse::RecDescent::Repetition' ),
                                                                                                bless( {
                                                                                                         'subrule' => 'return_clause',
@@ -18100,12 +18288,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'implicit' => undef,
                                                                                                         'argcode' => undef,
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 99
+                                                                                                        'line' => -288
                                                                                                       }, 'Parse::RecDescent::Subrule' ),
                                                                                                bless( {
                                                                                                         'hashname' => '__ACTION1__',
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 100,
+                                                                                                        'line' => -287,
                                                                                                         'code' => '{
                                                                         $return = $item[3];                                        # first collect the return clause
 									$return = TM::QL::PE::unshift_vars ([[\'@_\' => $item[2]->[0]]],
@@ -18128,7 +18316,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                        ],
                                                             'name' => 'flwr_expression',
                                                             'vars' => '',
-                                                            'line' => 95
+                                                            'line' => -292
                                                           }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_1_of_rule_query_expression' => bless( {
                                                                                                     'impcount' => 0,
@@ -18155,7 +18343,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                 'implicit' => undef,
                                                                                                                                                 'argcode' => undef,
                                                                                                                                                 'lookahead' => 0,
-                                                                                                                                                'line' => 373
+                                                                                                                                                'line' => 1
                                                                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                                                                      ],
                                                                                                                           'line' => undef
@@ -18175,10 +18363,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                 'implicit' => undef,
                                                                                                                                                 'argcode' => undef,
                                                                                                                                                 'lookahead' => 0,
-                                                                                                                                                'line' => 374
+                                                                                                                                                'line' => 2
                                                                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                                                                      ],
-                                                                                                                          'line' => 374
+                                                                                                                          'line' => 2
                                                                                                                         }, 'Parse::RecDescent::Production' ),
                                                                                                                  bless( {
                                                                                                                           'number' => '2',
@@ -18195,15 +18383,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                 'implicit' => undef,
                                                                                                                                                 'argcode' => undef,
                                                                                                                                                 'lookahead' => 0,
-                                                                                                                                                'line' => 375
+                                                                                                                                                'line' => 3
                                                                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                                                                      ],
-                                                                                                                          'line' => 375
+                                                                                                                          'line' => 3
                                                                                                                         }, 'Parse::RecDescent::Production' )
                                                                                                                ],
                                                                                                     'name' => '_alternation_1_of_production_1_of_rule_query_expression',
                                                                                                     'vars' => '',
-                                                                                                    'line' => 373
+                                                                                                    'line' => 1
                                                                                                   }, 'Parse::RecDescent::Rule' ),
                               'simple_content' => bless( {
                                                            'impcount' => 0,
@@ -18229,7 +18417,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'implicit' => undef,
                                                                                                        'argcode' => undef,
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 173
+                                                                                                       'line' => -214
                                                                                                      }, 'Parse::RecDescent::Subrule' ),
                                                                                               bless( {
                                                                                                        'subrule' => 'navigation',
@@ -18240,12 +18428,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'matchrule' => 0,
                                                                                                        'repspec' => '?',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 173
+                                                                                                       'line' => -214
                                                                                                      }, 'Parse::RecDescent::Repetition' ),
                                                                                               bless( {
                                                                                                        'hashname' => '__ACTION1__',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 173,
+                                                                                                       'line' => -214,
                                                                                                        'code' => '{ $return = new PEpr (arr => [ [[[ new PEpe (val => $item[1], mos => $item[2]->[0] || []) ]]]]); }'
                                                                                                      }, 'Parse::RecDescent::Action' )
                                                                                             ],
@@ -18254,7 +18442,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                       ],
                                                            'name' => 'simple_content',
                                                            'vars' => '',
-                                                           'line' => 173
+                                                           'line' => -214
                                                          }, 'Parse::RecDescent::Rule' ),
                               'boolean_primitive' => bless( {
                                                               'impcount' => 0,
@@ -18281,7 +18469,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'hashname' => '__STRING1__',
                                                                                                           'description' => '\'not\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 134
+                                                                                                          'line' => -253
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'subrule' => 'boolean_primitive',
@@ -18289,12 +18477,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 134
+                                                                                                          'line' => -253
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 134,
+                                                                                                          'line' => -253,
                                                                                                           'code' => '{ $return = _invert_if ($item[2]); }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
@@ -18314,16 +18502,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'hashname' => '__STRING1__',
                                                                                                           'description' => '\'false\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 135
+                                                                                                          'line' => -252
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 135,
+                                                                                                          'line' => -252,
                                                                                                           'code' => '{ $return = _mk_if (TM::QL::PE::mk_prs ()); }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
-                                                                                    'line' => 135
+                                                                                    'line' => -252
                                                                                   }, 'Parse::RecDescent::Production' ),
                                                                            bless( {
                                                                                     'number' => '2',
@@ -18339,7 +18527,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'hashname' => '__STRING1__',
                                                                                                           'description' => '\'(\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 136
+                                                                                                          'line' => -251
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'subrule' => 'boolean_expression',
@@ -18347,23 +18535,23 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 136
+                                                                                                          'line' => -251
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'pattern' => ')',
                                                                                                           'hashname' => '__STRING2__',
                                                                                                           'description' => '\')\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 136
+                                                                                                          'line' => -251
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 136,
+                                                                                                          'line' => -251,
                                                                                                           'code' => '{ $return = $item[2]; }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
-                                                                                    'line' => 136
+                                                                                    'line' => -251
                                                                                   }, 'Parse::RecDescent::Production' ),
                                                                            bless( {
                                                                                     'number' => '3',
@@ -18380,16 +18568,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 137
+                                                                                                          'line' => -250
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 137,
+                                                                                                          'line' => -250,
                                                                                                           'code' => '{ $return = _invert_if (_mk_if ($item[1])); }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
-                                                                                    'line' => 137
+                                                                                    'line' => -250
                                                                                   }, 'Parse::RecDescent::Production' ),
                                                                            bless( {
                                                                                     'number' => '4',
@@ -18406,21 +18594,21 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 138
+                                                                                                          'line' => -249
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 138,
+                                                                                                          'line' => -249,
                                                                                                           'code' => '{ $return = _mk_if ($item[1]); }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
-                                                                                    'line' => 137
+                                                                                    'line' => -250
                                                                                   }, 'Parse::RecDescent::Production' )
                                                                          ],
                                                               'name' => 'boolean_primitive',
                                                               'vars' => '',
-                                                              'line' => 134
+                                                              'line' => -253
                                                             }, 'Parse::RecDescent::Rule' ),
                               'exists_clause' => bless( {
                                                           'impcount' => 0,
@@ -18445,7 +18633,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__STRING1__',
                                                                                                       'description' => '\'some\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 140
+                                                                                                      'line' => -247
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'subrule' => 'variable_association',
@@ -18456,14 +18644,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'matchrule' => 0,
                                                                                                       'repspec' => 's',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 140
+                                                                                                      'line' => -247
                                                                                                     }, 'Parse::RecDescent::Repetition' ),
                                                                                              bless( {
                                                                                                       'pattern' => 'satisfies',
                                                                                                       'hashname' => '__STRING2__',
                                                                                                       'description' => '\'satisfies\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 141
+                                                                                                      'line' => -246
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'subrule' => 'boolean_expression',
@@ -18471,12 +18659,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'implicit' => undef,
                                                                                                       'argcode' => undef,
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 141
+                                                                                                      'line' => -246
                                                                                                     }, 'Parse::RecDescent::Subrule' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 141,
+                                                                                                      'line' => -246,
                                                                                                       'code' => '{ 
 									$return = TM::QL::PE::mk_prs ($item[4]);           # build prototype
 									$return = TM::QL::PE::unshift_vars ($item[2], $return);
@@ -18488,7 +18676,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'exists_clause',
                                                           'vars' => '',
-                                                          'line' => 140
+                                                          'line' => -247
                                                         }, 'Parse::RecDescent::Rule' ),
                               'anchor' => bless( {
                                                    'impcount' => 0,
@@ -18514,7 +18702,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 250
+                                                                                               'line' => -137
                                                                                              }, 'Parse::RecDescent::Subrule' )
                                                                                     ],
                                                                          'line' => undef
@@ -18534,10 +18722,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 251
+                                                                                               'line' => -136
                                                                                              }, 'Parse::RecDescent::Subrule' )
                                                                                     ],
-                                                                         'line' => 251
+                                                                         'line' => -136
                                                                        }, 'Parse::RecDescent::Production' ),
                                                                 bless( {
                                                                          'number' => '2',
@@ -18553,7 +18741,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'hashname' => '__STRING1__',
                                                                                                'description' => '\'~~~anchor_1~~~\'',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 343
+                                                                                               'line' => -44
                                                                                              }, 'Parse::RecDescent::Literal' )
                                                                                     ],
                                                                          'line' => undef
@@ -18561,7 +18749,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'anchor',
                                                    'vars' => '',
-                                                   'line' => 248
+                                                   'line' => -139
                                                  }, 'Parse::RecDescent::Rule' ),
                               'tm_content' => bless( {
                                                        'impcount' => 0,
@@ -18585,7 +18773,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'hashname' => '__STRING1__',
                                                                                                    'description' => '\'"""\'',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 287
+                                                                                                   'line' => -100
                                                                                                  }, 'Parse::RecDescent::Literal' ),
                                                                                           bless( {
                                                                                                    'subrule' => 'ctm_instance',
@@ -18593,19 +18781,19 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'implicit' => undef,
                                                                                                    'argcode' => undef,
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 287
+                                                                                                   'line' => -100
                                                                                                  }, 'Parse::RecDescent::Subrule' ),
                                                                                           bless( {
                                                                                                    'pattern' => '"""',
                                                                                                    'hashname' => '__STRING2__',
                                                                                                    'description' => '\'"""\'',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 287
+                                                                                                   'line' => -100
                                                                                                  }, 'Parse::RecDescent::Literal' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 287,
+                                                                                                   'line' => -100,
                                                                                                    'code' => '{ $return = $item[2]; }'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
@@ -18614,7 +18802,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                   ],
                                                        'name' => 'tm_content',
                                                        'vars' => '',
-                                                       'line' => 285
+                                                       'line' => -102
                                                      }, 'Parse::RecDescent::Rule' ),
                               'value_expression' => bless( {
                                                              'impcount' => 0,
@@ -18639,7 +18827,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          'implicit' => undef,
                                                                                                          'argcode' => undef,
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 213
+                                                                                                         'line' => -174
                                                                                                        }, 'Parse::RecDescent::Subrule' )
                                                                                               ],
                                                                                    'line' => undef
@@ -18647,8 +18835,63 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                         ],
                                                              'name' => 'value_expression',
                                                              'vars' => '',
-                                                             'line' => 213
+                                                             'line' => -174
                                                            }, 'Parse::RecDescent::Rule' ),
+                              'iri' => bless( {
+                                                'impcount' => 0,
+                                                'calls' => [
+                                                             'qname'
+                                                           ],
+                                                'changed' => 0,
+                                                'opcount' => 0,
+                                                'prods' => [
+                                                             bless( {
+                                                                      'number' => '0',
+                                                                      'strcount' => 0,
+                                                                      'dircount' => 0,
+                                                                      'uncommit' => undef,
+                                                                      'error' => undef,
+                                                                      'patcount' => 1,
+                                                                      'actcount' => 0,
+                                                                      'items' => [
+                                                                                   bless( {
+                                                                                            'pattern' => '\\w[\\w\\d\\+\\-\\.]+:\\/([^\\.\\s:;]|\\.(?!\\s)|:(?!\\s)|;(?!\\s))+',
+                                                                                            'hashname' => '__PATTERN1__',
+                                                                                            'description' => '/\\\\w[\\\\w\\\\d\\\\+\\\\-\\\\.]+:\\\\/([^\\\\.\\\\s:;]|\\\\.(?!\\\\s)|:(?!\\\\s)|;(?!\\\\s))+/',
+                                                                                            'lookahead' => 0,
+                                                                                            'rdelim' => '/',
+                                                                                            'line' => -7,
+                                                                                            'mod' => '',
+                                                                                            'ldelim' => '/'
+                                                                                          }, 'Parse::RecDescent::Token' )
+                                                                                 ],
+                                                                      'line' => undef
+                                                                    }, 'Parse::RecDescent::Production' ),
+                                                             bless( {
+                                                                      'number' => '1',
+                                                                      'strcount' => 0,
+                                                                      'dircount' => 0,
+                                                                      'uncommit' => undef,
+                                                                      'error' => undef,
+                                                                      'patcount' => 0,
+                                                                      'actcount' => 0,
+                                                                      'items' => [
+                                                                                   bless( {
+                                                                                            'subrule' => 'qname',
+                                                                                            'matchrule' => 0,
+                                                                                            'implicit' => undef,
+                                                                                            'argcode' => undef,
+                                                                                            'lookahead' => 0,
+                                                                                            'line' => -5
+                                                                                          }, 'Parse::RecDescent::Subrule' )
+                                                                                 ],
+                                                                      'line' => -6
+                                                                    }, 'Parse::RecDescent::Production' )
+                                                           ],
+                                                'name' => 'iri',
+                                                'vars' => '',
+                                                'line' => -7
+                                              }, 'Parse::RecDescent::Rule' ),
                               'query_expression' => bless( {
                                                              'impcount' => 1,
                                                              'calls' => [
@@ -18676,7 +18919,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          'matchrule' => 0,
                                                                                                          'repspec' => '?',
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 56
+                                                                                                         'line' => -331
                                                                                                        }, 'Parse::RecDescent::Repetition' ),
                                                                                                 bless( {
                                                                                                          'subrule' => '_alternation_1_of_production_1_of_rule_query_expression',
@@ -18684,7 +18927,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          'implicit' => 'select_expression, or flwr_expression, or path_expression',
                                                                                                          'argcode' => undef,
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 59
+                                                                                                         'line' => -328
                                                                                                        }, 'Parse::RecDescent::Subrule' )
                                                                                               ],
                                                                                    'line' => undef
@@ -18692,7 +18935,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                         ],
                                                              'name' => 'query_expression',
                                                              'vars' => '',
-                                                             'line' => 54
+                                                             'line' => -333
                                                            }, 'Parse::RecDescent::Rule' ),
                               'for_clause' => bless( {
                                                        'impcount' => 0,
@@ -18717,7 +18960,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'hashname' => '__STRING1__',
                                                                                                    'description' => '\'for\'',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 116
+                                                                                                   'line' => -271
                                                                                                  }, 'Parse::RecDescent::Literal' ),
                                                                                           bless( {
                                                                                                    'expected' => '<leftop: variable_association /,/ variable_association>',
@@ -18730,7 +18973,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                          'implicit' => undef,
                                                                                                                          'argcode' => undef,
                                                                                                                          'lookahead' => 0,
-                                                                                                                         'line' => 116
+                                                                                                                         'line' => -271
                                                                                                                        }, 'Parse::RecDescent::Subrule' ),
                                                                                                    'rightarg' => bless( {
                                                                                                                           'subrule' => 'variable_association',
@@ -18738,7 +18981,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                           'implicit' => undef,
                                                                                                                           'argcode' => undef,
                                                                                                                           'lookahead' => 0,
-                                                                                                                          'line' => 116
+                                                                                                                          'line' => -271
                                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                    'hashname' => '__DIRECTIVE1__',
                                                                                                    'type' => 'leftop',
@@ -18748,7 +18991,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                     'description' => '/,/',
                                                                                                                     'lookahead' => 0,
                                                                                                                     'rdelim' => '/',
-                                                                                                                    'line' => 116,
+                                                                                                                    'line' => -271,
                                                                                                                     'mod' => '',
                                                                                                                     'ldelim' => '/'
                                                                                                                   }, 'Parse::RecDescent::Token' )
@@ -18756,7 +18999,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 116,
+                                                                                                   'line' => -271,
                                                                                                    'code' => '{ $return = $item[2]; }'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
@@ -18765,7 +19008,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                   ],
                                                        'name' => 'for_clause',
                                                        'vars' => '',
-                                                       'line' => 116
+                                                       'line' => -271
                                                      }, 'Parse::RecDescent::Rule' ),
                               'variable_association' => bless( {
                                                                  'impcount' => 0,
@@ -18791,14 +19034,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                              'implicit' => undef,
                                                                                                              'argcode' => undef,
                                                                                                              'lookahead' => 0,
-                                                                                                             'line' => 119
+                                                                                                             'line' => -268
                                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                                     bless( {
                                                                                                              'pattern' => 'in',
                                                                                                              'hashname' => '__STRING1__',
                                                                                                              'description' => '\'in\'',
                                                                                                              'lookahead' => 0,
-                                                                                                             'line' => 119
+                                                                                                             'line' => -268
                                                                                                            }, 'Parse::RecDescent::Literal' ),
                                                                                                     bless( {
                                                                                                              'subrule' => 'content',
@@ -18806,12 +19049,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                              'implicit' => undef,
                                                                                                              'argcode' => undef,
                                                                                                              'lookahead' => 0,
-                                                                                                             'line' => 119
+                                                                                                             'line' => -268
                                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                                     bless( {
                                                                                                              'hashname' => '__ACTION1__',
                                                                                                              'lookahead' => 0,
-                                                                                                             'line' => 119,
+                                                                                                             'line' => -268,
                                                                                                              'code' => '{ $return = [ $item[1]->nam => $item[3] ]; }'
                                                                                                            }, 'Parse::RecDescent::Action' )
                                                                                                   ],
@@ -18820,7 +19063,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                             ],
                                                                  'name' => 'variable_association',
                                                                  'vars' => '',
-                                                                 'line' => 118
+                                                                 'line' => -269
                                                                }, 'Parse::RecDescent::Rule' ),
                               'boolean_expression_or' => bless( {
                                                                   'impcount' => 0,
@@ -18851,7 +19094,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                     'implicit' => undef,
                                                                                                                                     'argcode' => undef,
                                                                                                                                     'lookahead' => 0,
-                                                                                                                                    'line' => 133
+                                                                                                                                    'line' => -254
                                                                                                                                   }, 'Parse::RecDescent::Subrule' ),
                                                                                                               'rightarg' => bless( {
                                                                                                                                      'subrule' => 'boolean_primitive',
@@ -18859,7 +19102,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                      'implicit' => undef,
                                                                                                                                      'argcode' => undef,
                                                                                                                                      'lookahead' => 0,
-                                                                                                                                     'line' => 133
+                                                                                                                                     'line' => -254
                                                                                                                                    }, 'Parse::RecDescent::Subrule' ),
                                                                                                               'hashname' => '__DIRECTIVE1__',
                                                                                                               'type' => 'leftop',
@@ -18869,7 +19112,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                'description' => '/\\\\&/',
                                                                                                                                'lookahead' => 0,
                                                                                                                                'rdelim' => '/',
-                                                                                                                               'line' => 133,
+                                                                                                                               'line' => -254,
                                                                                                                                'mod' => '',
                                                                                                                                'ldelim' => '/'
                                                                                                                              }, 'Parse::RecDescent::Token' )
@@ -18877,7 +19120,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      bless( {
                                                                                                               'hashname' => '__ACTION1__',
                                                                                                               'lookahead' => 0,
-                                                                                                              'line' => 133,
+                                                                                                              'line' => -254,
                                                                                                               'code' => '{ $return = PEprs->new (arr => $item[1]); }'
                                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                                    ],
@@ -18886,7 +19129,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                              ],
                                                                   'name' => 'boolean_expression_or',
                                                                   'vars' => '',
-                                                                  'line' => 133
+                                                                  'line' => -254
                                                                 }, 'Parse::RecDescent::Rule' ),
                               'uri' => bless( {
                                                 'impcount' => 0,
@@ -18909,7 +19152,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                             'description' => '/(\\\\w+:[^\\\\"\\\\s)\\\\]\\\\>]+)/',
                                                                                             'lookahead' => 0,
                                                                                             'rdelim' => '/',
-                                                                                            'line' => 370,
+                                                                                            'line' => -9,
                                                                                             'mod' => '',
                                                                                             'ldelim' => '/'
                                                                                           }, 'Parse::RecDescent::Token' )
@@ -18919,7 +19162,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                            ],
                                                 'name' => 'uri',
                                                 'vars' => '',
-                                                'line' => 370
+                                                'line' => -9
                                               }, 'Parse::RecDescent::Rule' ),
                               'forall_clause' => bless( {
                                                           'impcount' => 0,
@@ -18945,7 +19188,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__STRING1__',
                                                                                                       'description' => '\'every\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 145
+                                                                                                      'line' => -242
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'expected' => '<leftop: variable_association /,/ variable_association>',
@@ -18958,7 +19201,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                             'implicit' => undef,
                                                                                                                             'argcode' => undef,
                                                                                                                             'lookahead' => 0,
-                                                                                                                            'line' => 145
+                                                                                                                            'line' => -242
                                                                                                                           }, 'Parse::RecDescent::Subrule' ),
                                                                                                       'rightarg' => bless( {
                                                                                                                              'subrule' => 'variable_association',
@@ -18966,7 +19209,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                              'implicit' => undef,
                                                                                                                              'argcode' => undef,
                                                                                                                              'lookahead' => 0,
-                                                                                                                             'line' => 145
+                                                                                                                             'line' => -242
                                                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                                       'hashname' => '__DIRECTIVE1__',
                                                                                                       'type' => 'leftop',
@@ -18976,7 +19219,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                        'description' => '/,/',
                                                                                                                        'lookahead' => 0,
                                                                                                                        'rdelim' => '/',
-                                                                                                                       'line' => 145,
+                                                                                                                       'line' => -242,
                                                                                                                        'mod' => '',
                                                                                                                        'ldelim' => '/'
                                                                                                                      }, 'Parse::RecDescent::Token' )
@@ -18986,7 +19229,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__STRING2__',
                                                                                                       'description' => '\'satisfies\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 146
+                                                                                                      'line' => -241
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'subrule' => 'boolean_expression',
@@ -18994,12 +19237,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'implicit' => undef,
                                                                                                       'argcode' => undef,
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 146
+                                                                                                      'line' => -241
                                                                                                     }, 'Parse::RecDescent::Subrule' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 146,
+                                                                                                      'line' => -241,
                                                                                                       'code' => '{                                                    # forall A satisfies B = !some A satisfy not B
 									$return = TM::QL::PE::mk_prs (_invert_if ($item[4])); # negate boolean expression
 									$return = TM::QL::PE::unshift_vars ($item[2], $return);
@@ -19012,7 +19255,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'forall_clause',
                                                           'vars' => '',
-                                                          'line' => 145
+                                                          'line' => -242
                                                         }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_1_of_rule_function_invocation' => bless( {
                                                                                                        'impcount' => 0,
@@ -19038,7 +19281,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                    'implicit' => undef,
                                                                                                                                                    'argcode' => undef,
                                                                                                                                                    'lookahead' => 0,
-                                                                                                                                                   'line' => 375
+                                                                                                                                                   'line' => 1
                                                                                                                                                  }, 'Parse::RecDescent::Subrule' )
                                                                                                                                         ],
                                                                                                                              'line' => undef
@@ -19058,15 +19301,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                    'implicit' => undef,
                                                                                                                                                    'argcode' => undef,
                                                                                                                                                    'lookahead' => 0,
-                                                                                                                                                   'line' => 375
+                                                                                                                                                   'line' => 1
                                                                                                                                                  }, 'Parse::RecDescent::Subrule' )
                                                                                                                                         ],
-                                                                                                                             'line' => 375
+                                                                                                                             'line' => 1
                                                                                                                            }, 'Parse::RecDescent::Production' )
                                                                                                                   ],
                                                                                                        'name' => '_alternation_1_of_production_1_of_rule_function_invocation',
                                                                                                        'vars' => '',
-                                                                                                       'line' => 375
+                                                                                                       'line' => 1
                                                                                                      }, 'Parse::RecDescent::Rule' ),
                               'role' => bless( {
                                                  'impcount' => 0,
@@ -19092,14 +19335,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 201
+                                                                                             'line' => -186
                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                     bless( {
                                                                                              'pattern' => ':',
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\':\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 201
+                                                                                             'line' => -186
                                                                                            }, 'Parse::RecDescent::Literal' ),
                                                                                     bless( {
                                                                                              'subrule' => 'player',
@@ -19107,7 +19350,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 201
+                                                                                             'line' => -186
                                                                                            }, 'Parse::RecDescent::Subrule' )
                                                                                   ],
                                                                        'line' => undef
@@ -19115,7 +19358,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                             ],
                                                  'name' => 'role',
                                                  'vars' => '',
-                                                 'line' => 201
+                                                 'line' => -186
                                                }, 'Parse::RecDescent::Rule' ),
                               'item_reference' => bless( {
                                                            'impcount' => 0,
@@ -19141,12 +19384,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'implicit' => undef,
                                                                                                        'argcode' => undef,
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 256
+                                                                                                       'line' => -131
                                                                                                      }, 'Parse::RecDescent::Subrule' ),
                                                                                               bless( {
                                                                                                        'hashname' => '__ACTION1__',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 256,
+                                                                                                       'line' => -131,
                                                                                                        'code' => '{ $return = \\ $item[1]; }'
                                                                                                      }, 'Parse::RecDescent::Action' )
                                                                                             ],
@@ -19167,10 +19410,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'implicit' => undef,
                                                                                                        'argcode' => undef,
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 257
+                                                                                                       'line' => -130
                                                                                                      }, 'Parse::RecDescent::Subrule' )
                                                                                             ],
-                                                                                 'line' => 257
+                                                                                 'line' => -130
                                                                                }, 'Parse::RecDescent::Production' ),
                                                                         bless( {
                                                                                  'number' => '2',
@@ -19186,7 +19429,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'hashname' => '__STRING1__',
                                                                                                        'description' => '\'~~~item_reference_1~~~\'',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 337
+                                                                                                       'line' => -50
                                                                                                      }, 'Parse::RecDescent::Literal' )
                                                                                             ],
                                                                                  'line' => undef
@@ -19205,21 +19448,21 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                        'hashname' => '__STRING1__',
                                                                                                        'description' => '\'~~~item_reference_op_1~~~\'',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 338
+                                                                                                       'line' => -49
                                                                                                      }, 'Parse::RecDescent::Literal' ),
                                                                                               bless( {
                                                                                                        'hashname' => '__ACTION1__',
                                                                                                        'lookahead' => 0,
-                                                                                                       'line' => 338,
+                                                                                                       'line' => -49,
                                                                                                        'code' => '{ $return = [ \'~~~item_reference_op_1~~~\' ]; }'
                                                                                                      }, 'Parse::RecDescent::Action' )
                                                                                             ],
-                                                                                 'line' => 338
+                                                                                 'line' => -49
                                                                                }, 'Parse::RecDescent::Production' )
                                                                       ],
                                                            'name' => 'item_reference',
                                                            'vars' => '',
-                                                           'line' => 256
+                                                           'line' => -131
                                                          }, 'Parse::RecDescent::Rule' ),
                               'content_l1' => bless( {
                                                        'impcount' => 0,
@@ -19301,12 +19544,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'%_\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 241
+                                                                                                 'line' => -146
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 241,
+                                                                                                 'line' => -146,
                                                                                                  'code' => '{ $return = new PEall; }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
@@ -19326,16 +19569,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'@_\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 242
+                                                                                                 'line' => -145
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 242,
+                                                                                                 'line' => -145,
                                                                                                  'code' => '{ $return = new PEvar (nam => $item[1]); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 242
+                                                                           'line' => -145
                                                                          }, 'Parse::RecDescent::Production' ),
                                                                   bless( {
                                                                            'number' => '2',
@@ -19351,16 +19594,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'$_\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 243
+                                                                                                 'line' => -144
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 243,
+                                                                                                 'line' => -144,
                                                                                                  'code' => '{ $return = new PEvar (nam => $item[1]); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 243
+                                                                           'line' => -144
                                                                          }, 'Parse::RecDescent::Production' ),
                                                                   bless( {
                                                                            'number' => '3',
@@ -19377,18 +19620,18 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'description' => '/(\\\\$\\\\d+)/',
                                                                                                  'lookahead' => 0,
                                                                                                  'rdelim' => '/',
-                                                                                                 'line' => 244,
+                                                                                                 'line' => -143,
                                                                                                  'mod' => '',
                                                                                                  'ldelim' => '/'
                                                                                                }, 'Parse::RecDescent::Token' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 244,
+                                                                                                 'line' => -143,
                                                                                                  'code' => '{ $return = new PEvar (nam => $1); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 244
+                                                                           'line' => -143
                                                                          }, 'Parse::RecDescent::Production' ),
                                                                   bless( {
                                                                            'number' => '4',
@@ -19405,18 +19648,18 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'description' => '/[%@\\\\$][\\\\w\\\\#\\\\_][\\\\w\\\\-\\\\.]*/',
                                                                                                  'lookahead' => 0,
                                                                                                  'rdelim' => '/',
-                                                                                                 'line' => 245,
+                                                                                                 'line' => -142,
                                                                                                  'mod' => '',
                                                                                                  'ldelim' => '/'
                                                                                                }, 'Parse::RecDescent::Token' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 245,
+                                                                                                 'line' => -142,
                                                                                                  'code' => '{ $return = new PEvar (nam => $item[1]); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 245
+                                                                           'line' => -142
                                                                          }, 'Parse::RecDescent::Production' ),
                                                                   bless( {
                                                                            'number' => '5',
@@ -19432,7 +19675,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'~~~variable_1~~~\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 339
+                                                                                                 'line' => -48
                                                                                                }, 'Parse::RecDescent::Literal' )
                                                                                       ],
                                                                            'line' => undef
@@ -19440,7 +19683,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                 ],
                                                      'name' => 'variable',
                                                      'vars' => '',
-                                                     'line' => 239
+                                                     'line' => -148
                                                    }, 'Parse::RecDescent::Rule' ),
                               'function_invocation' => bless( {
                                                                 'impcount' => 1,
@@ -19466,7 +19709,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                             'implicit' => undef,
                                                                                                             'argcode' => undef,
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 236
+                                                                                                            'line' => -151
                                                                                                           }, 'Parse::RecDescent::Subrule' ),
                                                                                                    bless( {
                                                                                                             'subrule' => '_alternation_1_of_production_1_of_rule_function_invocation',
@@ -19474,7 +19717,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                             'implicit' => 'tuple_expression, or roles',
                                                                                                             'argcode' => undef,
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 236
+                                                                                                            'line' => -151
                                                                                                           }, 'Parse::RecDescent::Subrule' )
                                                                                                  ],
                                                                                       'line' => undef
@@ -19482,7 +19725,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                            ],
                                                                 'name' => 'function_invocation',
                                                                 'vars' => '',
-                                                                'line' => 234
+                                                                'line' => -153
                                                               }, 'Parse::RecDescent::Rule' ),
                               'select_expression' => bless( {
                                                               'impcount' => 0,
@@ -19509,7 +19752,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 65
+                                                                                                          'line' => -322
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'subrule' => 'from_clause',
@@ -19520,7 +19763,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'matchrule' => 0,
                                                                                                           'repspec' => '?',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 66
+                                                                                                          'line' => -321
                                                                                                         }, 'Parse::RecDescent::Repetition' ),
                                                                                                  bless( {
                                                                                                           'subrule' => 'where_clause',
@@ -19531,12 +19774,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'matchrule' => 0,
                                                                                                           'repspec' => '?',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 67
+                                                                                                          'line' => -320
                                                                                                         }, 'Parse::RecDescent::Repetition' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 67,
+                                                                                                          'line' => -320,
                                                                                                           'code' => '{
 				                                        $return = $item[1];
 									my $where = $item[3]->[0] || TM::QL::PE::mk_prs ( _mk_if() );  # get an \'if\', default is \'true\'
@@ -19554,7 +19797,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                          ],
                                                               'name' => 'select_expression',
                                                               'vars' => '',
-                                                              'line' => 63
+                                                              'line' => -324
                                                             }, 'Parse::RecDescent::Rule' ),
                               'projection_postfix' => bless( {
                                                                'impcount' => 0,
@@ -19579,7 +19822,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                            'implicit' => undef,
                                                                                                            'argcode' => undef,
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 171
+                                                                                                           'line' => -216
                                                                                                          }, 'Parse::RecDescent::Subrule' )
                                                                                                 ],
                                                                                      'line' => undef
@@ -19587,7 +19830,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                           ],
                                                                'name' => 'projection_postfix',
                                                                'vars' => '',
-                                                               'line' => 169
+                                                               'line' => -218
                                                              }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_2_of_rule_content_l2' => bless( {
                                                                                               'impcount' => 0,
@@ -19611,7 +19854,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                           'hashname' => '__STRING1__',
                                                                                                                                           'description' => '\'else\'',
                                                                                                                                           'lookahead' => 0,
-                                                                                                                                          'line' => 375
+                                                                                                                                          'line' => 388
                                                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                                                  bless( {
                                                                                                                                           'subrule' => 'content',
@@ -19619,7 +19862,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                           'implicit' => undef,
                                                                                                                                           'argcode' => undef,
                                                                                                                                           'lookahead' => 0,
-                                                                                                                                          'line' => 375
+                                                                                                                                          'line' => 388
                                                                                                                                         }, 'Parse::RecDescent::Subrule' )
                                                                                                                                ],
                                                                                                                     'line' => undef
@@ -19627,7 +19870,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          ],
                                                                                               'name' => '_alternation_1_of_production_2_of_rule_content_l2',
                                                                                               'vars' => '',
-                                                                                              'line' => 375
+                                                                                              'line' => 388
                                                                                             }, 'Parse::RecDescent::Rule' ),
                               'xml_segment' => bless( {
                                                         'impcount' => 0,
@@ -19653,7 +19896,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'implicit' => undef,
                                                                                                     'argcode' => undef,
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 325
+                                                                                                    'line' => -62
                                                                                                   }, 'Parse::RecDescent::Subrule' )
                                                                                          ],
                                                                               'line' => undef
@@ -19673,15 +19916,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'implicit' => undef,
                                                                                                     'argcode' => '[\'[^<{]+\']',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 325
+                                                                                                    'line' => -62
                                                                                                   }, 'Parse::RecDescent::Subrule' )
                                                                                          ],
-                                                                              'line' => 325
+                                                                              'line' => -62
                                                                             }, 'Parse::RecDescent::Production' )
                                                                    ],
                                                         'name' => 'xml_segment',
                                                         'vars' => '',
-                                                        'line' => 325
+                                                        'line' => -62
                                                       }, 'Parse::RecDescent::Rule' ),
                               'boolean' => bless( {
                                                     'impcount' => 0,
@@ -19703,7 +19946,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'hashname' => '__STRING1__',
                                                                                                 'description' => '\'true\'',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 366
+                                                                                                'line' => -13
                                                                                               }, 'Parse::RecDescent::Literal' )
                                                                                      ],
                                                                           'line' => undef
@@ -19722,15 +19965,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'hashname' => '__STRING1__',
                                                                                                 'description' => '\'false\'',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 366
+                                                                                                'line' => -13
                                                                                               }, 'Parse::RecDescent::Literal' )
                                                                                      ],
-                                                                          'line' => 366
+                                                                          'line' => -13
                                                                         }, 'Parse::RecDescent::Production' )
                                                                ],
                                                     'name' => 'boolean',
                                                     'vars' => '',
-                                                    'line' => 366
+                                                    'line' => -16
                                                   }, 'Parse::RecDescent::Rule' ),
                               'xml_attribute' => bless( {
                                                           'impcount' => 0,
@@ -19754,7 +19997,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__DIRECTIVE1__',
                                                                                                       'name' => '<skip:\'\\s*\'>',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318,
+                                                                                                      'line' => -69,
                                                                                                       'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
                                                                                                     }, 'Parse::RecDescent::Directive' ),
                                                                                              bless( {
@@ -19763,14 +20006,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'implicit' => undef,
                                                                                                       'argcode' => undef,
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318
+                                                                                                      'line' => -69
                                                                                                     }, 'Parse::RecDescent::Subrule' ),
                                                                                              bless( {
                                                                                                       'pattern' => '=',
                                                                                                       'hashname' => '__STRING1__',
                                                                                                       'description' => '\'=\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318
+                                                                                                      'line' => -69
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'pattern' => '[\\\'\\"]',
@@ -19778,7 +20021,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'description' => '/[\\\\\'\\\\"]/',
                                                                                                       'lookahead' => 0,
                                                                                                       'rdelim' => '/',
-                                                                                                      'line' => 318,
+                                                                                                      'line' => -69,
                                                                                                       'mod' => '',
                                                                                                       'ldelim' => '/'
                                                                                                     }, 'Parse::RecDescent::Token' ),
@@ -19786,7 +20029,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__DIRECTIVE2__',
                                                                                                       'name' => '<skip:"">',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318,
+                                                                                                      'line' => -69,
                                                                                                       'code' => 'my $oldskip = $skip; $skip=""; $oldskip'
                                                                                                     }, 'Parse::RecDescent::Directive' ),
                                                                                              bless( {
@@ -19798,7 +20041,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'matchrule' => 0,
                                                                                                       'repspec' => 's',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 318
+                                                                                                      'line' => -69
                                                                                                     }, 'Parse::RecDescent::Repetition' ),
                                                                                              bless( {
                                                                                                       'pattern' => '[\\\'\\"]',
@@ -19806,14 +20049,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'description' => '/[\\\\\'\\\\"]/',
                                                                                                       'lookahead' => 0,
                                                                                                       'rdelim' => '/',
-                                                                                                      'line' => 318,
+                                                                                                      'line' => -69,
                                                                                                       'mod' => '',
                                                                                                       'ldelim' => '/'
                                                                                                     }, 'Parse::RecDescent::Token' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 319,
+                                                                                                      'line' => -68,
                                                                                                       'code' => '{ $return = [ $item[2], $item[6] ]; }'
                                                                                                     }, 'Parse::RecDescent::Action' )
                                                                                            ],
@@ -19822,7 +20065,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'xml_attribute',
                                                           'vars' => '',
-                                                          'line' => 318
+                                                          'line' => -69
                                                         }, 'Parse::RecDescent::Rule' ),
                               'xml_rest' => bless( {
                                                      'impcount' => 0,
@@ -19847,7 +20090,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'/>\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 321
+                                                                                                 'line' => -66
                                                                                                }, 'Parse::RecDescent::Literal' )
                                                                                       ],
                                                                            'line' => undef
@@ -19866,13 +20109,13 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'>\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322
+                                                                                                 'line' => -65
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__DIRECTIVE1__',
                                                                                                  'name' => '<skip:"">',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322,
+                                                                                                 'line' => -65,
                                                                                                  'code' => 'my $oldskip = $skip; $skip=""; $oldskip'
                                                                                                }, 'Parse::RecDescent::Directive' ),
                                                                                         bless( {
@@ -19884,20 +20127,20 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'matchrule' => 0,
                                                                                                  'repspec' => 's?',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322
+                                                                                                 'line' => -65
                                                                                                }, 'Parse::RecDescent::Repetition' ),
                                                                                         bless( {
                                                                                                  'pattern' => '</',
                                                                                                  'hashname' => '__STRING2__',
                                                                                                  'description' => '\'</\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322
+                                                                                                 'line' => -65
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__DIRECTIVE2__',
                                                                                                  'name' => '<skip:\'\\s*\'>',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322,
+                                                                                                 'line' => -65,
                                                                                                  'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
                                                                                                }, 'Parse::RecDescent::Directive' ),
                                                                                         bless( {
@@ -19906,28 +20149,28 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'implicit' => undef,
                                                                                                  'argcode' => undef,
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322
+                                                                                                 'line' => -65
                                                                                                }, 'Parse::RecDescent::Subrule' ),
                                                                                         bless( {
                                                                                                  'pattern' => '>',
                                                                                                  'hashname' => '__STRING3__',
                                                                                                  'description' => '\'>\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 322
+                                                                                                 'line' => -65
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 323,
+                                                                                                 'line' => -64,
                                                                                                  'code' => '{ $return = [ $item[3], $item[5] ]; }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 322
+                                                                           'line' => -65
                                                                          }, 'Parse::RecDescent::Production' )
                                                                 ],
                                                      'name' => 'xml_rest',
                                                      'vars' => '',
-                                                     'line' => 321
+                                                     'line' => -66
                                                    }, 'Parse::RecDescent::Rule' ),
                               'tuple_expression' => bless( {
                                                              'impcount' => 0,
@@ -19952,7 +20195,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          'hashname' => '__STRING1__',
                                                                                                          'description' => '\'(\'',
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 211
+                                                                                                         'line' => -176
                                                                                                        }, 'Parse::RecDescent::Literal' ),
                                                                                                 bless( {
                                                                                                          'expected' => '<leftop: value_expression /,/ value_expression>',
@@ -19965,7 +20208,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                'implicit' => undef,
                                                                                                                                'argcode' => undef,
                                                                                                                                'lookahead' => 0,
-                                                                                                                               'line' => 211
+                                                                                                                               'line' => -176
                                                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                                          'rightarg' => bless( {
                                                                                                                                 'subrule' => 'value_expression',
@@ -19973,7 +20216,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                 'implicit' => undef,
                                                                                                                                 'argcode' => undef,
                                                                                                                                 'lookahead' => 0,
-                                                                                                                                'line' => 211
+                                                                                                                                'line' => -176
                                                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                                          'hashname' => '__DIRECTIVE1__',
                                                                                                          'type' => 'leftop',
@@ -19983,7 +20226,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                           'description' => '/,/',
                                                                                                                           'lookahead' => 0,
                                                                                                                           'rdelim' => '/',
-                                                                                                                          'line' => 211,
+                                                                                                                          'line' => -176,
                                                                                                                           'mod' => '',
                                                                                                                           'ldelim' => '/'
                                                                                                                         }, 'Parse::RecDescent::Token' )
@@ -19993,12 +20236,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                          'hashname' => '__STRING2__',
                                                                                                          'description' => '\')\'',
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 211
+                                                                                                         'line' => -176
                                                                                                        }, 'Parse::RecDescent::Literal' ),
                                                                                                 bless( {
                                                                                                          'hashname' => '__ACTION1__',
                                                                                                          'lookahead' => 0,
-                                                                                                         'line' => 211,
+                                                                                                         'line' => -176,
                                                                                                          'code' => '{ $return = new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]); }'
                                                                                                        }, 'Parse::RecDescent::Action' )
                                                                                               ],
@@ -20007,7 +20250,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                         ],
                                                              'name' => 'tuple_expression',
                                                              'vars' => '',
-                                                             'line' => 209
+                                                             'line' => -178
                                                            }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_1_of_rule_path_l0_expression' => bless( {
                                                                                                       'impcount' => 0,
@@ -20033,7 +20276,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                   'implicit' => undef,
                                                                                                                                                   'argcode' => undef,
                                                                                                                                                   'lookahead' => 0,
-                                                                                                                                                  'line' => 375
+                                                                                                                                                  'line' => 1
                                                                                                                                                 }, 'Parse::RecDescent::Subrule' )
                                                                                                                                        ],
                                                                                                                             'line' => undef
@@ -20053,15 +20296,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                                   'implicit' => undef,
                                                                                                                                                   'argcode' => undef,
                                                                                                                                                   'lookahead' => 0,
-                                                                                                                                                  'line' => 375
+                                                                                                                                                  'line' => 1
                                                                                                                                                 }, 'Parse::RecDescent::Subrule' )
                                                                                                                                        ],
-                                                                                                                            'line' => 375
+                                                                                                                            'line' => 1
                                                                                                                           }, 'Parse::RecDescent::Production' )
                                                                                                                  ],
                                                                                                       'name' => '_alternation_1_of_production_1_of_rule_path_l0_expression',
                                                                                                       'vars' => '',
-                                                                                                      'line' => 375
+                                                                                                      'line' => 1
                                                                                                     }, 'Parse::RecDescent::Rule' ),
                               'xml_content' => bless( {
                                                         'impcount' => 0,
@@ -20084,7 +20327,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'hashname' => '__DIRECTIVE1__',
                                                                                                     'name' => '<skip:"">',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 295,
+                                                                                                    'line' => -92,
                                                                                                     'code' => 'my $oldskip = $skip; $skip=""; $oldskip'
                                                                                                   }, 'Parse::RecDescent::Directive' ),
                                                                                            bless( {
@@ -20093,7 +20336,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'description' => '/\\\\s*/',
                                                                                                     'lookahead' => 0,
                                                                                                     'rdelim' => '/',
-                                                                                                    'line' => 295,
+                                                                                                    'line' => -92,
                                                                                                     'mod' => '',
                                                                                                     'ldelim' => '/'
                                                                                                   }, 'Parse::RecDescent::Token' ),
@@ -20106,7 +20349,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'matchrule' => 0,
                                                                                                     'repspec' => 's',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 295
+                                                                                                    'line' => -92
                                                                                                   }, 'Parse::RecDescent::Repetition' ),
                                                                                            bless( {
                                                                                                     'pattern' => '\\s*',
@@ -20114,14 +20357,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'description' => '/\\\\s*/',
                                                                                                     'lookahead' => 0,
                                                                                                     'rdelim' => '/',
-                                                                                                    'line' => 295,
+                                                                                                    'line' => -92,
                                                                                                     'mod' => '',
                                                                                                     'ldelim' => '/'
                                                                                                   }, 'Parse::RecDescent::Token' ),
                                                                                            bless( {
                                                                                                     'hashname' => '__ACTION1__',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 295,
+                                                                                                    'line' => -92,
                                                                                                     'code' => '{
                                                                         $return = TM::QL::PE::mk_prs (
 												      new PExml (con => [ new TM::Literal ($item[2]),
@@ -20137,7 +20380,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                    ],
                                                         'name' => 'xml_content',
                                                         'vars' => '',
-                                                        'line' => 293
+                                                        'line' => -94
                                                       }, 'Parse::RecDescent::Rule' ),
                               'xml_fragment' => bless( {
                                                          'impcount' => 0,
@@ -20163,7 +20406,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'implicit' => undef,
                                                                                                      'argcode' => '[$arg[0]]',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 328
+                                                                                                     'line' => -59
                                                                                                    }, 'Parse::RecDescent::Subrule' )
                                                                                           ],
                                                                                'line' => undef
@@ -20182,13 +20425,13 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'hashname' => '__STRING1__',
                                                                                                      'description' => '\'\\{\'',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 329
+                                                                                                     'line' => -58
                                                                                                    }, 'Parse::RecDescent::Literal' ),
                                                                                             bless( {
                                                                                                      'hashname' => '__DIRECTIVE1__',
                                                                                                      'name' => '<skip:\'\\s*\'>',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 329,
+                                                                                                     'line' => -58,
                                                                                                      'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
                                                                                                    }, 'Parse::RecDescent::Directive' ),
                                                                                             bless( {
@@ -20197,28 +20440,28 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'implicit' => undef,
                                                                                                      'argcode' => undef,
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 329
+                                                                                                     'line' => -58
                                                                                                    }, 'Parse::RecDescent::Subrule' ),
                                                                                             bless( {
                                                                                                      'pattern' => '}',
                                                                                                      'hashname' => '__STRING2__',
                                                                                                      'description' => '\'\\}\'',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 329
+                                                                                                     'line' => -58
                                                                                                    }, 'Parse::RecDescent::Literal' ),
                                                                                             bless( {
                                                                                                      'hashname' => '__ACTION1__',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 329,
+                                                                                                     'line' => -58,
                                                                                                      'code' => '{ $return = $item[3]; }'
                                                                                                    }, 'Parse::RecDescent::Action' )
                                                                                           ],
-                                                                               'line' => 329
+                                                                               'line' => -58
                                                                              }, 'Parse::RecDescent::Production' )
                                                                     ],
                                                          'name' => 'xml_fragment',
                                                          'vars' => '',
-                                                         'line' => 328
+                                                         'line' => -59
                                                        }, 'Parse::RecDescent::Rule' ),
                               'boolean_expression' => bless( {
                                                                'impcount' => 0,
@@ -20249,7 +20492,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                  'implicit' => undef,
                                                                                                                                  'argcode' => undef,
                                                                                                                                  'lookahead' => 0,
-                                                                                                                                 'line' => 127
+                                                                                                                                 'line' => -260
                                                                                                                                }, 'Parse::RecDescent::Subrule' ),
                                                                                                            'rightarg' => bless( {
                                                                                                                                   'subrule' => 'boolean_expression_or',
@@ -20257,7 +20500,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                   'implicit' => undef,
                                                                                                                                   'argcode' => undef,
                                                                                                                                   'lookahead' => 0,
-                                                                                                                                  'line' => 127
+                                                                                                                                  'line' => -260
                                                                                                                                 }, 'Parse::RecDescent::Subrule' ),
                                                                                                            'hashname' => '__DIRECTIVE1__',
                                                                                                            'type' => 'leftop',
@@ -20267,7 +20510,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                             'description' => '/\\\\|/',
                                                                                                                             'lookahead' => 0,
                                                                                                                             'rdelim' => '/',
-                                                                                                                            'line' => 127,
+                                                                                                                            'line' => -260,
                                                                                                                             'mod' => '',
                                                                                                                             'ldelim' => '/'
                                                                                                                           }, 'Parse::RecDescent::Token' )
@@ -20275,7 +20518,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                   bless( {
                                                                                                            'hashname' => '__ACTION1__',
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 127,
+                                                                                                           'line' => -260,
                                                                                                            'code' => '{ 
                                                                         my @ors = map { [ $_ ] } @{$item[1]};              # every list element is a PEprs
 									@ors = ( $ors[0],                                  # wrap it with [] for ===
@@ -20289,7 +20532,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                           ],
                                                                'name' => 'boolean_expression',
                                                                'vars' => '',
-                                                               'line' => 125
+                                                               'line' => -262
                                                              }, 'Parse::RecDescent::Rule' ),
                               'path_l0_expression' => bless( {
                                                                'impcount' => 0,
@@ -20315,7 +20558,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                            'implicit' => 'tuple_expression, or simple_content',
                                                                                                            'argcode' => undef,
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 157
+                                                                                                           'line' => -230
                                                                                                          }, 'Parse::RecDescent::Subrule' ),
                                                                                                   bless( {
                                                                                                            'subrule' => 'postfix',
@@ -20326,12 +20569,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                            'matchrule' => 0,
                                                                                                            'repspec' => 's?',
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 158
+                                                                                                           'line' => -229
                                                                                                          }, 'Parse::RecDescent::Repetition' ),
                                                                                                   bless( {
                                                                                                            'hashname' => '__ACTION1__',
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 158,
+                                                                                                           'line' => -229,
                                                                                                            'code' => '{ 
 	                                                                my @PRs = map { TM::QL::PE::mk_prs ($_) } ($item[1], @{ $item[2] });
 									$return = pop @PRs;
@@ -20358,7 +20601,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                            'hashname' => '__STRING1__',
                                                                                                            'description' => '\'~~~path_l0_expression_1~~~\'',
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 345
+                                                                                                           'line' => -42
                                                                                                          }, 'Parse::RecDescent::Literal' )
                                                                                                 ],
                                                                                      'line' => undef
@@ -20366,12 +20609,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                           ],
                                                                'name' => 'path_l0_expression',
                                                                'vars' => '',
-                                                               'line' => 157
+                                                               'line' => -230
                                                              }, 'Parse::RecDescent::Rule' ),
                               'wuri' => bless( {
                                                  'impcount' => 0,
                                                  'calls' => [
-                                                              'uri'
+                                                              'iri'
                                                             ],
                                                  'changed' => 0,
                                                  'opcount' => 0,
@@ -20390,27 +20633,27 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'<\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 368
+                                                                                             'line' => -11
                                                                                            }, 'Parse::RecDescent::Literal' ),
                                                                                     bless( {
-                                                                                             'subrule' => 'uri',
+                                                                                             'subrule' => 'iri',
                                                                                              'matchrule' => 0,
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 368
+                                                                                             'line' => -11
                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                     bless( {
                                                                                              'pattern' => '>',
                                                                                              'hashname' => '__STRING2__',
                                                                                              'description' => '\'>\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 368
+                                                                                             'line' => -11
                                                                                            }, 'Parse::RecDescent::Literal' ),
                                                                                     bless( {
                                                                                              'hashname' => '__ACTION1__',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 368,
+                                                                                             'line' => -11,
                                                                                              'code' => '{ $item[2] }'
                                                                                            }, 'Parse::RecDescent::Action' )
                                                                                   ],
@@ -20419,7 +20662,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                             ],
                                                  'name' => 'wuri',
                                                  'vars' => '',
-                                                 'line' => 368
+                                                 'line' => -11
                                                }, 'Parse::RecDescent::Rule' ),
                               'constant' => bless( {
                                                      'impcount' => 0,
@@ -20445,7 +20688,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'implicit' => undef,
                                                                                                  'argcode' => undef,
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 253
+                                                                                                 'line' => -134
                                                                                                }, 'Parse::RecDescent::Subrule' )
                                                                                       ],
                                                                            'line' => undef
@@ -20465,16 +20708,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'implicit' => undef,
                                                                                                  'argcode' => undef,
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 254
+                                                                                                 'line' => -133
                                                                                                }, 'Parse::RecDescent::Subrule' ),
                                                                                         bless( {
                                                                                                  'hashname' => '__ACTION1__',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 254,
+                                                                                                 'line' => -133,
                                                                                                  'code' => '{ $return = new PEti (tid => $item[1]); }'
                                                                                                }, 'Parse::RecDescent::Action' )
                                                                                       ],
-                                                                           'line' => 254
+                                                                           'line' => -133
                                                                          }, 'Parse::RecDescent::Production' ),
                                                                   bless( {
                                                                            'number' => '2',
@@ -20490,7 +20733,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\'~~~constant_1~~~\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 340
+                                                                                                 'line' => -47
                                                                                                }, 'Parse::RecDescent::Literal' )
                                                                                       ],
                                                                            'line' => undef
@@ -20498,7 +20741,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                 ],
                                                      'name' => 'constant',
                                                      'vars' => '',
-                                                     'line' => 253
+                                                     'line' => -134
                                                    }, 'Parse::RecDescent::Rule' ),
                               'environment_clause' => bless( {
                                                                'impcount' => 0,
@@ -20523,7 +20766,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                            'implicit' => undef,
                                                                                                            'argcode' => undef,
                                                                                                            'lookahead' => 0,
-                                                                                                           'line' => 61
+                                                                                                           'line' => -326
                                                                                                          }, 'Parse::RecDescent::Subrule' )
                                                                                                 ],
                                                                                      'line' => undef
@@ -20531,7 +20774,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                           ],
                                                                'name' => 'environment_clause',
                                                                'vars' => '',
-                                                               'line' => 61
+                                                               'line' => -326
                                                              }, 'Parse::RecDescent::Rule' ),
                               'value_l3_expression' => bless( {
                                                                 'impcount' => 0,
@@ -20556,7 +20799,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                             'implicit' => undef,
                                                                                                             'argcode' => undef,
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 230
+                                                                                                            'line' => -157
                                                                                                           }, 'Parse::RecDescent::Subrule' )
                                                                                                  ],
                                                                                       'line' => undef
@@ -20564,7 +20807,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                            ],
                                                                 'name' => 'value_l3_expression',
                                                                 'vars' => '',
-                                                                'line' => 230
+                                                                'line' => -157
                                                               }, 'Parse::RecDescent::Rule' ),
                               'value_l1_expression' => bless( {
                                                                 'impcount' => 0,
@@ -20595,7 +20838,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                   'implicit' => undef,
                                                                                                                                   'argcode' => undef,
                                                                                                                                   'lookahead' => 0,
-                                                                                                                                  'line' => 219
+                                                                                                                                  'line' => -168
                                                                                                                                 }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'rightarg' => bless( {
                                                                                                                                    'subrule' => 'value_l2_expression',
@@ -20603,7 +20846,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                    'implicit' => undef,
                                                                                                                                    'argcode' => undef,
                                                                                                                                    'lookahead' => 0,
-                                                                                                                                   'line' => 219
+                                                                                                                                   'line' => -168
                                                                                                                                  }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'hashname' => '__DIRECTIVE1__',
                                                                                                             'type' => 'leftop',
@@ -20613,7 +20856,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                              'description' => '/([+-])/',
                                                                                                                              'lookahead' => 0,
                                                                                                                              'rdelim' => '/',
-                                                                                                                             'line' => 219,
+                                                                                                                             'line' => -168,
                                                                                                                              'mod' => '',
                                                                                                                              'ldelim' => '/'
                                                                                                                            }, 'Parse::RecDescent::Token' )
@@ -20621,7 +20864,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    bless( {
                                                                                                             'hashname' => '__ACTION1__',
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 219,
+                                                                                                            'line' => -168,
                                                                                                             'code' => '{ $return = _mk_fun_tree (@item); }'
                                                                                                           }, 'Parse::RecDescent::Action' )
                                                                                                  ],
@@ -20642,7 +20885,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                             'description' => '/-/',
                                                                                                             'lookahead' => 0,
                                                                                                             'rdelim' => '/',
-                                                                                                            'line' => 222,
+                                                                                                            'line' => -165,
                                                                                                             'mod' => '',
                                                                                                             'ldelim' => '/'
                                                                                                           }, 'Parse::RecDescent::Token' ),
@@ -20652,12 +20895,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                             'implicit' => undef,
                                                                                                             'argcode' => undef,
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 222
+                                                                                                            'line' => -165
                                                                                                           }, 'Parse::RecDescent::Subrule' ),
                                                                                                    bless( {
                                                                                                             'hashname' => '__ACTION1__',
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 222,
+                                                                                                            'line' => -165,
                                                                                                             'code' => '{
                                                                         $return = new PEfun (fun  => \'tmql:unary-minus\',
 											     args => [ $item[2] ],
@@ -20665,17 +20908,17 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                        }'
                                                                                                           }, 'Parse::RecDescent::Action' )
                                                                                                  ],
-                                                                                      'line' => 221
+                                                                                      'line' => -166
                                                                                     }, 'Parse::RecDescent::Production' )
                                                                            ],
                                                                 'name' => 'value_l1_expression',
                                                                 'vars' => '',
-                                                                'line' => 219
+                                                                'line' => -168
                                                               }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_1_of_rule_string' => bless( {
                                                                                           'impcount' => 0,
                                                                                           'calls' => [
-                                                                                                       'uri'
+                                                                                                       'iri'
                                                                                                      ],
                                                                                           'changed' => 0,
                                                                                           'opcount' => 0,
@@ -20694,15 +20937,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                       'hashname' => '__STRING1__',
                                                                                                                                       'description' => '\'^^\'',
                                                                                                                                       'lookahead' => 0,
-                                                                                                                                      'line' => 375
+                                                                                                                                      'line' => 1
                                                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                                                              bless( {
-                                                                                                                                      'subrule' => 'uri',
+                                                                                                                                      'subrule' => 'iri',
                                                                                                                                       'matchrule' => 0,
                                                                                                                                       'implicit' => undef,
                                                                                                                                       'argcode' => undef,
                                                                                                                                       'lookahead' => 0,
-                                                                                                                                      'line' => 375
+                                                                                                                                      'line' => 1
                                                                                                                                     }, 'Parse::RecDescent::Subrule' )
                                                                                                                            ],
                                                                                                                 'line' => undef
@@ -20710,7 +20953,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      ],
                                                                                           'name' => '_alternation_1_of_production_1_of_rule_string',
                                                                                           'vars' => '',
-                                                                                          'line' => 375
+                                                                                          'line' => 1
                                                                                         }, 'Parse::RecDescent::Rule' ),
                               'decimal' => bless( {
                                                     'impcount' => 0,
@@ -20733,7 +20976,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'description' => '/-?\\\\d+\\\\.\\\\d+/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 360,
+                                                                                                'line' => -27,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' )
@@ -20743,7 +20986,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'decimal',
                                                     'vars' => '',
-                                                    'line' => 360
+                                                    'line' => -27
                                                   }, 'Parse::RecDescent::Rule' ),
                               'ellipsis' => bless( {
                                                      'impcount' => 0,
@@ -20765,14 +21008,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                  'hashname' => '__STRING1__',
                                                                                                  'description' => '\',\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 207
+                                                                                                 'line' => -180
                                                                                                }, 'Parse::RecDescent::Literal' ),
                                                                                         bless( {
                                                                                                  'pattern' => '...',
                                                                                                  'hashname' => '__STRING2__',
                                                                                                  'description' => '\'...\'',
                                                                                                  'lookahead' => 0,
-                                                                                                 'line' => 207
+                                                                                                 'line' => -180
                                                                                                }, 'Parse::RecDescent::Literal' )
                                                                                       ],
                                                                            'line' => undef
@@ -20780,7 +21023,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                 ],
                                                      'name' => 'ellipsis',
                                                      'vars' => '',
-                                                     'line' => 207
+                                                     'line' => -180
                                                    }, 'Parse::RecDescent::Rule' ),
                               'predicate_postfix' => bless( {
                                                               'impcount' => 0,
@@ -20804,7 +21047,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'hashname' => '__STRING1__',
                                                                                                           'description' => '\'[\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 169
+                                                                                                          'line' => -218
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'subrule' => 'boolean_primitive',
@@ -20812,19 +21055,19 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                           'implicit' => undef,
                                                                                                           'argcode' => undef,
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 169
+                                                                                                          'line' => -218
                                                                                                         }, 'Parse::RecDescent::Subrule' ),
                                                                                                  bless( {
                                                                                                           'pattern' => ']',
                                                                                                           'hashname' => '__STRING2__',
                                                                                                           'description' => '\']\'',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 169
+                                                                                                          'line' => -218
                                                                                                         }, 'Parse::RecDescent::Literal' ),
                                                                                                  bless( {
                                                                                                           'hashname' => '__ACTION1__',
                                                                                                           'lookahead' => 0,
-                                                                                                          'line' => 169,
+                                                                                                          'line' => -218,
                                                                                                           'code' => '{ $return = $item[2]; }'
                                                                                                         }, 'Parse::RecDescent::Action' )
                                                                                                ],
@@ -20833,7 +21076,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                          ],
                                                               'name' => 'predicate_postfix',
                                                               'vars' => '',
-                                                              'line' => 169
+                                                              'line' => -218
                                                             }, 'Parse::RecDescent::Rule' ),
                               'axis' => bless( {
                                                  'impcount' => 0,
@@ -20855,7 +21098,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'epsilon\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 181
+                                                                                             'line' => -206
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
                                                                        'line' => undef
@@ -20874,10 +21117,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'classes\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 182
+                                                                                             'line' => -205
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 182
+                                                                       'line' => -205
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '2',
@@ -20893,10 +21136,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'superclasses\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 183
+                                                                                             'line' => -204
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 183
+                                                                       'line' => -204
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '3',
@@ -20912,10 +21155,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'players\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 184
+                                                                                             'line' => -203
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 184
+                                                                       'line' => -203
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '4',
@@ -20931,10 +21174,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'roles\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 185
+                                                                                             'line' => -202
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 185
+                                                                       'line' => -202
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '5',
@@ -20950,10 +21193,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'characteristics\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 186
+                                                                                             'line' => -201
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 186
+                                                                       'line' => -201
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '6',
@@ -20969,10 +21212,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'scope\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 187
+                                                                                             'line' => -200
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 187
+                                                                       'line' => -200
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '7',
@@ -20988,10 +21231,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'reifier\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 188
+                                                                                             'line' => -199
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 188
+                                                                       'line' => -199
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '8',
@@ -21007,10 +21250,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'atomify\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 189
+                                                                                             'line' => -198
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 189
+                                                                       'line' => -198
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '9',
@@ -21026,10 +21269,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'locators\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 190
+                                                                                             'line' => -197
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 190
+                                                                       'line' => -197
                                                                      }, 'Parse::RecDescent::Production' ),
                                                               bless( {
                                                                        'number' => '10',
@@ -21045,15 +21288,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'hashname' => '__STRING1__',
                                                                                              'description' => '\'indicators\'',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 191
+                                                                                             'line' => -196
                                                                                            }, 'Parse::RecDescent::Literal' )
                                                                                   ],
-                                                                       'line' => 191
+                                                                       'line' => -196
                                                                      }, 'Parse::RecDescent::Production' )
                                                             ],
                                                  'name' => 'axis',
                                                  'vars' => '',
-                                                 'line' => 181
+                                                 'line' => -206
                                                }, 'Parse::RecDescent::Rule' ),
                               'xml_id' => bless( {
                                                    'impcount' => 0,
@@ -21076,7 +21319,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'description' => '/[:\\\\w]+/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 316,
+                                                                                               'line' => -71,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' )
@@ -21086,7 +21329,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'xml_id',
                                                    'vars' => '',
-                                                   'line' => 316
+                                                   'line' => -71
                                                  }, 'Parse::RecDescent::Rule' ),
                               'literal' => bless( {
                                                     'impcount' => 0,
@@ -21115,12 +21358,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 351
+                                                                                                'line' => -36
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 351,
+                                                                                                'line' => -36,
                                                                                                 'code' => '{ $return = new TM::Literal  ($item[1], TM::Literal->DECIMAL); }'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
@@ -21141,16 +21384,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 352
+                                                                                                'line' => -35
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 352,
+                                                                                                'line' => -35,
                                                                                                 'code' => '{ $return = new TM::Literal  ($item[1], TM::Literal->INTEGER); }'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
-                                                                          'line' => 352
+                                                                          'line' => -35
                                                                         }, 'Parse::RecDescent::Production' ),
                                                                  bless( {
                                                                           'number' => '2',
@@ -21167,16 +21410,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 353
+                                                                                                'line' => -34
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 353,
+                                                                                                'line' => -34,
                                                                                                 'code' => '{ $return = new TM::Literal  ($item[1], TM::Literal->BOOLEAN); }'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
-                                                                          'line' => 353
+                                                                          'line' => -34
                                                                         }, 'Parse::RecDescent::Production' ),
                                                                  bless( {
                                                                           'number' => '3',
@@ -21193,16 +21436,16 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 354
+                                                                                                'line' => -33
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 354,
+                                                                                                'line' => -33,
                                                                                                 'code' => '{ $return = new TM::Literal  ($item[1], TM::Literal->URI); }'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
-                                                                          'line' => 354
+                                                                          'line' => -33
                                                                         }, 'Parse::RecDescent::Production' ),
                                                                  bless( {
                                                                           'number' => '4',
@@ -21219,15 +21462,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 355
+                                                                                                'line' => -32
                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                      ],
-                                                                          'line' => 355
+                                                                          'line' => -32
                                                                         }, 'Parse::RecDescent::Production' )
                                                                ],
                                                     'name' => 'literal',
                                                     'vars' => '',
-                                                    'line' => 348
+                                                    'line' => -39
                                                   }, 'Parse::RecDescent::Rule' ),
                               'postfix' => bless( {
                                                     'impcount' => 0,
@@ -21253,7 +21496,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 166
+                                                                                                'line' => -221
                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                      ],
                                                                           'line' => undef
@@ -21273,15 +21516,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 167
+                                                                                                'line' => -220
                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                      ],
-                                                                          'line' => 167
+                                                                          'line' => -220
                                                                         }, 'Parse::RecDescent::Production' )
                                                                ],
                                                     'name' => 'postfix',
                                                     'vars' => '',
-                                                    'line' => 166
+                                                    'line' => -221
                                                   }, 'Parse::RecDescent::Rule' ),
                               'step' => bless( {
                                                  'impcount' => 1,
@@ -21308,7 +21551,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'implicit' => '\'<<\', or \'>>\'',
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 177
+                                                                                             'line' => -210
                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                     bless( {
                                                                                              'subrule' => 'axis',
@@ -21316,7 +21559,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 177
+                                                                                             'line' => -210
                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                     bless( {
                                                                                              'subrule' => 'item_reference',
@@ -21327,12 +21570,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              'matchrule' => 0,
                                                                                              'repspec' => '?',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 177
+                                                                                             'line' => -210
                                                                                            }, 'Parse::RecDescent::Repetition' ),
                                                                                     bless( {
                                                                                              'hashname' => '__ACTION1__',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 177,
+                                                                                             'line' => -210,
                                                                                              'code' => '{ $return = new PEna (axi => $item[2],                              # build the navigation
 											    dir => $item[1] eq \'>>\',
 											    tid => $item[3]->[0] ? $item[3]->[0] : undef);
@@ -21344,7 +21587,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                             ],
                                                  'name' => 'step',
                                                  'vars' => '',
-                                                 'line' => 175
+                                                 'line' => -212
                                                }, 'Parse::RecDescent::Rule' ),
                               'identifier' => bless( {
                                                        'impcount' => 0,
@@ -21367,7 +21610,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'description' => '/([\\\\w\\\\#\\\\_][\\\\w\\\\-\\\\.]*)/',
                                                                                                    'lookahead' => 0,
                                                                                                    'rdelim' => '/',
-                                                                                                   'line' => 259,
+                                                                                                   'line' => -128,
                                                                                                    'mod' => '',
                                                                                                    'ldelim' => '/'
                                                                                                  }, 'Parse::RecDescent::Token' )
@@ -21388,21 +21631,21 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'hashname' => '__STRING1__',
                                                                                                    'description' => '\'*\'',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 260
+                                                                                                   'line' => -127
                                                                                                  }, 'Parse::RecDescent::Literal' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 260,
+                                                                                                   'line' => -127,
                                                                                                    'code' => '{ $return = \'thing\'; }'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
-                                                                             'line' => 260
+                                                                             'line' => -127
                                                                            }, 'Parse::RecDescent::Production' )
                                                                   ],
                                                        'name' => 'identifier',
                                                        'vars' => '',
-                                                       'line' => 259
+                                                       'line' => -128
                                                      }, 'Parse::RecDescent::Rule' ),
                               'integer' => bless( {
                                                     'impcount' => 0,
@@ -21424,7 +21667,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'hashname' => '__STRING1__',
                                                                                                 'description' => '\'~~~integer_1~~~\'',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 341
+                                                                                                'line' => -46
                                                                                               }, 'Parse::RecDescent::Literal' )
                                                                                      ],
                                                                           'line' => undef
@@ -21444,7 +21687,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                 'description' => '/-?\\\\d+/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 358,
+                                                                                                'line' => -29,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' )
@@ -21454,7 +21697,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'integer',
                                                     'vars' => '',
-                                                    'line' => 341
+                                                    'line' => -46
                                                   }, 'Parse::RecDescent::Rule' ),
                               'from_clause' => bless( {
                                                         'impcount' => 0,
@@ -21476,14 +21719,14 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'hashname' => '__STRING1__',
                                                                                                     'description' => '\'from\'',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 84
+                                                                                                    'line' => -303
                                                                                                   }, 'Parse::RecDescent::Literal' ),
                                                                                            bless( {
                                                                                                     'pattern' => '%_',
                                                                                                     'hashname' => '__STRING2__',
                                                                                                     'description' => '\'%_\'',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 84
+                                                                                                    'line' => -303
                                                                                                   }, 'Parse::RecDescent::Literal' )
                                                                                          ],
                                                                               'line' => undef
@@ -21491,7 +21734,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                    ],
                                                         'name' => 'from_clause',
                                                         'vars' => '',
-                                                        'line' => 84
+                                                        'line' => -303
                                                       }, 'Parse::RecDescent::Rule' ),
                               'startrule' => bless( {
                                                       'impcount' => 0,
@@ -21529,7 +21772,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                               '_alternation_1_of_production_2_of_rule_string' => bless( {
                                                                                           'impcount' => 0,
                                                                                           'calls' => [
-                                                                                                       'uri'
+                                                                                                       'iri'
                                                                                                      ],
                                                                                           'changed' => 0,
                                                                                           'opcount' => 0,
@@ -21548,15 +21791,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                       'hashname' => '__STRING1__',
                                                                                                                                       'description' => '\'^^\'',
                                                                                                                                       'lookahead' => 0,
-                                                                                                                                      'line' => 375
+                                                                                                                                      'line' => 1
                                                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                                                              bless( {
-                                                                                                                                      'subrule' => 'uri',
+                                                                                                                                      'subrule' => 'iri',
                                                                                                                                       'matchrule' => 0,
                                                                                                                                       'implicit' => undef,
                                                                                                                                       'argcode' => undef,
                                                                                                                                       'lookahead' => 0,
-                                                                                                                                      'line' => 375
+                                                                                                                                      'line' => 1
                                                                                                                                     }, 'Parse::RecDescent::Subrule' )
                                                                                                                            ],
                                                                                                                 'line' => undef
@@ -21564,7 +21807,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      ],
                                                                                           'name' => '_alternation_1_of_production_2_of_rule_string',
                                                                                           'vars' => '',
-                                                                                          'line' => 375
+                                                                                          'line' => 1
                                                                                         }, 'Parse::RecDescent::Rule' ),
                               'roles' => bless( {
                                                   'impcount' => 0,
@@ -21595,7 +21838,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                     'implicit' => undef,
                                                                                                                     'argcode' => undef,
                                                                                                                     'lookahead' => 0,
-                                                                                                                    'line' => 199
+                                                                                                                    'line' => -188
                                                                                                                   }, 'Parse::RecDescent::Subrule' ),
                                                                                               'rightarg' => bless( {
                                                                                                                      'subrule' => 'role',
@@ -21603,7 +21846,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                      'implicit' => undef,
                                                                                                                      'argcode' => undef,
                                                                                                                      'lookahead' => 0,
-                                                                                                                     'line' => 199
+                                                                                                                     'line' => -188
                                                                                                                    }, 'Parse::RecDescent::Subrule' ),
                                                                                               'hashname' => '__DIRECTIVE1__',
                                                                                               'type' => 'leftop',
@@ -21613,7 +21856,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                'description' => '/,/',
                                                                                                                'lookahead' => 0,
                                                                                                                'rdelim' => '/',
-                                                                                                               'line' => 199,
+                                                                                                               'line' => -188,
                                                                                                                'mod' => '',
                                                                                                                'ldelim' => '/'
                                                                                                              }, 'Parse::RecDescent::Token' )
@@ -21624,7 +21867,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'roles',
                                                   'vars' => '',
-                                                  'line' => 197
+                                                  'line' => -190
                                                 }, 'Parse::RecDescent::Rule' ),
                               'ctm_instance' => bless( {
                                                          'impcount' => 0,
@@ -21649,7 +21892,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'implicit' => undef,
                                                                                                      'argcode' => undef,
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 289
+                                                                                                     'line' => -98
                                                                                                    }, 'Parse::RecDescent::Subrule' )
                                                                                           ],
                                                                                'line' => undef
@@ -21657,7 +21900,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                     ],
                                                          'name' => 'ctm_instance',
                                                          'vars' => '',
-                                                         'line' => 287
+                                                         'line' => -100
                                                        }, 'Parse::RecDescent::Rule' ),
                               'content_l2' => bless( {
                                                        'impcount' => 0,
@@ -21760,12 +22003,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'matchrule' => 0,
                                                                                                    'repspec' => '?',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 48
+                                                                                                   'line' => -339
                                                                                                  }, 'Parse::RecDescent::Repetition' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 48,
+                                                                                                   'line' => -339,
                                                                                                    'code' => '{ $return = TM::QL::PE::mk_prs (new PEif (con  => $item[2],
 														then => $item[4],
 														else => $item[5]->[0] ? $item[5]->[0]
@@ -21789,10 +22032,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'implicit' => undef,
                                                                                                    'argcode' => undef,
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 52
+                                                                                                   'line' => -335
                                                                                                  }, 'Parse::RecDescent::Subrule' )
                                                                                         ],
-                                                                             'line' => 52
+                                                                             'line' => -335
                                                                            }, 'Parse::RecDescent::Production' ),
                                                                     bless( {
                                                                              'number' => '3',
@@ -21809,10 +22052,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'implicit' => undef,
                                                                                                    'argcode' => undef,
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 53
+                                                                                                   'line' => -334
                                                                                                  }, 'Parse::RecDescent::Subrule' )
                                                                                         ],
-                                                                             'line' => 53
+                                                                             'line' => -334
                                                                            }, 'Parse::RecDescent::Production' )
                                                                   ],
                                                        'name' => 'content_l2',
@@ -21843,7 +22086,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'implicit' => undef,
                                                                                                         'argcode' => undef,
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 154
+                                                                                                        'line' => -233
                                                                                                       }, 'Parse::RecDescent::Subrule' )
                                                                                              ],
                                                                                   'line' => undef
@@ -21863,10 +22106,10 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'implicit' => undef,
                                                                                                         'argcode' => undef,
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 155
+                                                                                                        'line' => -232
                                                                                                       }, 'Parse::RecDescent::Subrule' )
                                                                                              ],
-                                                                                  'line' => 155
+                                                                                  'line' => -232
                                                                                 }, 'Parse::RecDescent::Production' ),
                                                                          bless( {
                                                                                   'number' => '2',
@@ -21882,7 +22125,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'hashname' => '__STRING1__',
                                                                                                         'description' => '\'~~~path_expression_1~~~\'',
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 344
+                                                                                                        'line' => -43
                                                                                                       }, 'Parse::RecDescent::Literal' )
                                                                                              ],
                                                                                   'line' => undef
@@ -21901,15 +22144,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                         'hashname' => '__STRING1__',
                                                                                                         'description' => '\'~~~path_expression_2~~~\'',
                                                                                                         'lookahead' => 0,
-                                                                                                        'line' => 344
+                                                                                                        'line' => -43
                                                                                                       }, 'Parse::RecDescent::Literal' )
                                                                                              ],
-                                                                                  'line' => 344
+                                                                                  'line' => -43
                                                                                 }, 'Parse::RecDescent::Production' )
                                                                        ],
                                                             'name' => 'path_expression',
                                                             'vars' => '',
-                                                            'line' => 152
+                                                            'line' => -235
                                                           }, 'Parse::RecDescent::Rule' ),
                               'where_clause' => bless( {
                                                          'impcount' => 0,
@@ -21933,7 +22176,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'hashname' => '__STRING1__',
                                                                                                      'description' => '\'where\'',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 125
+                                                                                                     'line' => -262
                                                                                                    }, 'Parse::RecDescent::Literal' ),
                                                                                             bless( {
                                                                                                      'subrule' => 'boolean_expression',
@@ -21941,12 +22184,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                      'implicit' => undef,
                                                                                                      'argcode' => undef,
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 125
+                                                                                                     'line' => -262
                                                                                                    }, 'Parse::RecDescent::Subrule' ),
                                                                                             bless( {
                                                                                                      'hashname' => '__ACTION1__',
                                                                                                      'lookahead' => 0,
-                                                                                                     'line' => 125,
+                                                                                                     'line' => -262,
                                                                                                      'code' => '{ $return = TM::QL::PE::mk_prs ($item[2]); }'
                                                                                                    }, 'Parse::RecDescent::Action' )
                                                                                           ],
@@ -21955,7 +22198,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                     ],
                                                          'name' => 'where_clause',
                                                          'vars' => '',
-                                                         'line' => 123
+                                                         'line' => -264
                                                        }, 'Parse::RecDescent::Rule' ),
                               'xml_element' => bless( {
                                                         'impcount' => 0,
@@ -21981,7 +22224,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'hashname' => '__STRING1__',
                                                                                                     'description' => '\'<\'',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 304
+                                                                                                    'line' => -83
                                                                                                   }, 'Parse::RecDescent::Literal' ),
                                                                                            bless( {
                                                                                                     'subrule' => 'xml_id',
@@ -21989,7 +22232,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'implicit' => undef,
                                                                                                     'argcode' => undef,
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 304
+                                                                                                    'line' => -83
                                                                                                   }, 'Parse::RecDescent::Subrule' ),
                                                                                            bless( {
                                                                                                     'subrule' => 'xml_attribute',
@@ -22000,13 +22243,13 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'matchrule' => 0,
                                                                                                     'repspec' => 's?',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 304
+                                                                                                    'line' => -83
                                                                                                   }, 'Parse::RecDescent::Repetition' ),
                                                                                            bless( {
                                                                                                     'hashname' => '__DIRECTIVE1__',
                                                                                                     'name' => '<skip:\'\\s*\'>',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 304,
+                                                                                                    'line' => -83,
                                                                                                     'code' => 'my $oldskip = $skip; $skip=\'\\s*\'; $oldskip'
                                                                                                   }, 'Parse::RecDescent::Directive' ),
                                                                                            bless( {
@@ -22015,12 +22258,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                     'implicit' => undef,
                                                                                                     'argcode' => undef,
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 304
+                                                                                                    'line' => -83
                                                                                                   }, 'Parse::RecDescent::Subrule' ),
                                                                                            bless( {
                                                                                                     'hashname' => '__ACTION1__',
                                                                                                     'lookahead' => 0,
-                                                                                                    'line' => 305,
+                                                                                                    'line' => -82,
                                                                                                     'code' => '{
                                                                         if ($item[5] eq \'/>\') {                  # no end tag
 									    $return = new PExml (sta => $item[2],
@@ -22039,7 +22282,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                    ],
                                                         'name' => 'xml_element',
                                                         'vars' => '',
-                                                        'line' => 304
+                                                        'line' => -83
                                                       }, 'Parse::RecDescent::Rule' ),
                               'value_l0_expression' => bless( {
                                                                 'impcount' => 0,
@@ -22070,7 +22313,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                   'implicit' => undef,
                                                                                                                                   'argcode' => undef,
                                                                                                                                   'lookahead' => 0,
-                                                                                                                                  'line' => 217
+                                                                                                                                  'line' => -170
                                                                                                                                 }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'rightarg' => bless( {
                                                                                                                                    'subrule' => 'value_l1_expression',
@@ -22078,7 +22321,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                    'implicit' => undef,
                                                                                                                                    'argcode' => undef,
                                                                                                                                    'lookahead' => 0,
-                                                                                                                                   'line' => 217
+                                                                                                                                   'line' => -170
                                                                                                                                  }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'hashname' => '__DIRECTIVE1__',
                                                                                                             'type' => 'leftop',
@@ -22088,7 +22331,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                              'description' => '/(<|<=|=>|>)/',
                                                                                                                              'lookahead' => 0,
                                                                                                                              'rdelim' => '/',
-                                                                                                                             'line' => 217,
+                                                                                                                             'line' => -170,
                                                                                                                              'mod' => '',
                                                                                                                              'ldelim' => '/'
                                                                                                                            }, 'Parse::RecDescent::Token' )
@@ -22096,7 +22339,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    bless( {
                                                                                                             'hashname' => '__ACTION1__',
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 217,
+                                                                                                            'line' => -170,
                                                                                                             'code' => '{ $return = _mk_fun_tree (@item); }'
                                                                                                           }, 'Parse::RecDescent::Action' )
                                                                                                  ],
@@ -22105,7 +22348,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                            ],
                                                                 'name' => 'value_l0_expression',
                                                                 'vars' => '',
-                                                                'line' => 215
+                                                                'line' => -172
                                                               }, 'Parse::RecDescent::Rule' ),
                               'return_clause' => bless( {
                                                           'impcount' => 0,
@@ -22129,7 +22372,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__STRING1__',
                                                                                                       'description' => '\'return\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 121
+                                                                                                      'line' => -266
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'subrule' => 'content',
@@ -22137,7 +22380,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'implicit' => undef,
                                                                                                       'argcode' => undef,
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 121
+                                                                                                      'line' => -266
                                                                                                     }, 'Parse::RecDescent::Subrule' )
                                                                                            ],
                                                                                 'line' => undef
@@ -22145,7 +22388,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'return_clause',
                                                           'vars' => '',
-                                                          'line' => 121
+                                                          'line' => -266
                                                         }, 'Parse::RecDescent::Rule' ),
                               'value_l2_expression' => bless( {
                                                                 'impcount' => 0,
@@ -22176,7 +22419,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                   'implicit' => undef,
                                                                                                                                   'argcode' => undef,
                                                                                                                                   'lookahead' => 0,
-                                                                                                                                  'line' => 228
+                                                                                                                                  'line' => -159
                                                                                                                                 }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'rightarg' => bless( {
                                                                                                                                    'subrule' => 'value_l3_expression',
@@ -22184,7 +22427,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                    'implicit' => undef,
                                                                                                                                    'argcode' => undef,
                                                                                                                                    'lookahead' => 0,
-                                                                                                                                   'line' => 228
+                                                                                                                                   'line' => -159
                                                                                                                                  }, 'Parse::RecDescent::Subrule' ),
                                                                                                             'hashname' => '__DIRECTIVE1__',
                                                                                                             'type' => 'leftop',
@@ -22194,7 +22437,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                              'description' => '/(\\\\*|div|mod)/',
                                                                                                                              'lookahead' => 0,
                                                                                                                              'rdelim' => '/',
-                                                                                                                             'line' => 228,
+                                                                                                                             'line' => -159,
                                                                                                                              'mod' => '',
                                                                                                                              'ldelim' => '/'
                                                                                                                            }, 'Parse::RecDescent::Token' )
@@ -22202,7 +22445,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    bless( {
                                                                                                             'hashname' => '__ACTION1__',
                                                                                                             'lookahead' => 0,
-                                                                                                            'line' => 228,
+                                                                                                            'line' => -159,
                                                                                                             'code' => '{ $return = _mk_fun_tree (@item); }'
                                                                                                           }, 'Parse::RecDescent::Action' )
                                                                                                  ],
@@ -22211,7 +22454,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                            ],
                                                                 'name' => 'value_l2_expression',
                                                                 'vars' => '',
-                                                                'line' => 228
+                                                                'line' => -159
                                                               }, 'Parse::RecDescent::Rule' ),
                               'role_type' => bless( {
                                                       'impcount' => 0,
@@ -22236,7 +22479,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                   'implicit' => undef,
                                                                                                   'argcode' => undef,
                                                                                                   'lookahead' => 0,
-                                                                                                  'line' => 203
+                                                                                                  'line' => -184
                                                                                                 }, 'Parse::RecDescent::Subrule' )
                                                                                        ],
                                                                             'line' => undef
@@ -22244,7 +22487,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                  ],
                                                       'name' => 'role_type',
                                                       'vars' => '',
-                                                      'line' => 203
+                                                      'line' => -184
                                                     }, 'Parse::RecDescent::Rule' ),
                               'select_clause' => bless( {
                                                           'impcount' => 0,
@@ -22269,7 +22512,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                       'hashname' => '__STRING1__',
                                                                                                       'description' => '\'select\'',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 82
+                                                                                                      'line' => -305
                                                                                                     }, 'Parse::RecDescent::Literal' ),
                                                                                              bless( {
                                                                                                       'expected' => '<leftop: value_expression /,/ value_expression>',
@@ -22282,7 +22525,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                             'implicit' => undef,
                                                                                                                             'argcode' => undef,
                                                                                                                             'lookahead' => 0,
-                                                                                                                            'line' => 82
+                                                                                                                            'line' => -305
                                                                                                                           }, 'Parse::RecDescent::Subrule' ),
                                                                                                       'rightarg' => bless( {
                                                                                                                              'subrule' => 'value_expression',
@@ -22290,7 +22533,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                              'implicit' => undef,
                                                                                                                              'argcode' => undef,
                                                                                                                              'lookahead' => 0,
-                                                                                                                             'line' => 82
+                                                                                                                             'line' => -305
                                                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                                       'hashname' => '__DIRECTIVE1__',
                                                                                                       'type' => 'leftop',
@@ -22300,7 +22543,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                        'description' => '/,/',
                                                                                                                        'lookahead' => 0,
                                                                                                                        'rdelim' => '/',
-                                                                                                                       'line' => 82,
+                                                                                                                       'line' => -305,
                                                                                                                        'mod' => '',
                                                                                                                        'ldelim' => '/'
                                                                                                                      }, 'Parse::RecDescent::Token' )
@@ -22308,7 +22551,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 82,
+                                                                                                      'line' => -305,
                                                                                                       'code' => '{ $return = TM::QL::PE::mk_prs (new PEpr (arr => [ map { [[[ $_ ]]] } @{$item[2]} ]) ); }'
                                                                                                     }, 'Parse::RecDescent::Action' )
                                                                                            ],
@@ -22317,7 +22560,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'select_clause',
                                                           'vars' => '',
-                                                          'line' => 80
+                                                          'line' => -307
                                                         }, 'Parse::RecDescent::Rule' ),
                               'player' => bless( {
                                                    'impcount' => 0,
@@ -22342,7 +22585,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 205
+                                                                                               'line' => -182
                                                                                              }, 'Parse::RecDescent::Subrule' )
                                                                                     ],
                                                                          'line' => undef
@@ -22350,7 +22593,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'player',
                                                    'vars' => '',
-                                                   'line' => 205
+                                                   'line' => -182
                                                  }, 'Parse::RecDescent::Rule' ),
                               'content_l0' => bless( {
                                                        'impcount' => 0,
@@ -22436,7 +22679,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'implicit' => undef,
                                                                                                    'argcode' => undef,
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 175
+                                                                                                   'line' => -212
                                                                                                  }, 'Parse::RecDescent::Subrule' ),
                                                                                           bless( {
                                                                                                    'subrule' => 'navigation',
@@ -22447,12 +22690,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'matchrule' => 0,
                                                                                                    'repspec' => '?',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 175
+                                                                                                   'line' => -212
                                                                                                  }, 'Parse::RecDescent::Repetition' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 175,
+                                                                                                   'line' => -212,
                                                                                                    'code' => '{ $return = [ $item[1], $item[2]->[0] ? @{$item[2]->[0]} : () ];}'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
@@ -22472,12 +22715,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                    'hashname' => '__STRING1__',
                                                                                                    'description' => '\'~~~navigation_op_1~~~\'',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 346
+                                                                                                   'line' => -41
                                                                                                  }, 'Parse::RecDescent::Literal' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 346,
+                                                                                                   'line' => -41,
                                                                                                    'code' => '{ $return = [ \'~~~navigation_op_1~~~\' ]; }'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
@@ -22486,7 +22729,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                   ],
                                                        'name' => 'navigation',
                                                        'vars' => '',
-                                                       'line' => 175
+                                                       'line' => -212
                                                      }, 'Parse::RecDescent::Rule' ),
                               '_alternation_1_of_production_1_of_rule_step' => bless( {
                                                                                         'impcount' => 0,
@@ -22508,7 +22751,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                     'hashname' => '__STRING1__',
                                                                                                                                     'description' => '\'<<\'',
                                                                                                                                     'lookahead' => 0,
-                                                                                                                                    'line' => 375
+                                                                                                                                    'line' => 1
                                                                                                                                   }, 'Parse::RecDescent::Literal' )
                                                                                                                          ],
                                                                                                               'line' => undef
@@ -22527,15 +22770,15 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                                                     'hashname' => '__STRING1__',
                                                                                                                                     'description' => '\'>>\'',
                                                                                                                                     'lookahead' => 0,
-                                                                                                                                    'line' => 375
+                                                                                                                                    'line' => 1
                                                                                                                                   }, 'Parse::RecDescent::Literal' )
                                                                                                                          ],
-                                                                                                              'line' => 375
+                                                                                                              'line' => 1
                                                                                                             }, 'Parse::RecDescent::Production' )
                                                                                                    ],
                                                                                         'name' => '_alternation_1_of_production_1_of_rule_step',
                                                                                         'vars' => '',
-                                                                                        'line' => 375
+                                                                                        'line' => 1
                                                                                       }, 'Parse::RecDescent::Rule' ),
                               'prefix' => bless( {
                                                    'impcount' => 0,
@@ -22558,7 +22801,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'description' => '/\\\\w+/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 273,
+                                                                                               'line' => -114,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -22567,12 +22810,12 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                                                                'hashname' => '__STRING1__',
                                                                                                'description' => '\':\'',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 273
+                                                                                               'line' => -114
                                                                                              }, 'Parse::RecDescent::Literal' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 273,
+                                                                                               'line' => -114,
                                                                                                'code' => '{
                                                                         my @prefixes; ## TODO prefixes
 	                                                                $return = undef;             # pessimism rules this planet
@@ -22591,7 +22834,7 @@ package TM::QL::CParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'prefix',
                                                    'vars' => '',
-                                                   'line' => 271
+                                                   'line' => -116
                                                  }, 'Parse::RecDescent::Rule' )
                             }
                }, 'Parse::RecDescent' );

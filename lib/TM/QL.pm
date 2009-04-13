@@ -25,8 +25,8 @@ TM::QL - Topic Maps, Query Language Expressions
    my $tm = new TM (....);                         # get a map from somewhere
 
    my $or  = $tm->mids ('vagabond-university');    # find internal id
-   my $ts = $q->eval ('%_' => $tm,                 # explicitly pass in a default map
-                      '$o' => $or);                # and any number of other variable bindings
+   my $ts = $q->eval ('%_'   => $tm,               # explicitly pass in a default map
+                      '$org' => $or);              # and any number of other variable bindings
 
    foreach my $tuple (@$ts) {                      # iterate through the tuple sequence
       foreach my $value (@$tuple) {                # do something with the tuple

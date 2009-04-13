@@ -37,6 +37,10 @@ in@ascope (sometype): also typed
 oc (sometype): http://typedoc
 oc @ascope (sometype): http://typedandscopedoc
 
+dtop reifies http://gaia.earth/
+
+etop is-reified-by ftop
+
 (sucks-more-than)
 sucker: ctop
 winner: atop
@@ -64,6 +68,10 @@ ok ($content, "serialize returned something");
 
 like ($content, qr/sucks-more.+is-reified-by atop/, 'association reification');
 like ($content, qr/btop \(ctop\)/,                  'topic type');
+
+like($content, qr!dtop\s+reifies\s+http://gaia.earth/!, 'topic reifies ext url');
+like($content, qr/etop\s+is-reified-by\s+ftop/, 'topic reifies other topic');
+
 
 # now do the round trip
 my $rt=TM::Materialized::AsTMa->new(baseuri=>"tm://", inline=>$content);
@@ -102,11 +110,25 @@ ok(eq_array(\@oass,\@nass),"assertions roundtrip");
 
 is (ref ($tm->reifies ($tm->tids ('atop'))), 'Assertion', 'reification still there');
 
+## test infrastructure
+#$content = $tm->serialize;
+#
+#warn $content;
+
 
 # test omission options
 $content=$tm->serialize(omit_trivia=>1);
 ok($content,"serialize with options returns something");
 ok($content!~/nackertes_topic/,"suppression of naked topics works");
+
+ok($content,"serialize with options returns something");
+ok($content!~/nackertes_topic/,"suppression of naked topics works");
+
+$content=$tm->serialize;
+like ($content, qr/originally from/, 'provenance default on');
+$content=$tm->serialize(omit_provenance => 1);
+unlike ($content, qr/originally from/, 'provenance explicit off');
+
 
 
 

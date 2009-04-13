@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.44';
+our $VERSION  = '1.45';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -622,6 +622,26 @@ sub _find_free {
 
   $self->{mid2iid}  = $mid2iid;                                                  # this makes tie happy, in the case the map is tied
   $self->{last_mod} = Time::HiRes::time;
+}
+
+=pod
+
+=item B<clear>
+
+I<$tm>->clear
+
+This method removes all toplets and assertions (except the infrastructure). Everything else remains.
+
+=cut
+
+sub clear {
+    my $self    = shift;
+
+    %{ $self->{mid2iid} }    = %{ $infrastructure->{mid2iid} };                        # shallow clone
+    %{ $self->{assertions} } = %{ $infrastructure->{assertions} };                     # shallow clone
+
+    $self->{last_mod} = Time::HiRes::time;                                             # book keeping
+    return $self;                                                                      # convenience for chaining
 }
 
 =pod
@@ -1465,7 +1485,7 @@ sub _mod_list {
     } else {
 	my %minus;
 	@minus{ @_ } = (1) x @_;
-        return [ grep (!$minus{$_}, @$l) ];
+        return [ grep { !$minus{$_} } @$l ];
     }
 }
 sub _mk_uniq {
@@ -1909,21 +1929,24 @@ sub asserts {
 	    my $l = []; # will be list
 	    while ($spec =~ s/([+-])(\w+)//) {
 		if ($2 eq 'all') {
-		    $l = _mod_list ($1 eq '+', $l,                                      values %{$self->{assertions}});
+		    $l = _mod_list ($1 eq '+', $l,                                      keys %{$self->{assertions}});
 		} elsif ($2 eq 'associations') {
-		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->ASSOC } values %{$self->{assertions}});
+		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] } 
+                                                   grep { $_->[TM->KIND] == TM->ASSOC } values %{$self->{assertions}});
 		} elsif ($2 eq 'names') {
-		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->NAME }  values %{$self->{assertions}});
+		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] }
+                                                   grep { $_->[TM->KIND] == TM->NAME }  values %{$self->{assertions}});
 		} elsif ($2 eq 'occurrences') {
-		    $l = _mod_list ($1 eq '+', $l, grep { $_->[TM->KIND] == TM->OCC }   values %{$self->{assertions}});
+		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] }
+                                                   grep { $_->[TM->KIND] == TM->OCC }   values %{$self->{assertions}});
 		} elsif ($2 eq 'infrastructure') {
-		    $l = _mod_list ($1 eq '+', $l,                                      values %{$TM::infrastructure->{assertions}} );
+		    $l = _mod_list ($1 eq '+', $l,                                      keys %{$TM::infrastructure->{assertions}} );
 		} else {
 		    $log->logdie (scalar __PACKAGE__ .": specification '$2' unknown");
 		}
 	    }
 	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-	    return @$l;
+	    return map { $self->{assertions}->{$_} } @$l;
 	} else {
 	    return $self->{assertions}->{@_};
 	}

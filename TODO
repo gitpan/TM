@@ -59,6 +59,7 @@ TM:
 	- fix: variants according to TMDM are not any longer deeply nested?
 
 	- change: UUIDs for generated identifiers?
+	- TM::subtract
 
 TM::PSI:
 
@@ -93,6 +94,9 @@ TM::Serializable::XTM
 	- support 1.0, 1.1, 2.0
 	- load opera.xtm -> maps
 	- mergeMap
+
+TM::Serializable::JTM
+	- ????
 
 TM::Serializable::TMXML
 	- to be added (http://topicmaps.bond.edu.au/mda/internet/semantic-web/topicmaps/tmxml)

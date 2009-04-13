@@ -3251,7 +3251,7 @@ sub Parse::RecDescent::TM::CTM::CParser::uri
 	my %arg =        ($#arg & 01) ? @arg : (@arg, undef);
 	my $text;
 	my $lastsep="";
-    my $expectation = new Parse::RecDescent::Expectation(q{string});
+    my $expectation = new Parse::RecDescent::Expectation(q{string, or /(\\w+:[^\\"\\s)\\]\\>]+)/});
 	$expectation->at($_[1]);
 	
 	my $thisline;
@@ -3307,6 +3307,58 @@ sub Parse::RecDescent::TM::CTM::CParser::uri
 
 
 		Parse::RecDescent::_trace(q{>>Matched production: [string]<<},
+					  Parse::RecDescent::_tracefirst($text),
+					  q{uri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$_matched = 1;
+		last;
+	}
+
+
+	while (!$_matched && !$commit)
+	{
+		
+		Parse::RecDescent::_trace(q{Trying production: [/(\\w+:[^\\"\\s)\\]\\>]+)/]},
+					  Parse::RecDescent::_tracefirst($_[1]),
+					  q{uri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		my $thisprod = $thisrule->{"prods"}[1];
+		$text = $_[1];
+		my $_savetext;
+		@item = (q{uri});
+		%item = (__RULE__ => q{uri});
+		my $repcount = 0;
+
+
+		Parse::RecDescent::_trace(q{Trying terminal: [/(\\w+:[^\\"\\s)\\]\\>]+)/]}, Parse::RecDescent::_tracefirst($text),
+					  q{uri},
+					  $tracelevel)
+						if defined $::RD_TRACE;
+		$lastsep = "";
+		$expectation->is(q{})->at($text);
+		
+
+		unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ s/\A(?:(\w+:[^\"\s)\]\>]+))//)
+		{
+			
+			$expectation->failed();
+			Parse::RecDescent::_trace(q{<<Didn't match terminal>>},
+						  Parse::RecDescent::_tracefirst($text))
+					if defined $::RD_TRACE;
+
+			last;
+		}
+		Parse::RecDescent::_trace(q{>>Matched terminal<< (return value: [}
+						. $& . q{])},
+						  Parse::RecDescent::_tracefirst($text))
+					if defined $::RD_TRACE;
+		push @item, $item{__PATTERN1__}=$&;
+		
+
+
+		Parse::RecDescent::_trace(q{>>Matched production: [/(\\w+:[^\\"\\s)\\]\\>]+)/]<<},
 					  Parse::RecDescent::_tracefirst($text),
 					  q{uri},
 					  $tracelevel)
@@ -16998,7 +17050,7 @@ package TM::CTM::CParser; sub new { my $self = bless( {
                                                            ],
                                                 'name' => 'iri',
                                                 'vars' => '',
-                                                'line' => -9
+                                                'line' => -7
                                               }, 'Parse::RecDescent::Rule' ),
                               'scope' => bless( {
                                                   'impcount' => 0,
@@ -17483,6 +17535,28 @@ package TM::CTM::CParser; sub new { my $self = bless( {
                                                                                             'lookahead' => 0,
                                                                                             'line' => -64
                                                                                           }, 'Parse::RecDescent::Subrule' )
+                                                                                 ],
+                                                                      'line' => undef
+                                                                    }, 'Parse::RecDescent::Production' ),
+                                                             bless( {
+                                                                      'number' => '1',
+                                                                      'strcount' => 0,
+                                                                      'dircount' => 0,
+                                                                      'uncommit' => undef,
+                                                                      'error' => undef,
+                                                                      'patcount' => 1,
+                                                                      'actcount' => 0,
+                                                                      'items' => [
+                                                                                   bless( {
+                                                                                            'pattern' => '(\\w+:[^\\"\\s)\\]\\>]+)',
+                                                                                            'hashname' => '__PATTERN1__',
+                                                                                            'description' => '/(\\\\w+:[^\\\\"\\\\s)\\\\]\\\\>]+)/',
+                                                                                            'lookahead' => 0,
+                                                                                            'rdelim' => '/',
+                                                                                            'line' => -9,
+                                                                                            'mod' => '',
+                                                                                            'ldelim' => '/'
+                                                                                          }, 'Parse::RecDescent::Token' )
                                                                                  ],
                                                                       'line' => undef
                                                                     }, 'Parse::RecDescent::Production' )

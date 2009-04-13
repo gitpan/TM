@@ -1004,12 +1004,12 @@ bbb >> characteristics homepage >> atomify << atomify
 [bbb]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 <http://something2> << atomify << characteristics homepage
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 <http://something2> \ homepage
 ]]></code>
@@ -1053,12 +1053,12 @@ bbb >> characteristics homepage >> atomify << atomify
 [rumsti]
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 ( <http://rumsti.org/remsti> << indicators )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 ( <http://rumsti.org/remsti> ~ )
 ]]></code>
@@ -1077,12 +1077,12 @@ bbb >> characteristics homepage >> atomify << atomify
 	   <output type="list">
 	   </output>
 	 </interface>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 ( <http://does.not.exist/> << indicators )
 ]]></code>
 	 </solution>
-	 <solution language="tmql" style="pe" operational="yes">
+	 <solution language="tmql" style="pe" operational="no">
 	   <code><![CDATA[
 ( <http://does.not.exist/> ~ )
 ]]></code>

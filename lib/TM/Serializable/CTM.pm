@@ -52,17 +52,18 @@ below.
 =item B<deserialize>
 
 This method tries to parse the passed in text stream as CTM instance. It will raise an exception on
-the first parse error.
+the first parse error. On success, it will return the map object.
 
 =cut
 
 sub deserialize {
-  my $self    = shift;
-  my $content = shift;
+    my $self    = shift;
+    my $content = shift;
 
-  use TM::CTM::Parser;
-  my $ap = new TM::CTM::Parser (store => $self);
-  $ap->parse ($content);                                                 # we parse content into the ap object component 'store'
+    use TM::CTM::Parser;
+    my $ap = new TM::CTM::Parser (store => $self);
+    $ap->parse ($content);                                                 # we parse content into the ap object component 'store'
+    return $self;
 }
 
 =pod
@@ -94,7 +95,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.1';
+our $VERSION  = '0.2';
 our $REVISION = '$Id$';
 
 1;

@@ -89,7 +89,7 @@ the following changes:
 =item B<deserialize>
 
 This method take a string and tries to parse AsTMa= content from it. It will raise an exception on
-parse error.
+parse error. On success, it will return the map object.
 
 =cut
 
@@ -107,6 +107,7 @@ sub deserialize {
 	my $ap = new TM::AsTMa::Fact (store => $self);
 	$ap->parse ($content);                                                 # we parse content into the ap object component 'store'
     }
+    return $self;
 }
 
 =pod
@@ -132,6 +133,10 @@ This option suppresses the output of completely I<naked> toplets (toplets withou
 =item C<omit_infrastructure> (default: C<1>)
 
 This option suppresses the output of infrastructure toplets.
+
+=item C<omit_provenance> (default: C<0>)
+
+If set, no mentioning of where the content came from is added.
 
 =back
 
@@ -201,7 +206,7 @@ ASSOCS:
 	} elsif ($kind == TM->NAME) {
 	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
 	    
-	    $TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer reification of basenames (topic $thing)\n")
+	    $TM::log->logdie (scalar __PACKAGE__ .": astma 1.x does not offer reification of basenames (topic $thing)\n")
 		if $self->is_reified ($m);
 	    
 	    for my $p ($self->get_x_players($m, $VALUE)) {
@@ -211,11 +216,11 @@ ASSOCS:
 	} elsif ($kind == TM->OCC) {
 	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
 	    
-	    $TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer reification of occurrences (topic $thing)\n")
+	    $TM::log->logdie (scalar __PACKAGE__ .": astma 1.x does not offer reification of occurrences (topic $thing)\n")
 		if $self->is_reified ($m);
 	    
 	    for my $p ($self->get_x_players($m,$VALUE)) { 
-		my $key= $p->[1] eq TM::Literal::STRING ? "in" : "oc";
+		my $key= $p->[1] ne TM::Literal->URI ? "in" : "oc";
 		push @{$topics{$thing}->{$key}}, [ $p->[0], $type eq $OCCURRENCE ? undef : &$debase($type), $scope ];
 	    }
 	}
@@ -229,17 +234,32 @@ ASSOCS:
 
 	$topics{$tn} ||= {}; 
 	
-	$TM::log->logdie (scalar __PACKAGE__ ."astma 1.x does not offer variants (topic $tn)\n")
+	$TM::log->logdie (scalar __PACKAGE__ .": astma 1.x does not offer variants (topic $tn)\n")
 	    if ($self->variants ($t));
 	
         $topics{$tn}->{sins} = $tt->[TM->INDICATORS] if @{ $tt->[TM->INDICATORS] } > 0;
-	$topics{$tn}->{addr} = $tt->[TM->ADDRESS]    if $tt->[TM->ADDRESS] and $tt->[TM->ADDRESS] !~ /^[a-zA-Z0-9]{32}$/;
+	if ($tt->[TM->ADDRESS] and !$self->retrieve($tt->[TM->ADDRESS]))
+	{
+	    # external target? attach as active 'reifies' to local topic
+	    # target is an internal topic? attach as passive 'is-reified-by' to the target,
+	    # to avoid the ugly/base-specific 'x reifies tm://y'
+	    my $target=$tt->[TM->ADDRESS];
+	    if ($self->toplet($target))
+	    {
+		$topics{&$debase($target)}->{raddr}=$tn;
+	    }
+	    else
+	    {
+		$topics{$tn}->{addr}=$target;
+	    }
+	}
     } 
-#--------------------------------------------------------------------------------------------------------------
-    
-    # finally the actual dumping of the information
-    my @result=("# serialized object, originally from ".($self->{url}=~/^inline:/?"inline":$self->{url}),
-		"# base $baseuri","");
+#--- finally the actual dumping of the actual information ---------------------------------------------------
+    my @result; # will collect lines here
+    push @result, "# originally from ".($self->{url}=~/^inline:/?"inline":$self->{url}) unless $opts{omit_provenance};
+    push @result, "# base $baseuri";
+    push @result, "";
+
 TOPICS:
     for my $t (sort keys %topics) {
 	my $tn = $topics{$t};
@@ -254,7 +274,8 @@ TOPICS:
 	push @result,
         $t                                                                                   # the id
 	.($tn->{parents} ? " (".join(" ",@{$tn->{parents}}).")" : "")                        # optionally the types (....)
-        .($tn->{add}     ? " reifies ". $tn->{addr}              : "");                      # optionally the subject address
+        .($tn->{addr}     ? " reifies ". $tn->{addr}              : "")                      # optionally the subject address
+	.($tn->{raddr}?(" is-reified-by ".$tn->{raddr}):""); # subject address, passive.
 	
 	for my $k (qw(bn in oc)) {
 	    if ($tn->{$k}) {
@@ -307,7 +328,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.4';
+our $VERSION  = '0.5';
 our $REVISION = '$Id: az';
 
 1;

@@ -239,10 +239,10 @@ if (1) { # prepopulated
 
     my $indexed = (Time::HiRes::time - $start);
     ok (1, "measurable speedup with eager (populated) index ?? ($indexed < $unindexed)");
-  TODO: {
-      local $TODO = "systematic speed test";
-      ok ($indexed < $unindexed, "measurable speedup with eager (populated) index ($indexed < $unindexed)");
-  }
+#  TODO: {
+#      local $TODO = "systematic speed test";
+#      ok ($indexed < $unindexed, "measurable speedup with eager (populated) index ($indexed < $unindexed)");
+#  }
 }
 
 require_ok( 'TM::Index::Characteristics' );

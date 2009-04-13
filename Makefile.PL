@@ -66,7 +66,7 @@ lib/TM/CTM/CParser.pm: lib/TM/CTM/Parser.pm lib/TM/Literal.pm
 	rm /tmp/grammar
 	mv CParser.pm lib/TM/CTM/
 
-lib/TM/QL/CParser.pm: lib/TM/QL.pm
+lib/TM/QL/CParser.pm: lib/TM/QL.pm lib/TM/Literal.pm
 	perl -Ilib -MTM::QL      -e 'print \$\$TM::QL::grammar'      >  /tmp/grammar
 	perl -Ilib -MTM::Literal -e 'print \$\$TM::Literal::grammar' >> /tmp/grammar
 	perl -MParse::RecDescent - /tmp/grammar TM::QL::CParser
