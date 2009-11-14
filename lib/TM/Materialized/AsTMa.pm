@@ -22,7 +22,7 @@ TM::Materialized::AsTMa - Topic Maps, Parsing of AsTMa instances.
   # or
   my $tm = new TM::Materialized::AsTMa (file => 'test.atm');
   # ...
-  $tm->sync;
+  $tm->sync_in;
 
 =head1 DESCRIPTION
 

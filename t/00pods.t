@@ -46,7 +46,6 @@ my @PODs = qw(
 	      lib/TM/Index.pm
 	      lib/TM/Index/Characteristics.pm
 	      lib/TM/Index/Match.pm
-	      lib/TM/QL.pm
 	      );
 plan tests => scalar @PODs;
 

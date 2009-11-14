@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                TM
-version:             1.45
+version:             1.46
 abstract:            Topic Maps, Base Class
 license:             ~
 author:              
@@ -23,8 +23,8 @@ requires:
     Test::Deep:                    0.093
     Test::More:                    0.47
     Test::Pod:                     1
+    URI:                           1.35
     URI::Escape:                   3.22
-    URI::file:                     4.14
     XML::LibXML:                   1.58
     XML::Simple:                   2.13
     XML::Writer:                   0.602

@@ -11,7 +11,6 @@ yapp/astma-fact.yp
 yapp/astma2-fact.yp
 yapp/YappTemplate.pm
 t/log.conf
-t/tmql-use-cases.xml
 t/00pods.t
 t/00utils.t
 t/010infrastructure.t
@@ -48,7 +47,6 @@ t/101mapsphere.t
 t/102mapsphere.t
 t/13tmdm.t
 t/14workbench.t
-t/16tmql.t
 schemas/xtm20.dtd
 schemas/xtm10.dtd
 schemas/xtm11.dtd
@@ -81,10 +79,6 @@ lib/TM.pm
 lib/TM/Overview.pm
 lib/TM/FAQ.pm
 lib/TM/PSI.pm
-lib/TM/QL.pm
-lib/TM/QL/CParser.pm
-lib/TM/QL/PE.pm
-lib/TM/QL/TS.pm
 lib/TM/ResourceAble.pm
 lib/TM/ResourceAble/MLDBM.pm
 lib/TM/Serializable/AsTMa.pm

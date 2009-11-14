@@ -25,7 +25,7 @@ WriteMakefile(
 		  "Test::Deep"        => 0.093,
 		  "Test::Pod"         => 1.00,
 		  "URI::Escape"       => 3.22,
-		  "URI::file"         => 4.14,
+		  "URI"               => 1.35,
 		  "XML::LibXML"       => 1.58,
 		  "XML::Simple"       => 2.13,
 		  "IO::String"        => 1.08,
@@ -91,7 +91,7 @@ manifesto:
 	find t    -iname '*.t'  | sort
 
 upload:
-	cpan-upload-http TM-\$(VERSION).tar.gz
+	cpan-upload --verbose TM-\$(VERSION).tar.gz
 
 inject:
 	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
@@ -99,7 +99,7 @@ inject:
 	echo "reload index" | cpan
 
 debian:
-	(cd /usr/local/share/packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest --core-ok)
+	(cd ; cd packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest --core-ok)
 
 MAKE
 }

@@ -4,7 +4,11 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
-1.45  ????????????????????????????
+1.46  Sat Nov 14 17:36:21 CET 2009
+        - mod: dependency to URI and not URI::file
+	- del: TM::QL and all related packages (problem with smoke testers, decoupling)
+
+1.45  Mon Apr 13 16:45:08 CEST 2009
 	- fix: deserialization to astma1 "topic reifies non-assoc" handled properly (az)
 	- fix: bug in TM::asserts (comparison based on mem address and not on LID!)
 	- add: added TM::clear method to remove all content in one go
