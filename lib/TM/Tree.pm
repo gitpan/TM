@@ -110,7 +110,7 @@ sub tree {
   return       _tree ($self,
 		      $lid,
 		      {},
-		      [ $self->match_forall (type => $type) ],  # where are the associations which are relevant? (do not recompute them over and over, again
+		      [ $self->match_forall (type => $type) ],  # where are the associations which are relevant? (do not recompute them over and over, again)
 		      $arole,
 		      $brole,
 		      0,                               # current depth

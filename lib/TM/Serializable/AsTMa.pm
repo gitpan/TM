@@ -152,6 +152,14 @@ sub serialize  {
 
     $TM::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} );
 
+sub _fat_mama {
+    use Proc::ProcessTable;
+    my $t = new Proc::ProcessTable;
+#warn Dumper [ $t->fields ]; exit;                                                                                                                                               
+    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
+#warn "size: ".  $me->size;                                                                                                                                                      
+    return $me->size / 1024;
+}
 
 sub _serializeAsTMa1 {
     my $self = shift;
@@ -174,7 +182,6 @@ ASSOCS:
 	my $type  = $m->[TM->TYPE];
 	my $scope = $m->[TM->SCOPE];
 	my $lid   = $m->[TM->LID];
-
 	$scope = $US eq $scope ? undef : &$debase ($scope);
 
 	if ($kind == TM->ASSOC) {
@@ -281,10 +288,19 @@ TOPICS:
 	    if ($tn->{$k}) {
 		push @result, 
 		map {  $k.($_->[2]?(" @ ".$_->[2]):"")
-			   .($_->[1]?(" (".$_->[1].")"):"").": ".$_->[0] } 
+			   .($_->[1]?(" (".$_->[1].")"):"").": ". _multiline ($_->[0]) } 
 		(@{$tn->{$k}});
 	    }
 	}
+sub _multiline {
+    my $s = shift;
+    if ($s =~ /\n/s) {
+	return "<<<\n$s\n<<<";
+    } else {
+	return $s;
+    }
+}
+
 	if ($tn->{sins}) {
 	    map { push @result, "sin: ".$_; } (@{$tn->{sins}});
 	}
@@ -307,7 +323,7 @@ TOPICS:
     sort { $assocs{$b}->{type} cmp $assocs{$a}->{type} } 
     keys %assocs;
     
-    return join("\n",@result)."\n";
+    return join("\n",@result)."\n\n";
 }
 }
 
@@ -328,8 +344,8 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.5';
-our $REVISION = '$Id: az';
+our $VERSION  = '0.6';
+our $REVISION = '$Id: rho';
 
 1;
 

@@ -266,6 +266,68 @@ sub is_path {
 
 =pod
 
+=item B<neighborhood>
+
+I<@neighbors> = I<$tm>->neighborhood (I<$MAXDEPTH>, I<\@start_lids>)
+
+This method returns a list of neighbors for the given start LIDs. In that it follows paths with the
+maximal length given as first parameter. In any case the path with length C<0> is returned, which
+includes any of the starting nodes.
+
+Each neighbor is represented by a hash (reference) with the C<path> and the C<end> LID. The I<path>
+is a list (reference) holding the LIDs of the association types visited along the path.
+
+=cut
+
+sub neighborhood {
+    my $self   = shift;
+    my $DEPTH  = shift;
+    my $starts = shift;
+    my @starts = grep { $_ } $self->mids (@$starts);                  # make sure we only have defined ones
+
+    my @ns = map { { path => [], end => $_ } } @starts;               # bootstrap result, will be accumulated below
+    return _neighborhood ($self,
+			  \@ns,                                       # current paths and frontiers
+			  $DEPTH, 1,                                  # max depth and current depth
+	                  );
+
+sub _neighborhood {
+    my $self = shift;
+    my $ns   = shift;
+    my $DEPTH = shift;
+    my $depth = shift;
+
+    if ($depth > $DEPTH) {                                            # if we went too far
+	return @$ns;                                                  # this is the result
+    } else {                                                          # still not at DEPTH
+	my %seen = map { $_ => 1 }                                    # build already seen hash
+	           map { $_->{end} }                                  # find end points
+                   @$ns;                                              # walk through all paths we have
+	my @ns;
+	foreach my $n (@$ns) {
+	    my @as = $self->match_forall (iplayer => $n->{end});
+	    foreach my $a (@as) {
+		push @ns, 
+		           map  {                                     # construct path/end combo
+		                  { path => [ @{$n->{path}}, $a->[TM->TYPE] ],
+				    end  => $_
+				  }
+	                         }         
+		           grep { !$seen{ $_ }++ }                    # filter out those which we have already (and mark them seen)
+	                   $self->get_players ($a);                   # get all players of this assoc
+	    }
+	}
+	return _neighborhood ($self,                                  # the map
+			      [ @ns, @$ns ],
+			      $DEPTH, $depth+1,                       # max depth and current depth
+	                      );
+    }
+}
+}
+
+=pod
+
+
 =back
 
 =head1 SEE ALSO

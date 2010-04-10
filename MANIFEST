@@ -32,6 +32,7 @@ t/050astma.t
 t/051mldbm.t
 t/052mldbm2.t
 t/054ltm.t
+t/055jtm.t
 t/061xtmserialize.t
 t/061xtmdeserialize.t
 t/062xtmserialize.t
@@ -75,6 +76,7 @@ lib/TM/Materialized/MLDBM.pm
 lib/TM/Materialized/Null.pm
 lib/TM/Materialized/Stream.pm
 lib/TM/Materialized/XTM.pm
+lib/TM/Materialized/JTM.pm
 lib/TM.pm
 lib/TM/Overview.pm
 lib/TM/FAQ.pm
@@ -87,6 +89,7 @@ lib/TM/Serializable/Dumper.pm
 lib/TM/Serializable/LTM.pm
 lib/TM/Serializable/Summary.pm
 lib/TM/Serializable/XTM.pm
+lib/TM/Serializable/JTM.pm
 lib/TM/Serializable.pm
 lib/TM/Synchronizable/MapSphere.pm
 lib/TM/Synchronizable/MLDBM.pm

@@ -4,9 +4,20 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.47  Sat Apr 10 11:01:06 CEST 2010
+        - fix: &TM::add and &TM::clear did not touch map subcomponents so that MLDBM picked that up (rho)
+	- mod: retrieve uses now shorthands not to confuse MLDBM trait (created huge memory problems) (rho)
+	- add: TM::Analysis::entropy (rho)
+	- add: TM::Graph::neighborhood (rho)
+	- fix: TM::Serialize::AsTMa: missing eol at end of file added (rho)
+	- fix: TM::Serialize::AsTMa: inline data with \n's treated correctly (rho)
+	- fix: TM::toplets & asserts did not play well with DBM-backed store - memory hog (rho)
+	- mod: removed implicit dependency from URI::Escape (produced wrong version numbers with dh-make-perl) (rho)
+	- add: JTM support via JSON and YAML (az)
+
 1.46  Sat Nov 14 17:36:21 CET 2009
         - mod: dependency to URI and not URI::file
-	- del: TM::QL and all related packages (problem with smoke testers, decoupling)
+	- !del: TM::QL and all related packages (problem with smoke testers, decoupling)
 
 1.45  Mon Apr 13 16:45:08 CEST 2009
 	- fix: deserialization to astma1 "topic reifies non-assoc" handled properly (az)

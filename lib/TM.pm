@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.46';
+our $VERSION  = '1.47';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -637,11 +637,13 @@ This method removes all toplets and assertions (except the infrastructure). Ever
 sub clear {
     my $self    = shift;
 
-    %{ $self->{mid2iid} }    = %{ $infrastructure->{mid2iid} };                        # shallow clone
-    %{ $self->{assertions} } = %{ $infrastructure->{assertions} };                     # shallow clone
+    my %mid2iid    = %{ $infrastructure->{mid2iid} };                            # shallow clone
+    my %assertions = %{ $infrastructure->{assertions} };                         # shallow clone
 
-    $self->{last_mod} = Time::HiRes::time;                                             # book keeping
-    return $self;                                                                      # convenience for chaining
+    $self->{mid2iid}    = \%mid2iid;                                             # making it explicit keeps MLDBM happy
+    $self->{assertions} = \%assertions;                                          # ditto
+    $self->{last_mod}   = Time::HiRes::time;                                     # book keeping
+    return $self;                                                                # convenience for chaining
 }
 
 =pod
@@ -707,7 +709,9 @@ sub add {
 	    $asserts->{ $a->[TM->LID] } = $a;                                  # and also in the assertions part
 	}
     }
-    $self->{last_mod} = Time::HiRes::time;
+    $self->{mid2iid}    = $mid2iid;                                            # make MLDBM happy
+    $self->{assertions} = $asserts;                                            # ditto
+    $self->{last_mod}   = Time::HiRes::time;
 }
 
 
@@ -1454,6 +1458,7 @@ sub midlets {
 
 sub toplets {
     my $self = shift;
+    my $mid2iid = $self->{mid2iid};
 
     if ($_[0]) {                                                # if there is some parameter
 	if (ref ($_[0]) ) {                                     # whoohie, a search spec
@@ -1461,7 +1466,7 @@ sub toplets {
             my $l = []; # will be list
             while ($spec =~ s/([+-])(\w+)//) {
                 if ($2 eq 'all') {
-                    $l = _mod_list ($1 eq '+', $l, keys %{$self->{mid2iid}});
+                    $l = _mod_list ($1 eq '+', $l, keys %$mid2iid);
                 } elsif ($2 eq 'infrastructure') {
                     $l = _mod_list ($1 eq '+', $l, keys %{$infrastructure->{mid2iid}});
                 } else {
@@ -1471,12 +1476,13 @@ sub toplets {
             $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
             return map { $self->{mid2iid}->{$_} } @$l;
 	} else {
-	    my $m = $self->{mid2iid};
+	    my $m = $mid2iid;
 	    return @$m{$self->tids (@_)};                        # make all these fu**ing identifiers map-absolute
 	}
     } else {                                                     # if the list was empty, we assume every thing in the map
-	return values %{$self->{mid2iid}};
+	return values %$mid2iid;
     }
+
 sub _mod_list {
     my $pm = shift; # non-zero for +
     my $l  = shift;
@@ -1852,13 +1858,14 @@ context, it will return a list of assertion references.
 =cut
 
 sub retrieve {
-  my $self = shift;
+    my $self    = shift;
+    my $asserts = $self->{assertions};
 
-  if (wantarray) {
-      return map { $self->{assertions}->{$_} } @_;
-  } else {
-      return $self->{assertions}->{$_[0]};
-  }
+    if (wantarray()) {
+	return map { $asserts->{$_} } @_;
+    } else {
+	return $asserts->{$_[0]};
+    }
 }
 
 =pod
@@ -1922,6 +1929,7 @@ C<-infrastructure>.
 
 sub asserts {
     my $self = shift;
+    my $asserts = $self->{assertions};
 
     if ($_[0]) {
 	if (ref ($_[0])) {
@@ -1929,16 +1937,17 @@ sub asserts {
 	    my $l = []; # will be list
 	    while ($spec =~ s/([+-])(\w+)//) {
 		if ($2 eq 'all') {
-		    $l = _mod_list ($1 eq '+', $l,                                      keys %{$self->{assertions}});
+		    $l = _mod_list ($1 eq '+', $l,                                      keys %$asserts);
+
 		} elsif ($2 eq 'associations') {
 		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] } 
-                                                   grep { $_->[TM->KIND] == TM->ASSOC } values %{$self->{assertions}});
+                                                   grep { $_->[TM->KIND] == TM->ASSOC } values %$asserts);
 		} elsif ($2 eq 'names') {
 		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] }
-                                                   grep { $_->[TM->KIND] == TM->NAME }  values %{$self->{assertions}});
+                                                   grep { $_->[TM->KIND] == TM->NAME }  values %$asserts);
 		} elsif ($2 eq 'occurrences') {
 		    $l = _mod_list ($1 eq '+', $l, map  { $_->[TM->LID] }
-                                                   grep { $_->[TM->KIND] == TM->OCC }   values %{$self->{assertions}});
+                                                   grep { $_->[TM->KIND] == TM->OCC }   values %$asserts);
 		} elsif ($2 eq 'infrastructure') {
 		    $l = _mod_list ($1 eq '+', $l,                                      keys %{$TM::infrastructure->{assertions}} );
 		} else {
@@ -1946,12 +1955,12 @@ sub asserts {
 		}
 	    }
 	    $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-	    return map { $self->{assertions}->{$_} } @$l;
+	    return map { $asserts->{$_} } @$l;
 	} else {
-	    return $self->{assertions}->{@_};
+	    return $asserts->{@_};
 	}
     } else {
-	return values %{ $self->{assertions} };
+	return values %$asserts;
     }
 }
 

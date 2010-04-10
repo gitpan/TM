@@ -152,6 +152,35 @@ sub orphanage {
 
 =pod
 
+=item B<entropy>
+
+This method returns a hash (reference) where the keys are the assertion types and the values are the
+individual entropies of these assertion types. More frequently used (inflationary) types will have a
+lower value, very seldomly used ones too. Only those in the middle count most.
+
+=cut
+
+sub entropy {
+    my $self = shift;
+
+    my %S;
+    my $Total;
+
+    { # compute statistics first
+	foreach my $a (values %{$self->{assertions}}) {
+	    $S{ $a->[TM->TYPE] }++;
+	    $Total++;
+	}
+    }
+    return {
+	map { $_->[0] => - $_->[1] * log ( $_->[1] ) }         # compute the entropy
+	map { [ $_, $S{$_}/$Total ] }                          # compute their probability (schartzian)
+	keys %S                                                # iterate over all assertion types
+    };
+}
+
+=pod
+
 =back
 
 =head1 SEE ALSO
@@ -160,14 +189,14 @@ L<TM>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[3-68] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 20(0[3-68]|10) by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = 0.9;
+our $VERSION  = 0.10;
 our $REVISION = '$Id: Analysis.pm,v 1.7 2007/07/28 16:41:13 rho Exp $';
 
 

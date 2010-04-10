@@ -17,13 +17,15 @@ sub _chomp {
 
 use Class::Trait;
 
+use constant DONE => 1;
+
 #== TESTS =====================================================================
 
 require_ok ('TM::Tree');
 require_ok ('TM::Graph');
 require_ok ('TM::Analysis');
 
-{ # tree
+if (DONE) { # tree
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -111,7 +113,7 @@ child: noam
     eq_deeply( $pedigree2, $pedigree, "tree = tree_x" );
 }
 
-{ # taxonomy
+if (DONE) { # taxonomy
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -148,7 +150,7 @@ ddd subclasses aaa
 
 }
 
-{ # clustering
+if (DONE) { # clustering
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -213,7 +215,7 @@ qqq: www
     is (scalar @$c4, 33, 'cluster 4');
 }
 
-{ # graph
+if (DONE) { # graph
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -328,9 +330,43 @@ child: noam
 
 #warn Dumper $tm;
 
+   my @ns = $tm->neighborhood (0, [ 'adam' ]);
+   ok (eq_set ([ 'tm:adam' ], [ map { $_->{end} } @ns ]), '0-length neighborhood');
+   is (scalar @{ $ns[0]->{path} }, 0, '0-length neighborhood path');
+
+      @ns = $tm->neighborhood (1, [ 'adam' ]);
+      my %expect1 = (
+              'tm:human'   => 'isa',
+	      'tm:eve'     => 'tm:begets',
+	      'tm:cain'    => 'tm:begets',
+	      'tm:candrews'=> 'tm:bigots',
+	      'tm:abel'    => 'tm:begets',
+	      'tm:seth'    => 'tm:begets',
+	      'tm:azura'   => 'tm:begets',
+      );
+
+      is (scalar @ns, 8, "1-length neighborhood");
+      foreach my $t (keys %expect1) {
+         my ($n) = grep { $_->{end} eq $t } @ns;
+         ok (defined $n, "1-length neighborhood $t detected ");
+         ok (eq_array ($n->{path}, [ $expect1{$t} ]), "1-length neighborhood path");
+      }
+
+
+#      ok (eq_set (
+##warn Dumper
+#             [ { path => [],
+#                 end  => 'tm:adam' },
+#               map { { path => [ $expect1{$_} ], 
+##                       end  => $_ } } keys %expect1 ],
+#             [@ns]),'1-length neighborhood')
+#;
+
+#warn Dumper \@ns;
+
 }
 
-{ # statistics
+if (DONE) { # statistics
     use TM;
     my $tm1 = new TM;
     'TM::Analysis'->apply ($tm1);
@@ -360,10 +396,11 @@ bbb is-a ccc
     is ($stats2->{'nr_asserts'},  $stats1->{'nr_asserts'} + 2,     'nr_asserts');
     is ($stats2->{'nr_toplets'},  $stats1->{'nr_toplets'} + 3,     'nr_toplets');
     is ($stats2->{'nr_clusters'}, 15,                              'nr_clusters');
-    
+
+
 }
 
-{ # orphanage
+if (DONE) { # orphanage
     use TM::Materialized::AsTMa;
     my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
 					  inline => '
@@ -391,6 +428,36 @@ bbb is-a ccc
 
     $o = TM::Analysis::orphanage ($tm, 'untyped');
     ok ($o->{untyped}, 'only untyped');
+}
+
+if (DONE) {
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+                                          inline => '
+aaa subclasses bbb
+
+bbb is-a ccc
+
+    ')->sync_in;
+
+    $tm->assert (Assertion->new (type => 'seldom',   roles => [ 'xxx' ], players => [ 'ramsti'.$_ ]))
+       for (0..0);
+    $tm->assert (Assertion->new (type => 'frequent', roles => [ 'xxx' ], players => [ 'ramsti'.$_ ]))
+       for (0..10);
+    $tm->assert (Assertion->new (type => 'inflated', roles => [ 'xxx' ], players => [ 'ramsti'.$_ ]))
+       for (0..100);
+
+    'TM::Analysis'->apply ($tm);
+    my $E = $tm->entropy;
+
+    ok (! (grep { ! $E->{$_} } map { $_->[TM->TYPE] } $tm->asserts), 'any assoc type missing');
+
+    ok (! (grep { $_ < 0 }    values %$E), 'all > 0');
+    ok (! (grep { $_ > 0.37 } values %$E), 'all < 0.37');
+
+    ok ($E->{'tm:seldom'}   < $E->{'tm:frequent'}, 'seldom   < frequent');
+    ok ($E->{'tm:inflated'} < $E->{'tm:frequent'}, 'inflated < frequent');
+#warn Dumper $E;
 }
 
 
