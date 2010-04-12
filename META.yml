@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               TM
-version:            1.47
+version:            1.48
 abstract:           Topic Maps, Base Class
 author:
     - Robert Barta <drrho@cpan.org>

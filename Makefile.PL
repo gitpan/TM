@@ -90,7 +90,7 @@ manifesto:
 	find t    -iname '*.t'  | sort
 
 upload:
-	cpan-upload --verbose TM-\$(VERSION).tar.gz
+	cpan-upload TM-\$(VERSION).tar.gz
 
 inject:
 	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz

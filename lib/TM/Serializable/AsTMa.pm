@@ -152,14 +152,14 @@ sub serialize  {
 
     $TM::log->logdie(scalar __PACKAGE__ .": serialization not implemented for AsTMa version ".$opts{version} );
 
-sub _fat_mama {
-    use Proc::ProcessTable;
-    my $t = new Proc::ProcessTable;
-#warn Dumper [ $t->fields ]; exit;                                                                                                                                               
-    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
-#warn "size: ".  $me->size;                                                                                                                                                      
-    return $me->size / 1024;
-}
+#sub _fat_mama {
+#    use Proc::ProcessTable;
+#    my $t = new Proc::ProcessTable;
+##warn Dumper [ $t->fields ]; exit;                                                                                                                                               
+#    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
+##warn "size: ".  $me->size;                                                                                                                                                      
+#    return $me->size / 1024;
+#}
 
 sub _serializeAsTMa1 {
     my $self = shift;

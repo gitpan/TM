@@ -4,6 +4,9 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.48  Mon Apr 12 07:51:27 CEST 2010
+        - fix: removed test code in TM::Serializable::AsTMa with unsatisfied dependency (rho)
+
 1.47  Sat Apr 10 11:01:06 CEST 2010
         - fix: &TM::add and &TM::clear did not touch map subcomponents so that MLDBM picked that up (rho)
 	- mod: retrieve uses now shorthands not to confuse MLDBM trait (created huge memory problems) (rho)
