@@ -4,6 +4,10 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.49  Tue Apr 13 20:44:25 CEST 2010
+        - fixed: dependency on YAML::Syck missing (az)
+	- fixed: cparser target mentions TM::QL (az)
+
 1.48  Mon Apr 12 07:51:27 CEST 2010
         - fix: removed test code in TM::Serializable::AsTMa with unsatisfied dependency (rho)
 

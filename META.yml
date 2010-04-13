@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               TM
-version:            1.48
+version:            1.49
 abstract:           Topic Maps, Base Class
 author:
     - Robert Barta <drrho@cpan.org>
@@ -30,6 +30,7 @@ requires:
     XML::LibXML:          1.58
     XML::Simple:          2.13
     XML::Writer:          0.602
+    YAML::Syck:           ~
 no_index:
     directory:
         - t

@@ -29,6 +29,7 @@ WriteMakefile(
 		  "XML::Simple"       => 2.13,
 		  "IO::String"        => 1.08,
 		  'XML::Writer'       => 0.602,
+		  'YAML::Syck'        => undef,
 	      },
               NORECURS       => 1,
 );
@@ -38,7 +39,7 @@ package MY;
 sub depend {
     return <<MAKE
 
-cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm lib/TM/CTM/CParser.pm lib/TM/QL/CParser.pm
+cparser: lib/TM/AsTMa/Fact2.pm lib/TM/AsTMa/Fact.pm lib/TM/LTM/CParser.pm lib/TM/CTM/CParser.pm
 
 lib/TM/AsTMa/Fact.pm: yapp/astma-fact.yp yapp/YappTemplate.pm
 	yapp -m TM::AsTMa::Fact -t yapp/YappTemplate.pm -o lib/TM/AsTMa/Fact.pm yapp/astma-fact.yp
@@ -64,13 +65,6 @@ lib/TM/CTM/CParser.pm: lib/TM/CTM/Parser.pm lib/TM/Literal.pm
 	perl -MParse::RecDescent - /tmp/grammar TM::CTM::CParser
 	rm /tmp/grammar
 	mv CParser.pm lib/TM/CTM/
-
-lib/TM/QL/CParser.pm: lib/TM/QL.pm lib/TM/Literal.pm
-	perl -Ilib -MTM::QL      -e 'print \$\$TM::QL::grammar'      >  /tmp/grammar
-	perl -Ilib -MTM::Literal -e 'print \$\$TM::Literal::grammar' >> /tmp/grammar
-	perl -MParse::RecDescent - /tmp/grammar TM::QL::CParser
-	rm /tmp/grammar
-	mv CParser.pm lib/TM/QL/
 
 axespod:
 	perl -Ilib support/mkaxespod.pl \$(VERSION) > lib/TM/Axes.pm
