@@ -37,6 +37,8 @@ do { $tmp = tmpnam() ;  } until IO::File->new ($tmp, O_RDWR|O_CREAT|O_EXCL);
 
 END { unlink ($tmp) || warn "cannot unlink tmp file '$tmp'"; }
 
+unlink ($tmp) || warn "# cannot unlink $tmp file, but that is ok";
+
 {
      my $tm = new TM::ResourceAble::MLDBM (file => $tmp);
     

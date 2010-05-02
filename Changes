@@ -4,6 +4,9 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.50  Sun May  2 17:25:23 CEST 2010
+        - fixed: version 0.42 of BerkeleyDB does not like empty files to tie with (rho)
+
 1.49  Tue Apr 13 20:44:25 CEST 2010
         - fixed: dependency on YAML::Syck missing (az)
 	- fixed: cparser target mentions TM::QL (az)
