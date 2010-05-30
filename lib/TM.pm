@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.50';
+our $VERSION  = '1.51';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -1289,6 +1289,13 @@ then this subject identifier is simply added. Duplicates are suppressed (since v
 Like above, only that the internal identifier is auto-created if there is no toplet with the URI
 as subject address.
 
+Attention: If you call internalize like this
+
+  $tm->internalize(undef => $whatever) 
+
+then perl will (un)helpfully replace the required undef with the string "undef" and wreck the operation. 
+Using either a variable to hold the undef or replacing the (syntactic sugar) arrow with a comma works around this issue.
+
 =item C<undef =E<gt> \ URI>
 
 Like above, only that the URI us used as subject identifier.
@@ -1318,6 +1325,8 @@ sub internalize {
 	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
 #warn "internalize $k, $v" if ! defined $k;
 	# make sure that $k contains a mid
+
+	$k = undef if defined $k && $k eq 'undef';                 # perl 5.10 will stringify undef => ....
 
 	if (defined $k) {
 	    if ($mid2iid->{$k}) {                                  # this identifier is already in the map
@@ -1568,7 +1577,8 @@ sub tids {
 	} elsif (my $kk = $mid2iid->{$k}) {                            # we already have something which looks like a tid
 	    push @ks, $kk->[TM->LID];                                  # give back the 'canonical' one
 
-	} elsif ($k =~ /^\w+:/) {                                      # must be some other uri, must be subject address
+	} elsif ($k =~ /^(\w+:|[A-F0-9]{32}$)/i) {                     # must be some other uri or assoc id, must be subject address
+
 	    no warnings;
 	    my @k2 = grep ($mid2iid->{$_}->[TM->ADDRESS] eq $k, keys %{$mid2iid});
 	    push @ks,  @k2 ? $mid2iid->{$k2[0]}->[TM->LID] : undef;    # we take the first we find

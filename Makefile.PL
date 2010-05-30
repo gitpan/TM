@@ -30,6 +30,7 @@ WriteMakefile(
 		  "IO::String"        => 1.08,
 		  'XML::Writer'       => 0.602,
 		  'YAML::Syck'        => undef,
+		  'Regexp::Common'    => undef,
 	      },
               NORECURS       => 1,
 );

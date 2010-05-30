@@ -4,6 +4,12 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.51  Sun May 30 19:14:21 CEST 2010
+        - fix: internalize will get 'undef' when invoking it with undef => 'http:...' (perl 5.10, az, rho)
+	- fix: tids did not recognize reified subject addresses of assocs (az)
+	- add: TM::Serializable::CSV deserialize (rho)
+	- ~: all workbench related stuff is now marked "deprecated", will be replaced by ts (TempleScript)
+
 1.50  Sun May  2 17:25:23 CEST 2010
         - fixed: version 0.42 of BerkeleyDB does not like empty files to tie with (rho)
 

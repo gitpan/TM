@@ -30,7 +30,7 @@ There are two options:
 =item C<open>:
 
 The default is to keep the index I<lazy>. In this mode the index is empty at the start and it will
-learn more and more by its own. In this sense, the index lives under an I<open world assumption>
+learn more and more on its own. In this sense, the index lives under an I<open world assumption>
 (hence the name), as the absence of information does not mean that there is no result.
 
 =item C<closed>:
@@ -245,19 +245,18 @@ sub do_cache {
 
 =head1 SEE ALSO
 
-L<TM>, L<TM::Index>
+L<TM>, L<TM::Index::Characteristics>, L<TM::Index::Match>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[6] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 20(0[6]|10) by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
 =cut
 
-our $VERSION = 0.1;
-our $REVISION = '$Id: Index.pm,v 1.3 2006/12/13 10:46:58 rho Exp $';
+our $VERSION = 0.2;
 
 1;
 

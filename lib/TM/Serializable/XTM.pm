@@ -2,6 +2,7 @@ package TM::Serializable::XTM;
 
 use strict;
 use warnings;
+
 use Class::Trait 'base';
 use Class::Trait 'TM::Serializable';
 

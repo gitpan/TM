@@ -1,3 +1,7 @@
+TM::Serializable::CSV
+	- more DWImming: sub { $tm, record, adds tm fragment}, use &PRE to cleanup data
+	- serialize
+
 TM::Synchronizable::MapSphere
 	- document
 

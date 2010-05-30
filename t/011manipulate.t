@@ -84,10 +84,19 @@ use TM;
 
 { # adding one assertion, finding the toplets, finding it
     my $tm = new TM ();
-    $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'rumsti', 'ramsti' ]));
+    my ($aid)=$tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ 'rumsti', 'ramsti' ]));
 
     is ($tm->tids ('rumsti') , 'tm://nirvana/rumsti', 'found inserted by assertion 1');
     is ($tm->tids ('ramsti') , 'tm://nirvana/ramsti', 'found inserted by assertion 2');
+
+    # add reifier topic
+    my $tid1=$tm->internalize(undef,$aid->[TM->LID]);
+    ok($tid1 
+       && $tm->toplet($tid1)->[TM->ADDRESS] eq $aid->[TM->LID],"internalize creates correct assertion reifier");
+    
+    # find this reifier topic again
+    my $tid2=$tm->internalize(undef,$aid->[TM->LID]);
+    is ($tid2, $tid1, "internalize finds existing assertion reifier");
 }
 
 { # reasserting

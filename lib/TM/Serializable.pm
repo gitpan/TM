@@ -1,7 +1,5 @@
 package TM::Serializable;
 
-#use base qw(TM::Synchronizable);
-
 use Class::Trait 'base';
 use Class::Trait 'TM::Synchronizable';
 

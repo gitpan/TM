@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               TM
-version:            1.50
+version:            1.51
 abstract:           Topic Maps, Base Class
 author:
     - Robert Barta <drrho@cpan.org>
@@ -22,6 +22,7 @@ requires:
     Parse::RecDescent:    ~
     Parse::Yapp::Driver:  1.05
     Pod::Usage:           1.16
+    Regexp::Common:       ~
     Term::ReadLine:       1.01
     Test::Deep:           0.093
     Test::More:           0.47

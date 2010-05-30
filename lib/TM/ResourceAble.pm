@@ -91,6 +91,7 @@ Example:
 =item B<url>
 
 I<$url> = I<$tm>->url
+
           I<$tm>->url (I<$url>)
 
 Once an object of this class is instantiated it keeps the URL of the resource to which it is

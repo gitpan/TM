@@ -38,6 +38,7 @@ t/061xtmdeserialize.t
 t/062xtmserialize.t
 t/062xtmdeserialize.t
 t/063xtm.t
+t/064csv.t
 t/072bulk.t
 t/091taufilter.t
 t/092taufederate.t
@@ -47,7 +48,6 @@ t/100mapsphere.t
 t/101mapsphere.t
 t/102mapsphere.t
 t/13tmdm.t
-t/14workbench.t
 schemas/xtm20.dtd
 schemas/xtm10.dtd
 schemas/xtm11.dtd
@@ -90,6 +90,7 @@ lib/TM/Serializable/LTM.pm
 lib/TM/Serializable/Summary.pm
 lib/TM/Serializable/XTM.pm
 lib/TM/Serializable/JTM.pm
+lib/TM/Serializable/CSV.pm
 lib/TM/Serializable.pm
 lib/TM/Synchronizable/MapSphere.pm
 lib/TM/Synchronizable/MLDBM.pm

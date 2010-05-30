@@ -71,7 +71,7 @@ B<Note>: This needs a bit of consideration from the user's side.
 
 I<$tm>->sync_in
 
-This method provides only the main logic, wether a synchronisation from the resource into the
+This method provides only the main logic, whether a synchronisation from the resource into the
 in-memory map should occur. If the last modification date of the resource (C<mtime>) is more recent
 than that of the map (C<last_mod>), then synchronisation from the resource to the in-memory map will
 be triggered. For this, a method C<source_in> has to exist for the map object; that will be invoked.
