@@ -31,6 +31,7 @@ WriteMakefile(
 		  'XML::Writer'       => 0.602,
 		  'YAML::Syck'        => undef,
 		  'Regexp::Common'    => undef,
+		  'Text::CSV'         => undef,
 	      },
               NORECURS       => 1,
 );

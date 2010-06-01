@@ -4,6 +4,9 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.52  Tue Jun  1 07:27:10 CEST 2010
+        - fix: missing dependency :/ (rho)
+
 1.51  Sun May 30 19:14:21 CEST 2010
         - fix: internalize will get 'undef' when invoking it with undef => 'http:...' (perl 5.10, az, rho)
 	- fix: tids did not recognize reified subject addresses of assocs (az)
