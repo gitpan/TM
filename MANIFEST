@@ -62,6 +62,7 @@ lib/TM/Graph.pm
 lib/TM/Index.pm
 lib/TM/Index/Characteristics.pm
 lib/TM/Index/Match.pm
+lib/TM/Index/Reified.pm
 lib/TM/Literal.pm
 lib/TM/LTM/Parser.pm
 lib/TM/LTM/CParser.pm

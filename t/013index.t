@@ -347,5 +347,8 @@ END { map { unlink <$_*> } @tmp; };
 
 }
 
+require_ok ( 'TM::Index::Reified');
+
+
 __END__
 

@@ -69,18 +69,34 @@ the parser should let you know what it could detect successfully.
 Line numbers cannot be used because the file will be massively reduced before the parser actually
 see it.
 
+=item
+
+Q: When serializing large maps, the serializer is REALLY slow. How to make it faster?
+
+A: The problem was that some serializers have to call the method C<is_reified> very often to
+find out whether there is a reification for the assertion. If this becomes a concern to you, simple
+add an index over reification (available since 1.53):
+
+   use Class::Trait;
+   Class::Trait->apply ($tm, 'TM::Serializable::XTM');
+
+   use TM::Index::Reified;
+   my $idx = new TM::Index::Reified ($tm, closed => 1);
+
+   print $tm->serialize;
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 200[3-68] by Robert Barta, E<lt>drrho@cpan.orgE<gt>
+Copyright 20(0[3-68]|10) by Robert Barta, E<lt>drrho@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
 =cut
 
-our $VERSION  = 0.5;
+our $VERSION  = 0.6;
 our $REVISION = '$Id: FAQ.pm,v 1.1 2006/11/30 08:38:10 rho Exp $';
 
 1;

@@ -4,6 +4,14 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.53  Sat Jun  5 16:17:56 CEST 2010
+        - add: extended Serializable::CSV serialization (rho)
+	- mod: sync_in/out and source_in/out allow to pass through parameters (rho)
+        - fix: added dependency
+	- add: Serializable::CSV has also first serialize support (rho)
+        - fix: XTM serialization: namespaces, instanceOf (rho)
+	- add: TM::Index::Reified for apps which excessively call is_reified (rho), TODO: more tests
+
 1.52  Tue Jun  1 07:27:10 CEST 2010
         - fix: missing dependency :/ (rho)
 

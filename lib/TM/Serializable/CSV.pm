@@ -100,7 +100,7 @@ Example:
 sub deserialize {
     my $self = shift;
     my $stream = shift;
-##    my $config = shift; # ????
+    my %options = @_;
 
     $stream =~ s/\r//g;                                                                      # F...ing M$
     my @lines = split /\n/, $stream;
@@ -119,7 +119,12 @@ sub deserialize {
 	    my @players = $csv->fields();
 	    my $type    = splice @players, $pos, 1;
 
-#	    warn "$type: ".Dumper (\@roles, \@players);
+	    if (my $p = $options{preprocess}) {                                              # if the application wants to modify the values before adding
+		foreach my $i (0..$#players) {                                               # clumsily step through the player/header lists
+		    $players[$i] = &$p ( $headers[$i], $players[$i] );                       # apply the change
+		}
+	    }
+#	    warn "$type: ".Dumper (\@headers, \@players);
 	    
 	    $self->assert (
 		Assertion->new (kind    => TM->ASSOC,
@@ -146,12 +151,18 @@ sub deserialize {
 	    my @attrs = $csv->fields();
 	    my $id    = splice @attrs, $pos, 1;
 
-#	    warn "$type: ".Dumper (\@roles, \@players);
 	    $self->internalize ($id);
 
 	    use Regexp::Common qw /URI/;
 	    use TM::Literal;
 	    foreach my $i (0..$#attrs) {
+		if (my $p = $options{preprocess}) {
+		    eval {
+			$attrs[$i] = &$p ( $headers[$i], $attrs[$i] );                    # user-defined transformation of the value
+		    };
+		    next if $@;                                                           # on die, we simply skip that attribute
+		}
+
 		if ($headers[$i] eq 'name') {
 		    $self->assert (
 			Assertion->new (kind    => TM->NAME,
@@ -192,12 +203,93 @@ sub deserialize {
 
 =item B<serialize>
 
-Not yet implemented. But it's easy.
+I<$tm>->serialize
+
+[Since TM 1.53] This method serializes a fragment of a topic map into CSV. B<Which> fragment can be
+controlled with the I<header line> and options (see constructor).
+
+=over
+
+=item C<header_line> (only for serialization)
+
+This string contains a comma separated list (CSV parseable) of headings. If one of the headings is
+C<association-type>, then the generated CSV content will contain associations only. Nothing else is
+implemented yet. The other headings control which roles (and in which order) should be included in
+the CSV content. If a particular role type has more than one player, then B<all> players are included.
+
+B<NOTE>: As this is inconsistent, this will have to change.
+
+=item C<type> (only for serialization)
+
+If existing, then this controls which association type is to be taken.
+
+=item C<baseuri> (only for serialization)
+
+If existing and non-zero, the base URI of the map will remain in the identifiers. Otherwise it will
+be removed.
+
+=item C<specification>
+
+If existing (and when selecting only associations), this specification will be interpreted in the
+sense of C<asserts> (see L<TM>).
+
+=back
+
+=back
+
+Example:
+
+    $tm->serialize (header_line => 'association-type,location,bio-unit',
+                    type        => 'is-born',
+                    baseuri     => 0);
 
 =cut
 
 sub serialize {
-    die "not implemented";
+    my $self    = shift;
+    my $headers = shift;
+    my %options = @_;
+
+    my $bu = $self->baseuri; # we may need it later
+
+    use Text::CSV;
+    my $csv = Text::CSV->new();
+
+    $csv->parse ($headers);
+    my @headers = $csv->fields;
+
+    my $content = ( join ",", @headers ) . "\n";
+    if (grep { $_ eq 'association-type' } @headers) {
+	my @as;
+	if ($options{type}) {
+	    @as = $self->match_forall (type => $self->tids ($options{type}));
+
+	} elsif ($options{specification}) {
+	    @as = $self->asserts (\ $options{specification});
+
+	} else {
+	    my $spec = \ '+associations';
+	    @as = $self->asserts ($spec);
+	}
+
+	foreach my $a ( @as ) {
+	    my @vs;
+	    foreach my $h (@headers) {
+		if ($h eq 'association-type') {
+		    push @vs, $a->[TM->TYPE];
+		} else {
+		    push @vs, TM::get_players ($self, $a, $self->tids ($h));
+		}
+	    }
+	    @vs = map { $_ =~ s/^$bu// ; $_ } @vs unless ($options{baseuri});
+	    
+	    $content .= (join ",", @vs) . "\n";
+	}
+
+    } else {
+	die "not yet implemented";
+    }
+    return $content;
 }
 
 =pod
@@ -217,6 +309,6 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 1;

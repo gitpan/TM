@@ -67,6 +67,8 @@ If the resource URI is C<io:stdout>, then nothing happens.
 
 If the resource URI is C<null:>, then nothing happens.
 
+[Since TM 1.53]: Any additional parameters are passed through to the underlying C<deserialize> method.
+
 =cut
 
 sub source_in {
@@ -78,7 +80,7 @@ sub source_in {
     return if $url eq 'null:';       # no syncing in from null
 
     my $content = _get_content ($url);
-    $self->deserialize ($content);
+    $self->deserialize ($content, @_);
 }
 
 our $STDIN; # here we store the STDIN content to be able to reuse it later
@@ -116,6 +118,8 @@ If the resource URI is C<null:>, nothing happens.
 
 If the resource URI is C<inline:..> nothing happens.
 
+[Since TM 1.53]: Any additional parameters are passed through to the underlying C<serialize> method.
+
 =cut
 
 sub source_out {
@@ -126,7 +130,7 @@ sub source_out {
     return if $url eq 'null:';    # no syncing out to null
     return if $url =~ /^inline:/; # no syncing out to inline
 
-    my $content = $self->serialize;
+    my $content = $self->serialize (@_);
     _put_content ($url, $content);
 }
 
@@ -159,15 +163,14 @@ L<TM>, L<TM::Synchronizable>
 
 =head1 AUTHOR INFORMATION
 
-Copyright 200[2-6], Robert Barta <drrho@cpan.org>, All rights reserved.
+Copyright 20(0[2-6]|10), Robert Barta <drrho@cpan.org>, All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION = 0.12;
-our $REVISION = '$Id: Serializable.pm,v 1.4 2006/11/26 22:01:32 rho Exp $';
+our $VERSION = 0.13;
 
 1;
 

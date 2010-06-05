@@ -14,7 +14,7 @@ nackertes_topic
 atop
 bn: just a topic
 
-btop (ctop)
+btop (ctop dtop)
 bn: something
 bn@ascope: some other thing
 
@@ -60,7 +60,7 @@ can_ok $tm, 'serialize';
 
 {
     my $content = $tm->serialize (version => '2.0');
-#warn $content;
+#    warn $content;
 
     use XML::LibXML;
     my $xp  = XML::LibXML->new();
@@ -68,6 +68,16 @@ can_ok $tm, 'serialize';
 #    use XML::LibXML::Dtd;
     my $dtd = XML::LibXML::Dtd->new("SOME // Public / ID / 1.0",'schemas/xtm20.dtd');
     ok ( $doc->validate($dtd), 'validates XTM 2.0');
+}
+
+{
+    my $content = $tm->serialize (version => '2.0');
+#    warn $content;exit;
+    $content =~ s{xmlns="http://www.topicmaps.org/xtm/"}{};  # get rid of the namespace
+
+    use XML::LibXML;
+    my $xp  = XML::LibXML->new();
+    my $doc = $xp->parse_string ($content);
 
     ok (eq_set ([
 		 map { "tm://$_" }
@@ -78,7 +88,7 @@ can_ok $tm, 'serialize';
 		 ]), 'topic ids');
     is ('2.0', $doc->findvalue ('/topicMap/@version'), 'version');
 
-    is ('#ctop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@href'), 'instance btop');
+    is ('#ctop#dtop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@href'), 'instances btop');
     
     ok ($doc->findnodes('/topicMap/association[itemIdentity/@href="068ce15eb7cf7cc4536d504c73a4c05c"]/type/topicRef[@href="#sucks-more-than"]'),
 	'found assoc');
@@ -145,6 +155,7 @@ can_ok $tm, 'serialize';
 		 map { $_->nodeValue } $doc->findnodes('/topicMap/topic[count(*) = 0]/@id')
 		 ],
 		[
+		 'dtop',
 		 'nackertes_topic',
 		 'nobody',
 		 'others',
@@ -185,6 +196,7 @@ can_ok $tm, 'serialize';
 
 {
     my $content = $tm->serialize (omit_trivia => 1, version => '2.0');
+    $content =~ s{xmlns="http://www.topicmaps.org/xtm/"}{};  # get rid of the namespace
 
     use XML::LibXML;
     my $xp  = XML::LibXML->new();
@@ -193,13 +205,14 @@ can_ok $tm, 'serialize';
     ok (eq_set ([
 		 map { "tm://$_" }
 		 (
-		 'nackertes_topic',
-		 'nobody',
-		 'others',
-		 'sometype',
-		 'sucker',
-		 'sucks-more-than',
-		 'winner',
+		  'dtop',
+		  'nackertes_topic',
+		  'nobody',
+		  'others',
+		  'sometype',
+		  'sucker',
+		  'sucks-more-than',
+		  'winner',
 		  map { $_->nodeValue } $doc->findnodes('/topicMap/topic/@id')
 		  )
 		 ],

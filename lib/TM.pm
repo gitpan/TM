@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.52';
+our $VERSION  = '1.53';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -3163,9 +3163,9 @@ sub are_subtypes {
 
 =item B<is_reified>
 
-I<$tid> = I<$tm>->is_reified (I<$assertion>)
+(I<$tid>) = I<$tm>->is_reified (I<$assertion>)
 
-I<$tid> = I<$tm>->is_reified (I<$url>)
+(I<$tid>) = I<$tm>->is_reified (I<$url>)
 
 In the case that the handed-in assertion is internally reified in the map, this method will return
 the internal identifier of the reifying toplet. Or C<undef> if there is none.
@@ -3181,9 +3181,21 @@ sub is_reified {
 
     my $mid2iid = $self->{mid2iid};                                                               # shortcut
     $a = $a->[TM->LID] if ref ($a) eq 'Assertion';                                                # for assertions we take the LID
-    return grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                           # brute force
-           grep { $mid2iid->{$_}->[TM->ADDRESS] }
-	   keys %{$mid2iid};
+    if (my $ri = $self->{rindex}) {                                                               # do we have an index of reifications?
+	if (my $tid = $ri->is_cached ($a)) {                                                      # always get back a list ref, undef for "not cached", [] for "none"
+	    return @$tid;
+	} else {
+	    my @tid = grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                # brute force, at most there is one
+	              grep { $mid2iid->{$_}->[TM->ADDRESS] }
+	              keys %{$mid2iid};
+	    $ri->do_cache ($a, \@tid);                                                            # but with subsequent store
+	    return @tid;
+	}
+    } else {
+	return grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                       # brute force
+	       grep { $mid2iid->{$_}->[TM->ADDRESS] }
+	       keys %{$mid2iid};
+    }
 }
 
 =pod
@@ -3312,10 +3324,6 @@ sub _prime_infrastructure {                                                     
 	@{ $h->{assertions} };
     }
 }
-
-
-
-our $REVISION = '$Id: TM.pm,v 1.45 2007/07/17 16:24:00 rho Exp $';
 
 
 1;

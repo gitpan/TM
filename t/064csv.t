@@ -21,7 +21,7 @@ unless ($warn) {
     select (STDERR); $| = 1;
 }
 
-use constant DONE => 0;
+use constant DONE => 1;
 #-------------------------------------------------------
 
 use_ok ('TM::Serializable::CSV');
@@ -56,11 +56,9 @@ rimsti,is-born,vienna
 			                                     brole => 'tm:bio-unit', bplayer => 'tm:remsti'), 1, 'assoc 1');
     is (scalar $tm->match (TM->FORALL, type => 'tm:is-born', arole => 'tm:location', aplayer => 'tm:vienna',
 			                                     brole => 'tm:bio-unit', bplayer => 'tm:rimsti'), 1, 'assoc 2');
-
-
 }
 
-if (1||DONE) {
+if (DONE) {
     my $content = q|name,id,location,homepage
 "Rumsti",rumsti,gold-coast,http://rumsti.com
 "Ramsti",ramsti,vienna,http://ramsti.com
@@ -132,7 +130,61 @@ if (1||DONE) {
 		   TM::Literal->URI,
 		   TM::Literal->URI
 		  ]), 'homepages types');
+}
 
+if (DONE) { # round trip
+    my $content = q|association-type,location,bio-unit
+is-born,gold-coast,rumsti
+is-born,vienna,ramsti
+|;
+
+    my $tm = new TM (baseuri=>"tm:");
+    Class::Trait->apply ($tm, "TM::Serializable::CSV");
+    $tm->deserialize ($content);
+
+    my $back = $tm->serialize ('association-type,location,bio-unit', type => 'tm:is-born', baseuri => 0);
+    ok (eq_set (_to_list ($content), _to_list ($back)), 'round trip');
+
+       $back = $tm->serialize ('association-type,location,bio-unit', type => 'is-born', baseuri => 0);
+    ok (eq_set (_to_list ($content), _to_list ($back)), 'round trip (auto tid)');
+
+       $back = $tm->serialize ('association-type,location,bio-unit', type => 'is-born', baseuri => 1);
+    like ($back, qr/tm:gold-coast/, 'round trip (baseuri)');
+
+       $back = $tm->serialize ('association-type,location,bio-unit');
+#    warn ">>>>$back<<";
+    my @back = split /\n/, $back;
+
+    is (3, (scalar grep { $_ eq 'isa' }              @back), 'back isa');
+    is (5, (scalar grep { $_ eq 'is-subclass-of' }   @back), 'back subclass');
+    is ($back[0], 'association-type,location,bio-unit', 'back header');
+    is (2, (scalar grep { $_ =~ /is-born/ }          @back), 'back is-born');
+
+    my $back2 = $tm->serialize ('association-type,location,bio-unit', specification => '+associations');
+    my @back2 = split /\n/, $back2;
+#    warn Dumper \@back2;
+    ok (eq_set (\@back, \@back2), '+associations is default');
+
+    $back2 = $tm->serialize ('association-type,location,bio-unit', specification => '+all -infrastructure');
+    @back2 = split /\n/, $back2;
+    is (0, (scalar grep { $_ eq 'isa' }              @back2), 'back no isa');
+    is (0, (scalar grep { $_ eq 'is-subclass-of' }   @back2), 'back no subclass');
+
+
+sub _to_list {
+    my $content = shift;
+
+    use Text::CSV;
+    my $csv = Text::CSV->new();
+
+    my @content;
+    foreach my $line (split /\n/, $content) {
+	$csv->parse ($line);
+	push @content, [ $csv->fields ];
+    }
+#    warn Dumper \@content;
+    return \@content;
+}
 
 }
 

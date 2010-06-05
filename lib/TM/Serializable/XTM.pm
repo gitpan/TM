@@ -521,9 +521,9 @@ sub _serialize_20 {
     my $writer = new XML::Writer(OUTPUT     => $ios,
                                  NAMESPACES => 1,
 				 PREFIX_MAP => {$xtm   => ''},
-#				 FORCED_NS_DECLS => [XTM_NS],
+				 FORCED_NS_DECLS => [XTM_NS],
 				 NEWLINES   => 1);
-    $writer->xmlDecl("iso-8859-1");
+    $writer->xmlDecl("utf-8");
     $writer->startTag("topicMap", 'version' => '2.0');
 
     my %chars = %{ _chars ($self) };
@@ -551,15 +551,19 @@ sub _serialize_20 {
 	    $writer->emptyTag("subjectIdentifier", "href" => $_);
 	} @{ $t->[TM->INDICATORS] };
 	#-- deserialize types
-	map {                                                                   # for all classes
-	    $writer->startTag("instanceOf");
-	    $writer->emptyTag("topicRef", 'href' => '#'.&$debase ($_));
-	    $writer->endTag;
+	{
+	    my @types = map  { $_->[TM->PLAYERS]->[0] }                                     # find the classes
+                        sort { $a->[TM->LID] cmp $b->[TM->LID] }                            # just for reproducability
+	                grep { $_->[TM->TYPE] eq 'isa' }                                    # only those with instance/class
+	                @chars;                                                             # all chars
+	    if (@types) {
+		$writer->startTag("instanceOf");
+		map {                                                                       # for all classes
+		    $writer->emptyTag("topicRef", 'href' => '#'.&$debase ($_));
+		} @types;
+		$writer->endTag;
+	    }
 	}
-            map  { $_->[TM->PLAYERS]->[0] }                                     # find the classes
-            sort { $a->[TM->LID] cmp $b->[TM->LID] }                            # just for reproducability
-	    grep { $_->[TM->TYPE] eq 'isa' }                                    # only those with instance/class
-	    @chars;                                                             # all chars
 	#-- deserialize names
 	map {                                                                   # find all names
 	    $writer->startTag("name", $reified{ $_->[TM->LID] } 

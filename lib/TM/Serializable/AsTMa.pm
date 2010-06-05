@@ -196,8 +196,10 @@ ASSOCS:
 
 		$thisa{type}      = &$debase ($type);
 		$thisa{scope}     = $scope;
-                my ($reifier)     = $self->is_reified ($m);
-                $thisa{reifiedby} = &$debase ($reifier) if $reifier;
+
+		if (my ($reifier)     = $self->is_reified ($m)) {
+		    $thisa{reifiedby} = &$debase ($reifier);
+		}
 
 		for my $role (@{$self->get_role_s($m)}) {
 		    my $rolename = &$debase ($role);
