@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               TM
-version:            1.53
+version:            1.54
 abstract:           Topic Maps, Base Class
 author:
     - Robert Barta <drrho@cpan.org>
@@ -12,6 +12,7 @@ build_requires:
     ExtUtils::MakeMaker:  0
 requires:
     BerkeleyDB:           0.26
+    Cache::Memcached:     ~
     Class::Trait:         0.22
     Config::General:      2.26
     IO::String:           1.08

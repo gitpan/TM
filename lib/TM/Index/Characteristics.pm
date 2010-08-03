@@ -50,8 +50,8 @@ sub populate {
     my $cache = $self->{cache};
 
     foreach my $a (values %{ $map->{assertions} }) {
-	next if $a->[TM->KIND] == TM->ASSOC; # these are not interestin here
-	my $mid = $a->[TM->PLAYERS]->[0]; # the thing is ALWAYS here
+	next if $a->[TM->KIND] == TM->ASSOC;                                     # these are not interesting here
+	my $mid = $a->[TM->PLAYERS]->[0];                                        # the thing is ALWAYS here
 	push @{ $cache->{"char.topic:1.$mid"} }, $a->[TM->LID];
     }
 }

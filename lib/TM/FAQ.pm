@@ -12,6 +12,46 @@ TM::FAQ - Topic Maps, Frequently Angering Quirks
 
 =item
 
+Q: I am using MLDBM as persistent store and the larger the map grows the MUCH slower insertions
+become.
+
+A: The way MLDBM works is that at every access (read or write) a large portion of the map is
+loaded via DBM into memory (and written back). One option is to avoid needpin-like modifications
+and to exploit the fact that many routines accept lists as parameters.
+
+So DO NOT do this:
+
+   for some changes {
+       $tm->assert ( one change );
+   }   
+
+But DO that:
+
+   $tm->assert (
+        map { one change $_ } some changes
+   );
+
+Similar with topic changes.
+
+Another option is to use a second, in-memory map for additions and then C<add> the modifications
+to the MLDBM based map:
+
+   my $updates = new TM;
+   $updates->internalize ....
+   $updates->assert ....
+
+   $dbm->add ($updates);
+
+=item
+
+Q: I am using MLDBM as persistent store and receive very strange errors which indicate that
+the map is empty.
+
+A: You could be dealing with a sitation that the DBM file already exists, but is completely
+empty (maybe because tmpnam created it). This has been fixed in v1.54.
+
+=item
+
 Q: How can I get rid of these annoying topics C<occurrence>, C<name>, etc. which I have not put into
 the map in the first place. They seem to be in each map I create.
 
@@ -67,14 +107,14 @@ and write a message onto STDERR. Another method is to use C<%trace 1> within the
 the parser should let you know what it could detect successfully.
 
 Line numbers cannot be used because the file will be massively reduced before the parser actually
-see it.
+sees it.
 
 =item
 
 Q: When serializing large maps, the serializer is REALLY slow. How to make it faster?
 
 A: The problem was that some serializers have to call the method C<is_reified> very often to
-find out whether there is a reification for the assertion. If this becomes a concern to you, simple
+find out whether there is a reification for the assertion. If this becomes a concern to you, simply
 add an index over reification (available since 1.53):
 
    use Class::Trait;
@@ -96,7 +136,6 @@ itself.
 
 =cut
 
-our $VERSION  = 0.6;
-our $REVISION = '$Id: FAQ.pm,v 1.1 2006/11/30 08:38:10 rho Exp $';
+our $VERSION  = 0.8;
 
 1;

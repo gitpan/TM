@@ -32,6 +32,7 @@ WriteMakefile(
 		  'YAML::Syck'        => undef,
 		  'Regexp::Common'    => undef,
 		  'Text::CSV'         => undef,
+		  'Cache::Memcached'  => undef,
 	      },
               NORECURS       => 1,
 );
@@ -88,13 +89,23 @@ manifesto:
 upload:
 	cpan-upload TM-\$(VERSION).tar.gz
 
-inject:
-	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
-	sudo mcpani --inject
-	echo "reload index" | cpan
+#inject:
+#	mcpani --add --module TM --authorid DRRHO --modversion \$(VERSION) --file TM-\$(VERSION).tar.gz
+#	sudo mcpani --inject
+#	echo "reload index" | cpan
+
+DEBVERSION=5
 
 debian:
-	(cd ; cd packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest --core-ok)
+	export DEB_BUILD_OPTIONS=nocheck
+	dh-make-perl --build --version=\$(VERSION)-\$(DEBVERSION) TM-\$(VERSION)
+
+inject: debian
+	scp libtm-perl_\$(VERSION)-\$(DEBVERSION)_all.deb packages:packages/
+	ssh packages reprepro -b /var/www/packages/data includedeb testing packages/libtm-perl_\$(VERSION)-\$(DEBVERSION)_all.deb
+
+#debian:
+#	(cd ; cd packages; rm -rf TM* ; dh-make-perl --cpan-mirror file:/usr/local/share/minicpan --build --cpan TM --notest --core-ok)
 
 MAKE
 }

@@ -338,9 +338,17 @@ sub _Error {
     die "Syntax error: Found ".$_[0]->YYCurtok." but expected ".join (' or ', $_[0]->YYExpect);
 }
 
+use constant CHUNK_SIZE => 32000;
+
 sub _Lexer {
     my $parser = shift;
-    my $refINPUT = \$parser->YYData->{INPUT};
+    my $yydata = $parser->YYData;
+
+    if (length ($yydata->{INPUT}) < 1024 && $yydata->{OFFSET} < $yydata->{TOTAL}) { 
+	$yydata->{INPUT}  .= substr ($yydata->{RESERVE}, $yydata->{OFFSET}, CHUNK_SIZE);
+	$yydata->{OFFSET} += CHUNK_SIZE;
+    }
+    my $refINPUT = \$yydata->{INPUT};
 
     my $aux;                                                                           # need this to store identifier/uri prefix for optimization
 
@@ -411,21 +419,18 @@ sub _Lexer {
 }
 
 sub parse {
-    my $self               = shift;
-    $self->YYData->{INPUT} = shift;
+    my $self  = shift;
+    $_        = shift;
 
-#warn "parse";
-    $self->YYData->{INPUT} =~ s/\r\n/\n/sg;
-    $self->YYData->{INPUT} =~ s/\r/\n/sg;
-    $self->YYData->{INPUT} =~ s/(?<!\\)\\\n//sg;       # a \, but not a \\
-    $self->YYData->{INPUT} =~ s/ \~ /\n/g;             # replace _~_ with \n
-    $self->YYData->{INPUT} =~ s/ \~\~ / \~ /g;         # stuffed ~~ cleanout
-    $self->YYData->{INPUT} =~ s/^\#.*?\n/\n/mg;        # # at the start of every line -> gone
-    $self->YYData->{INPUT} =~ s/\s\#.*?\n/\n/mg;       # anything which starts with <blank># -> gone
-    $self->YYData->{INPUT} =~ s/(?<!\\)\\\#/\#/g;      # but # can be escaped with a single \, as in \#
-    $self->YYData->{INPUT} =~ s/\n\n\n+/\n\n/sg;       # canonicalize line break (line count is gone already)
-#warn "XXXX ".$self->YYData->{INPUT};
-
+    s/\r\n/\n/sg;
+    s/\r/\n/sg;
+    s/(?<!\\)\\\n//sg;       						# a \, but not a \\
+    s/ \~ /\n/g;             						# replace _~_ with \n
+    s/ \~\~ / \~ /g;         						# stuffed ~~ cleanout
+    s/^\#.*?\n/\n/mg;        						# # at the start of every line -> gone
+    s/\s\#.*?\n/\n/mg;       						# anything which starts with <blank># -> gone
+    s/(?<!\\)\\\#/\#/g;      						# but # can be escaped with a single \, as in \#
+    s/\n\n\n+/\n\n/sg;       						# canonicalize line break (line count is gone already)
 
     # we not only capture what is said EXPLICITELY in the map, we also collect implicit knowledge
     # we could add this immediately into the map at parsing, but it would slow the process down and
@@ -435,9 +440,13 @@ sub parse {
 	'isa-scope'  => undef,                                          # just let them spring into existence
 	'subclasses' => undef
 	};
-#    $self->{USER}->{topic_count} = 0;
                                                                         # clone a pseudo map into which to store templates as assocs temporarily
     $self->{USER}->{templates} = new TM (baseuri => $self->{USER}->{store}->baseuri);
+
+    $self->YYData->{INPUT}   = '';
+    $self->YYData->{RESERVE} = $_;                                      # here we park the whole string
+    $self->YYData->{TOTAL}   = length ($_);                             # this is how much we have in the reserve
+    $self->YYData->{OFFSET}  = 0;                                       # and we start at index 0
 
     eval {
 	$self->YYParse ( yylex => \&_Lexer, yyerror => \&_Error );
@@ -446,8 +455,7 @@ sub parse {
     } elsif ($@) {
 	die $@;                                                         # otherwise re-raise the exception
     }
-#warn "in parse end";
-#warn "in parse end ".Dumper $self->{USER}->{implicits};
+
 
     { # resolving implicit stuff
 	my $implicits = $self->{USER}->{implicits};

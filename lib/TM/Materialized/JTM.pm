@@ -7,13 +7,13 @@ use TM::Materialized::Stream;
 use base qw (TM::Materialized::Stream);
 
 use vars qw($VERSION);
-$VERSION = qw(('$Revision: 1.1 $'))[1];
+$VERSION = qw(('$Revision: 1.2 $'))[1];
 
 =pod
 
 =head1 NAME
 
-TM::Materialized::JTM - Topic Maps trait for JSON Topic Map instances.
+TM::Materialized::JTM - Topic Maps, trait for JSON Topic Map instances.
 
 =head1 SYNOPSIS
 

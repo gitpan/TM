@@ -9,13 +9,13 @@ use YAML::Syck;
 use TM::Literal;
 
 use vars qw($VERSION);
-$VERSION = qw(('$Revision: 1.1 $'))[1];
+$VERSION = qw(('$Revision: 1.2 $'))[1];
 
 =pod
 
 =head1 NAME
 
-TM::Serializable::JTM - Topic Maps trait for reading/writing JSON Topic Map instances.
+TM::Serializable::JTM - Topic Maps, trait for reading/writing JSON Topic Map instances.
 
 =head1 SYNOPSIS
 

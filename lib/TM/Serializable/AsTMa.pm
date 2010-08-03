@@ -1,5 +1,8 @@
 package TM::Serializable::AsTMa;
 
+use strict;
+use warnings;
+
 use Class::Trait 'base';
 use Class::Trait 'TM::Serializable';
 
@@ -138,6 +141,11 @@ This option suppresses the output of infrastructure toplets.
 
 If set, no mentioning of where the content came from is added.
 
+=item C<trace> (default: C<undef>)
+
+[v1.54] Switches on I<tracing> in the generated AsTMa code. The trace level can be controlled via the value of
+this option.
+
 =back
 
 =cut
@@ -167,6 +175,10 @@ sub _serializeAsTMa1 {
 
     my ($THING, $US, $CLASS, $INSTANCE, $VALUE, $ISA, $NAME, $OCCURRENCE) =
 	('thing', 'us', 'class', 'instance', 'value', 'isa', 'name', 'occurrence');
+
+#    my ($PLAYERS, $ROLES, $URI, $LID, $ADDRESS, $NAME, $OCC, $ASSOC, $SCOPE, $TYPE, $KIND, $INDICATORS) =  # sadly, this makes a difference in speed
+#	(TM->PLAYERS, TM->ROLES, TM::Literal->URI, TM->LID, TM->ADDRESS, TM->NAME, TM->OCC, TM->ASSOC, TM->SCOPE, TM->TYPE, TM->KIND, TM->INDICATORS);
+
     my $baseuri = $self->{baseuri};
 
     my $debase = sub {
@@ -182,12 +194,12 @@ ASSOCS:
 	my $type  = $m->[TM->TYPE];
 	my $scope = $m->[TM->SCOPE];
 	my $lid   = $m->[TM->LID];
+
 	$scope = $US eq $scope ? undef : &$debase ($scope);
 
 	if ($kind == TM->ASSOC) {
 	    if ( $type eq $ISA ) {
-		my $p = &$debase ( ($self->get_x_players($m,$CLASS))[0]);
-		my $c = &$debase ( ($self->get_x_players($m,$INSTANCE))[0]);
+		my ($p, $c) = map { &$debase ( $_) } @{ $m->[TM->PLAYERS] };
 		push @{$topics{$p}->{children}}, $c;
 		push @{$topics{$c}->{parents}},  $p;
 
@@ -201,42 +213,37 @@ ASSOCS:
 		    $thisa{reifiedby} = &$debase ($reifier);
 		}
 
-		for my $role (@{$self->get_role_s($m)}) {
-		    my $rolename = &$debase ($role);
-		    $thisa{roles}->{$rolename}=[];                                    # must prime the array...
-		    
-		    for my $player ($self->get_x_players($m, $role)) {
-			push @{$thisa{roles}->{$rolename}}, &$debase ($player);
+		{
+		    my ($ps, $rs) = ($m->[TM->PLAYERS], $m->[TM->ROLES]);
+		    for (my $i = 0; $i < @$ps; $i++) {
+			push @{  $thisa{roles}->{ &$debase ($rs->[$i]) }  }, &$debase ($ps->[$i]);
 		    }
 		}
+
 		$assocs{$lid} = \%thisa;
 	    }
 
 	} elsif ($kind == TM->NAME) {
-	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
+	    my ($thing, $value) = @{ $m->[TM->PLAYERS] };
+	    $thing = &$debase ($thing);
 	    
 	    $TM::log->logdie (scalar __PACKAGE__ .": astma 1.x does not offer reification of basenames (topic $thing)\n")
 		if $self->is_reified ($m);
-	    
-	    for my $p ($self->get_x_players($m, $VALUE)) {
-		push @{$topics{$thing}->{bn}}, [ $p->[0], $type eq $NAME ? undef : &$debase($type), $scope ];
-	    }
 
+	    push @{$topics{$thing}->{bn}}, [ $value->[0], $type eq $NAME ? undef : &$debase($type), $scope ];
+	    
 	} elsif ($kind == TM->OCC) {
-	    my $thing = &$debase (($self->get_x_players($m,$THING))[0]);
+	    my ($thing, $value) = @{ $m->[TM->PLAYERS] };
+	    $thing = &$debase ($thing);
 	    
 	    $TM::log->logdie (scalar __PACKAGE__ .": astma 1.x does not offer reification of occurrences (topic $thing)\n")
 		if $self->is_reified ($m);
-	    
-	    for my $p ($self->get_x_players($m,$VALUE)) { 
-		my $key= $p->[1] ne TM::Literal->URI ? "in" : "oc";
-		push @{$topics{$thing}->{$key}}, [ $p->[0], $type eq $OCCURRENCE ? undef : &$debase($type), $scope ];
-	    }
+
+	    my $key= $value->[1] eq TM::Literal->URI ? "oc" : "in";
+	    push @{$topics{$thing}->{ $key }}, [ $value->[0], $type eq $OCCURRENCE ? undef : &$debase($type), $scope ];
 	}
     }
-    
 ##warn Dumper \%topics;
-
     foreach my $tt ($self->toplets (\ '+all -infrastructure') ) {                     # then from the topics
 	my $t = $tt->[TM->LID];
 	my $tn = &$debase ($t);
@@ -247,12 +254,11 @@ ASSOCS:
 	    if ($self->variants ($t));
 	
         $topics{$tn}->{sins} = $tt->[TM->INDICATORS] if @{ $tt->[TM->INDICATORS] } > 0;
-	if ($tt->[TM->ADDRESS] and !$self->retrieve($tt->[TM->ADDRESS]))
-	{
+	if ($tt->[TM->ADDRESS] and !$self->retrieve($tt->[TM->ADDRESS])) {
 	    # external target? attach as active 'reifies' to local topic
 	    # target is an internal topic? attach as passive 'is-reified-by' to the target,
 	    # to avoid the ugly/base-specific 'x reifies tm://y'
-	    my $target=$tt->[TM->ADDRESS];
+	    my $target = $tt->[TM->ADDRESS];
 	    if ($self->toplet($target))
 	    {
 		$topics{&$debase($target)}->{raddr}=$tn;
@@ -268,6 +274,8 @@ ASSOCS:
     push @result, "# originally from ".($self->{url}=~/^inline:/?"inline":$self->{url}) unless $opts{omit_provenance};
     push @result, "# base $baseuri";
     push @result, "";
+
+    push @result, "%trace ".$opts{trace} if $opts{trace};
 
 TOPICS:
     for my $t (sort keys %topics) {
@@ -286,20 +294,18 @@ TOPICS:
         .($tn->{addr}     ? " reifies ". $tn->{addr}              : "")                      # optionally the subject address
 	.($tn->{raddr}?(" is-reified-by ".$tn->{raddr}):""); # subject address, passive.
 	
-	for my $k (qw(bn in oc)) {
-	    if ($tn->{$k}) {
-		push @result, 
+	foreach my $k (qw(bn in oc)) {
+	    push @result, 
 		map {  $k.($_->[2]?(" @ ".$_->[2]):"")
-			   .($_->[1]?(" (".$_->[1].")"):"").": ". _multiline ($_->[0]) } 
+			 .($_->[1]?(" (".$_->[1].")"):"")
+                         .": ". _multiline ($_->[0]) } 
 		(@{$tn->{$k}});
-	    }
 	}
 sub _multiline {
-    my $s = shift;
-    if ($s =~ /\n/s) {
-	return "<<<\n$s\n<<<";
+    if ($_[0] =~ /\n/s) {
+	return "<<<\n$_[0]\n<<<";
     } else {
-	return $s;
+	return $_[0];
     }
 }
 
@@ -308,7 +314,6 @@ sub _multiline {
 	}
 	push @result,"";                                                                     # will end up as empty line
     }
-
     map {
 	my $a = $_;
 	push @result,"(".$a->{type}.")"
@@ -321,10 +326,9 @@ sub _multiline {
 	} (sort keys %{$a->{roles}});
 	push @result,"";
     }
-    map { $assocs{ $_ } }
-    sort { $assocs{$b}->{type} cmp $assocs{$a}->{type} } 
-    keys %assocs;
-    
+    map       { $assocs{ $_ } }
+         sort { $assocs{$b}->{type} cmp $assocs{$a}->{type} } 
+         keys %assocs;
     return join("\n",@result)."\n\n";
 }
 }

@@ -1,10 +1,12 @@
 package TM::Index;
 
+use Data::Dumper;
+
 =pod
 
 =head1 NAME
 
-TM::Index - Topic Maps, Generic Indexing support
+TM::Index - Topic Maps, generic indexing support
 
 =head2 SYNOPSIS
 
@@ -15,7 +17,7 @@ TM::Index - Topic Maps, Generic Indexing support
 
 One performance bottleneck when using the L<TM> package or any of its subclasses are the low-level
 query functions C<match_forall> and C<match_exists>. They are looking for assertions of a certain
-nature. Almost all high-level functions, and certainly L<TM::QL> use these.
+nature. Almost all high-level functions, and certainly L<TM::TS> (TempleScript) use these.
 
 This package (actually more its subclasses) provides an indexing mechanism to speed up the
 C<match_*> functions by caching some results in a very specific way. When an index is attached to a
@@ -116,16 +118,16 @@ sub new {
     $TM::log->logdie (scalar __PACKAGE__.": first parameter must be an instance of TM") unless ref ($tm) && $tm->isa ('TM');
 
     my %options = @_;
-    $options{closed} ||= 0;  # we assume that this is 'open' and not 'closed'
-    $options{cache}  ||= {};
+    $options{closed} //= 0;                          # we assume that this is 'open' and not 'closed'
+    $options{cache}  //= {};
+    $options{loose}  //= 0;                          # unless specified otherwise, we will couple tightly with the map (cyclic reference!)
 
-    my $self = bless { 
-		      %options,
-		      map       => $tm
-		  }, $class;
+    my $self = bless \ %options, $class;             # create the object
+    $self->{map} = $tm unless $self->{loose};        # here we avoid to create a cyclic dependency (bites with MLDBM backed TMs)
 
-    $self->attach;
-    $self->populate if $self->{closed};
+    $self->attach ($tm);
+#warn Dumper $self;
+    $self->populate ($tm) if $self->{closed};
     return $self;
 }
 
@@ -149,11 +151,14 @@ This method attaches the index to the configured map. Normally you will not call
 attachment is implicitly done at constructor time. The index itself is not destroyed; it is just
 deactivated to be used together with the map.
 
+@@ optional TM
+
 =cut
 
 sub attach {
     my $self = shift;
-    push @{ $self->{map}->{indices} }, $self;      # append to the list
+    my $tm   = shift || $self->{map};
+    push @{ $tm->{indices} }, $self;      # append to the list
 }
 
 =pod
@@ -168,10 +173,11 @@ Makes the index detach safely from the map. The map is not harmed in this proces
 
 sub detach {
     my $self = shift;
-    $self->{map}->{indices} = _del ($self->{map}->{indices}, $self);
-    $self->{map}->{indices} = undef if (  $self->{map}
-                                    &&    $self->{map}->{indices} 
-                                    && @{ $self->{map}->{indices} } == 0); # make it undef, allows for a faster test
+    my $tm   = shift || $self->{map};
+    $tm->{indices} = _del ($tm->{indices}, $self);
+    $tm->{indices} = undef if (  $tm
+			   &&    $tm->{indices} 
+                           && @{ $tm->{indices} } == 0); # make it undef, allows for a faster test
     $self->{map}            = undef;
 
 sub _del {         # gets rid of a particular entry in a list
@@ -234,7 +240,7 @@ Given a key and a list reference, it will store the list reference there in the 
 
 sub do_cache {
     my $self = shift;
-    my $key = shift;
+    my $key  = shift;
     my $data = shift;
     return $self->{cache}->{$key} = $data;
 }
@@ -256,7 +262,7 @@ itself.
 
 =cut
 
-our $VERSION = 0.2;
+our $VERSION = 0.5;
 
 1;
 

@@ -17,6 +17,7 @@ t/010infrastructure.t
 t/011manipulate.t
 t/012analysis.t
 t/013index.t
+t/015indexable.t
 t/014insane.t
 t/021ctmdeserialize.t
 t/031synchronize.t
@@ -33,6 +34,8 @@ t/051mldbm.t
 t/052mldbm2.t
 t/054ltm.t
 t/055jtm.t
+t/056bdb.t
+t/057memcached.t
 t/061xtmserialize.t
 t/061xtmdeserialize.t
 t/062xtmserialize.t
@@ -63,6 +66,8 @@ lib/TM/Index.pm
 lib/TM/Index/Characteristics.pm
 lib/TM/Index/Match.pm
 lib/TM/Index/Reified.pm
+lib/TM/Index/Taxonomy.pm
+lib/TM/IndexAble.pm
 lib/TM/Literal.pm
 lib/TM/LTM/Parser.pm
 lib/TM/LTM/CParser.pm
@@ -84,6 +89,8 @@ lib/TM/FAQ.pm
 lib/TM/PSI.pm
 lib/TM/ResourceAble.pm
 lib/TM/ResourceAble/MLDBM.pm
+lib/TM/ResourceAble/BDB.pm
+lib/TM/ResourceAble/MemCached.pm
 lib/TM/Serializable/AsTMa.pm
 lib/TM/Serializable/CTM.pm
 lib/TM/Serializable/Dumper.pm
@@ -118,3 +125,7 @@ examples/05_traits.pl
 examples/old_testament.atm
 examples/06_diff.pl
 examples/08_tmdm.pl
+examples/09_opera.pl
+examples/10_mldbm.t
+examples/11_tmql.pl
+examples/12_index.pl

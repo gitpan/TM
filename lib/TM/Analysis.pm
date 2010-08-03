@@ -196,9 +196,7 @@ it under the same terms as Perl itself.
 
 =cut
 
-our $VERSION  = '0.10';
-our $REVISION = '$Id: Analysis.pm,v 1.7 2007/07/28 16:41:13 rho Exp $';
-
+our $VERSION  = '0.91';
 
 1;
 

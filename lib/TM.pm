@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.53';
+our $VERSION  = '1.54';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -534,7 +534,7 @@ sub _find_free {
 	      }
 	  }
       }
-#warn "after TM->ADDRESS on '$this' ";#.Dumper $mid2iid;
+#warn "after 1 on '$this' ";#.Dumper $mid2iid;
   }
 #-- based on TNC ---------------------------------------------------------------------------------------------
    if ($tnc) {
@@ -699,7 +699,6 @@ sub add {
 		$mid2iid->{$k2} = $v;                                          # ...add what the other has
 	    }
 	}
-
 #warn Dumper \%changes;
 	my $changed = _relabel (\%changes, $baseuri, values %{ $_->{assertions} } );
 #warn Dumper $changed;
@@ -1372,8 +1371,9 @@ sub internalize {
 		$kentry->[TM->ADDRESS] = $v;                 
 	    }
 	}
+	$mid2iid->{$k} = $kentry;                                  # necessary if mid2iid is tied itself
     }
-    $self->{mid2iid}  = $mid2iid; #!! needed for Berkeley DBM recognize changes on deeper levels
+    $self->{mid2iid}  = $mid2iid;                                  #!! needed for Berkeley DBM recognize changes on deeper levels
     $self->{last_mod} = Time::HiRes::time;
     return wantarray ? @mids : $mids[0];
 }
@@ -1483,7 +1483,7 @@ sub toplets {
                 }
             }
             $log->logdie (scalar __PACKAGE__ .": unhandled specification '$spec' left") if $spec =~ /\S/;
-            return map { $self->{mid2iid}->{$_} } @$l;
+            return map { $mid2iid->{$_} } @$l;
 	} else {
 	    my $m = $mid2iid;
 	    return @$m{$self->tids (@_)};                        # make all these fu**ing identifiers map-absolute
@@ -1577,8 +1577,7 @@ sub tids {
 	} elsif (my $kk = $mid2iid->{$k}) {                            # we already have something which looks like a tid
 	    push @ks, $kk->[TM->LID];                                  # give back the 'canonical' one
 
-	} elsif ($k =~ /^(\w+:|[A-F0-9]{32}$)/i) {                     # must be some other uri or assoc id, must be subject address
-
+	} elsif ($k =~ /(^\w+:)|(^[A-F0-9]{32}$)/i) {                  # must be some other uri or assoc id, must be subject address
 	    no warnings;
 	    my @k2 = grep ($mid2iid->{$_}->[TM->ADDRESS] eq $k, keys %{$mid2iid});
 	    push @ks,  @k2 ? $mid2iid->{$k2[0]}->[TM->LID] : undef;    # we take the first we find
@@ -2121,7 +2120,20 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are subclasses of a given toplet',
-			    params => { 'type' => 'is-subclass-of', subclass => 'which toplet should be the superclass'}
+			    params => { 'type' => 'is-subclass-of', subclass => 'which toplet should be the superclass'},
+			    key => sub {
+				my $self = shift;
+				my $a    = shift;
+				my ($ISSC, $SUBCLASS) = ('is-subclass-of', 'subclass');
+				return "subclass.type:". ($self->get_x_players   ($a, $SUBCLASS))[0] . '.' . $ISSC;
+			    },
+			    enum => sub {
+				my $self = shift;
+				my ($ISSC) = ('is-subclass-of');
+				return
+ 				    grep { $_->[TYPE] eq $ISSC }
+				    values %{$self->{assertions}};
+			    }
 			},
 			
 			'superclass.type' => {
@@ -2136,7 +2148,20 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are superclasses of a given toplet',
-			    params => { 'type' => 'is-subclass-of', superclass => 'which toplet should be the subclass'}
+			    params => { 'type' => 'is-subclass-of', superclass => 'which toplet should be the subclass'},
+			    key => sub {
+				my $self = shift;
+				my $a    = shift;
+				my ($ISSC, $SUPERCLASS) = ('is-subclass-of', 'superclass');
+				return "superclass.type:". ($self->get_x_players   ($a, $SUPERCLASS))[0] . '.' . $ISSC;
+			    },
+			    enum => sub {
+				my $self = shift;
+				my ($ISSC) = ('is-subclass-of');
+				return
+ 				    grep { $_->[TYPE] eq $ISSC }
+				    values %{$self->{assertions}};
+			    }
 			},
 
 			'class.type' => {
@@ -2151,7 +2176,20 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are instances of a given toplet',
-			    params => { type => 'isa', class => 'which toplet should be the class'}
+			    params => { type => 'isa', class => 'which toplet should be the class'},
+			    key => sub {
+				my $self = shift;
+				my $a    = shift;
+				my ($ISA, $CLASS) = ('isa', 'class');
+				return "class.type:". ($self->get_x_players   ($a, $CLASS))[0] . '.' . $ISA;
+			    },
+			    enum => sub {
+				my $self = shift;
+				my ($ISA) = ('isa');
+				return
+ 				    grep { $_->[TYPE] eq $ISA }
+				    values %{$self->{assertions}};
+			    }
 			},
 
 			'instance.type' => {
@@ -2166,7 +2204,20 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'returns all assertions where there are classes of a given toplet',
-			    params => { type => 'isa', instance => 'which toplet should be the instance'}
+			    params => { type => 'isa', instance => 'which toplet should be the instance'},
+			    key => sub {
+				my $self = shift;
+				my $a    = shift;
+				my ($ISA, $INSTANCE) = ('isa', 'instance');
+				return "instance.type:". ($self->get_x_players   ($a, $INSTANCE))[0] . '.' . $ISA;
+			    },
+			    enum => sub {
+				my $self = shift;
+				my ($ISA) = ('isa');
+				return
+ 				    grep { $_->[TYPE] eq $ISA }
+				    values %{$self->{assertions}};
+			    }
 			},
 #--
 			'char.irole' => {
@@ -2194,7 +2245,18 @@ our %forall_handlers = (
 				    values %{$self->{assertions}});
 			    },
 			    desc => 'return all assertions which are characteristics for a given toplet',
-			    params => { char => '1', topic => 'the toplet for which characteristics are sought'}
+			    params => { char => '1', topic => 'the toplet for which characteristics are sought'},
+			    key => sub {
+				my $self = shift;
+				my $a    = shift;
+				return "char.topic:1.". $a->[PLAYERS]->[0];
+			    },
+			    enum => sub {
+				my $self = shift;
+				return
+				    grep { $_->[KIND] != ASSOC }
+				    values %{ $self->{assertions} };
+			    }
 			},
 
 			'char.value' => {
@@ -2208,7 +2270,69 @@ our %forall_handlers = (
 				    values %{$self->{assertions}});
 			    },
 			    desc => 'return all assertions which are characteristics for some topic of a given value',
-			    params => { char => '1', value => 'the value for which all characteristics are sought'}
+			    params => { char => '1', value => 'the value for which all characteristics are sought'},
+			    key => sub {
+                                my $self = shift;
+                                my $a    = shift;
+                                return "char.value:1.". $a->[PLAYERS]->[1]->[0];
+                            },
+                            enum => sub {
+                                my $self = shift;
+                                return
+                                    grep { $_->[KIND] != ASSOC }
+				    values %{ $self->{assertions} };
+                            }
+			},
+
+			'char.type' => {
+			    code => sub {
+				my $self   = shift;
+				my $type   = $_[1];
+				return
+				    grep { $self->is_subclass ($_->[TYPE], $type ) }
+				    grep { $_->[KIND] != ASSOC }
+				    values %{$self->{assertions}};
+			    },
+			    desc => 'return all assertions which are characteristics for some given type',
+			    params => { char => '1', type => 'the characteristic type'},
+			    key => sub {
+                                my $self = shift;
+                                my $a    = shift;
+                                return "char.type:1.". $a->[TYPE];
+                            },
+                            enum => sub {
+                                my $self = shift;
+                                return
+                                    grep { $_->[KIND] != ASSOC }
+				    values %{ $self->{assertions} };
+                            }
+			},
+
+			'char.type.value' => {
+			    code => sub {
+				my $self   = shift;
+				my $type   = $_[1];
+				my $value  = $_[2];
+				return
+				    grep { $self->is_subclass ($_->[TYPE], $type ) }
+				    grep (NAME <= $_->[KIND] && $_->[KIND] <= OCC &&
+					  $_->[PLAYERS]->[1]->[0] eq $value->[0] &&                       # second role is always the value
+					  $_->[PLAYERS]->[1]->[1] eq $value->[1],                         # test value AND type
+				    values %{$self->{assertions}});
+			    },
+			    desc => 'return all assertions which are characteristics for some topic of a given value for some given type',
+			    params => { char => '1', type => 'the characteristic type', value => 'the value for which all characteristics are sought'},
+			    key => sub {
+                                my $self = shift;
+                                my $a    = shift;
+                                return "char.type.value:1.". $a->[TYPE] . '.' . $a->[PLAYERS]->[1]->[0];
+                            },
+                            enum => sub {
+                                my $self = shift;
+                                return
+                                    grep { $_->[KIND] != ASSOC }
+				    values %{ $self->{assertions} };
+                            }
 			},
 
 			'char.topic.type' => {
@@ -2223,7 +2347,18 @@ our %forall_handlers = (
 				    values %{$self->{assertions}}));
 			    },
 			    desc => 'return all assertions which are a characteristic of a given type for a given topic',
-			    params => { char => '1', topic => 'the toplet for which these characteristics are sought', type => 'type of characteristics' }
+			    params => { char => '1', topic => 'the toplet for which these characteristics are sought', type => 'type of characteristic' },
+			    key => sub {
+                                my $self = shift;
+                                my $a    = shift;
+                                return "char.topic.type:1.". $a->[PLAYERS]->[0] . '.' . $a->[TYPE] ;
+                            },
+                            enum => sub {
+                                my $self = shift;
+                                return
+                                    grep { $_->[KIND] != ASSOC }
+				    values %{ $self->{assertions} };
+                            }
 			},
 
 			'lid' => {
@@ -2824,9 +2959,6 @@ superclass is a $TM::PSI::THING or if subclass and superclass are the same (refl
 
 =cut
 
-#use Memoize;
-#memoize('is_subclass');
-
 sub is_subclass {
     my $self  = shift;
     my $class = shift;
@@ -3035,7 +3167,7 @@ Duplicates are suppressed.
 sub instances {
     my $self = shift;
 
-    warn Dumper [ caller ] unless @_;
+#    warn Dumper [ caller ] unless @_;
 
     my ($ISA, $THING) = ('isa', 'thing');
 
@@ -3175,27 +3307,20 @@ the internal identifier of the reifying toplet. Or C<undef> if there is none.
 
 =cut
 
-sub is_reified {
+sub _is_reified {
     my $self = shift;
     my $a    = shift;
 
     my $mid2iid = $self->{mid2iid};                                                               # shortcut
     $a = $a->[TM->LID] if ref ($a) eq 'Assertion';                                                # for assertions we take the LID
-    if (my $ri = $self->{rindex}) {                                                               # do we have an index of reifications?
-	if (my $tid = $ri->is_cached ($a)) {                                                      # always get back a list ref, undef for "not cached", [] for "none"
-	    return @$tid;
-	} else {
-	    my @tid = grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                # brute force, at most there is one
-	              grep { $mid2iid->{$_}->[TM->ADDRESS] }
-	              keys %{$mid2iid};
-	    $ri->do_cache ($a, \@tid);                                                            # but with subsequent store
-	    return @tid;
-	}
-    } else {
-	return grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                       # brute force
-	       grep { $mid2iid->{$_}->[TM->ADDRESS] }
-	       keys %{$mid2iid};
-    }
+
+    return grep { $mid2iid->{$_}->[TM->ADDRESS] eq $a }                                           # brute force
+           grep { $mid2iid->{$_}->[TM->ADDRESS] }
+           keys %{$mid2iid};
+}
+
+sub is_reified {
+    return _is_reified (@_);
 }
 
 =pod
@@ -3334,13 +3459,13 @@ __END__
 		$mid2iid->{$k2} = $v;                                          # ...add what the other has
 	    } else {                                                           # same internal identifier? danger lurking...
 #warn Dumper $v, $mid2iid->{$k};
-		if (!$v->[TM->ADDRESS]) {                                      # new had undef there, leave what we have
-		} elsif (!$mid2iid->{$k2}->[TM->ADDRESS]) {                    # old had nothing, =>
-		    $mid2iid->{$k2}->[TM->ADDRESS] = $v->[TM->ADDRESS];        # copy it
-		} elsif ($mid2iid->{$k}->[TM->ADDRESS] eq $v->[TM->ADDRESS]) { # old had something and new has something and they are the same
+		if (!$v->[1]) {                                      # new had undef there, leave what we have
+		} elsif (!$mid2iid->{$k2}->[1]) {                    # old had nothing, =>
+		    $mid2iid->{$k2}->[1] = $v->[1];        # copy it
+		} elsif ($mid2iid->{$k}->[1] eq $v->[1]) { # old had something and new has something and they are the same
 		    # leave it
 		} else {                                   # not good, subject addresses differ
-		    $log->logdie ("using the same internal identifier (including baseuri) '$k', but having different subject addresses (".$mid2iid->{$k}->[TM->ADDRESS].",".$v->[TM->ADDRESS].") is just weird");
+		    $log->logdie ("using the same internal identifier (including baseuri) '$k', but having different subject addresses (".$mid2iid->{$k}->[1].",".$v->[TM->ADDRESS].") is just weird");
 		}
 		push @{$mid2iid->{$k}->[TM->INDICATORS]}, 
 		     @{$v->[TM->INDICATORS]};              # simply add all the subject indication stuff

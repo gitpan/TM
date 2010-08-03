@@ -39,9 +39,14 @@ This package just implements L<TM> with a BerkeleyDB store. Unlike L<TM::Materia
 module does not need explicit synchronisation with the external resource (the DBM file here).  It
 ties content-wise with the DBM file at constructor time and unties at DESTROY time.
 
-The advantage of this storage form is that there is little memory usage. Only those fractions of the
-map are loaded which are actually needed. If one has very intense interactions with the map (as a
-query processor has), then this storage technique is not optimal.
+This implementation technique is not so memory-efficient as I had thought. Whenever an assertion
+or a toplet is referenced, the whole block of toplets, resp. assertions, is loaded from the DB database.
+For small maps this is really fast, but it can become a drag for larger maps. See L<TM::ResourceAble::BDB>
+for a more efficient solution.
+
+B<NOTE>: Be careful to use this together with L<TM::Index::*>. The indices will be held as part of the
+map, and so will be stored along side. If you heavily use the map, this can result in many swapin/swapouts.
+Better to look at L<TM::IndexAble> for that matter.
 
 =head1 INTERFACE
 
@@ -69,7 +74,7 @@ sub new {
     my %self;                                                                       # forget about the object itself, make a new one
 
 #warn "file exists $file?";
-    if (-e $file) {                                                                 # file does exist already
+    if (-e $file && -s $file) {                                                     # file does exist already (and is not empty)
 	tie %self, 'MLDBM', -Filename => $file
 	    or $TM::log->logdie ( "Cannot create DBM file '$file: $!");
                                                                                     # oh, we are done now
@@ -80,6 +85,7 @@ sub new {
 	    or $TM::log->logdie ( "Cannot create DBM file '$file: $!");
 
 	foreach (keys %$whatever) {                                                 # clone all components
+	    next if /indices|rindex/;                                               # we do not want these
 	    $self{$_} = $whatever->{$_};                                            # this makes sure that Berkeley'ed tie picks it up
 	}
     }
@@ -106,8 +112,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.02';
-our $REVISION = '$Id: MLDBM2.pm,v 1.3 2006/11/13 08:02:34 rho Exp $';
+our $VERSION  = '0.03';
 
 1;
 

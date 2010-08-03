@@ -1,6 +1,6 @@
 package TM::Axes;
 
-our  = '0.2';
+our $VERSION = '0.2';
 
 =pod
 
@@ -16,7 +16,7 @@ have been implemented specifically. These are listed below.
 
 =head1 SEARCH SPECIFICATIONS
 
-Automatically generated from TM (1.42)
+Automatically generated from TM (1.54)
 
 =over
 
@@ -71,7 +71,22 @@ return all assertions which are a characteristic of a given type for a given top
 
           'topic' => 'the toplet for which these characteristics are sought',
           'char' => '1',
-          'type' => 'type of characteristics'
+          'type' => 'type of characteristic'
+
+=item Code:char.type
+
+return all assertions which are characteristics for some given type
+
+          'char' => '1',
+          'type' => 'the characteristic type'
+
+=item Code:char.type.value
+
+return all assertions which are characteristics for some topic of a given value for some given type
+
+          'value' => 'the value for which all characteristics are sought',
+          'char' => '1',
+          'type' => 'the characteristic type'
 
 =item Code:char.value
 

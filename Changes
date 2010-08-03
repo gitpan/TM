@@ -4,6 +4,18 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.54  Tue Aug  3 12:25:03 CEST 2010
+        - add: TM axes: one more to compute characteristics based on oc types (rho)
+        - fix: newly introduced problem with XTM serialization (rho)
+	- add: TM::Index::Taxonomy for taxo intensive apps (rho)
+	- fix: MLDBM could be fooled into empty maps if file existed with size 0 (rho)
+	- add: TM::IndexAble, an experimental trait to provide index functionality for maps (rho)
+	- add: EXPERIMENTAL & undocumented TM::ResourceAble::BDB, a Berkeley DB backed store (rho)
+	- fix: speed problems with MLDBM backed store (rho)
+	- fix: speed problems with AsTMa serializer (rho)
+	- mod: speedup when parsing LARGE AsTMa streams (rho)
+	- add: EXPERIMENTAL TM::ResourceAble::MemCached, a memcached backed store (rho)
+
 1.53  Sat Jun  5 16:17:56 CEST 2010
         - add: extended Serializable::CSV serialization (rho)
 	- mod: sync_in/out and source_in/out allow to pass through parameters (rho)

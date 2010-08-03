@@ -74,7 +74,14 @@ can_ok $tm, 'serialize';
 		 map { $_->[TM->LID] } $tm->toplets (\ '+all -infrastructure')
 		 ]), 'topic ids');
     
-    is ('#ctop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@xlink:href'), 'instance btop');
+    ok (
+	eq_set ([
+	          '#ctop',
+		],
+		[
+		 map { $_->nodeValue }
+		 $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@xlink:href')
+		]), 'instance btop');
 
     ok ($doc->findnodes('/topicMap/association[@id="a068ce15eb7cf7cc4536d504c73a4c05c"]/instanceOf/topicRef[@xlink:href="#sucks-more-than"]'),
 	'found assoc');

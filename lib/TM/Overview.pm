@@ -94,7 +94,12 @@ numerous times. There is also a first lookup function for names.
 =head2 Indexing
 
 Using a naive in-memory representation can be quite slow if you map gets big and the retrieval more
-complex. To improve the performance instances of L<TM::Index> can be associated with the map.
+complex. To improve the performance instances of L<TM::Index> can be associated with the map. See
+for the subclasses L<TM::Index::Match>, L<TM::Index::Characteristics>, L<TM::Index::Reify>.
+
+[from v1.54]: There is now a trait L<TM::IndexAble> which you can attach to an existing map to
+get index support (experimental).
+
 
 =head2 TMDM
 

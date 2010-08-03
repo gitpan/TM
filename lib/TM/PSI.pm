@@ -4,7 +4,7 @@ package TM::PSI;
 
 =head1 NAME
 
-TM::PSI - Topic Maps - PSI (published subject identifiers)
+TM::PSI - Topic Maps, PSI (published subject identifiers)
 
 =head1 DESCRIPTION
 

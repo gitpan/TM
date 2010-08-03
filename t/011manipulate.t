@@ -90,7 +90,7 @@ use TM;
     is ($tm->tids ('ramsti') , 'tm://nirvana/ramsti', 'found inserted by assertion 2');
 
     # add reifier topic
-    my $tid1=$tm->internalize(undef,$aid->[TM->LID]);
+    my $tid1 = $tm->internalize(undef,$aid->[TM->LID]);
     ok($tid1 
        && $tm->toplet($tid1)->[TM->ADDRESS] eq $aid->[TM->LID],"internalize creates correct assertion reifier");
     
@@ -426,6 +426,8 @@ use TM;
     $tm->internalize (bbb => 'http://bbb/');
     is ($tm->reifies ('tm:bbb'), 'http://bbb/',                                    'forward reification (extern)');
     is_deeply ([ $tm->is_reified ('http://bbb/') ], [ 'tm:bbb' ],                  'backwards reification (extern)');
+
+    is ($tm->tids ('http://bbb/'), 'tm:bbb',                                       'identification via tids');
 
 
     my ($a) = $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'superclass', 'subclass' ], players => [ 'rumsti', 'ramsti' ]));

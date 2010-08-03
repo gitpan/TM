@@ -44,9 +44,7 @@ The constructor/destructor is inherited from L<TM::Index>.
 
 =over
 
-=item B<attach>
-
-=item B<detach>
+=item B<attach>, B<detach>
 
 This index attaches in a special way to the map.
 
@@ -54,13 +52,18 @@ This index attaches in a special way to the map.
 
 sub attach {
     my $self = shift;
-    $self->{map}->{rindex} = $self;          # there will only be one
+    my $tm   = shift || $self->{map};
+warn "attach";
+    $tm->{rindex} = [ $self ];                                 # there will only be one, but we will use one indirection to fool MLDBM
+warn "end attach ". Dumper $tm->{rindex};
 }
 
 sub detach {
     my $self = shift;
-    $self->{map}->{rindex} = undef;
-    $self->{map} = undef;
+    my $tm   = shift || $self->{map};
+warn "detach";
+    $tm->{rindex} = undef;
+    $self->{map}  = undef;   # regardless whether this is loose coupling or not
 }
 
 =pod
@@ -73,17 +76,18 @@ Invoking this, you will fill this index with authoritative information.
 
 sub populate {
     my $self  = shift;
-    my $map   = $self->{map};
+    my $tm    = shift || $self->{map};
     my $cache = $self->{cache};
 
-    my $mid2iid = $map->{mid2iid};
+    warn "reif populate";
+
+    my $mid2iid = $tm->{mid2iid};
 
     map { $cache->{ $mid2iid->{$_}->[TM->ADDRESS] } = $_ }  # invert the index
         grep { $mid2iid->{$_}->[TM->ADDRESS] }              # only those which "reify" something survive
         keys %{$mid2iid};                                   # all toplet tids
 
     $self->{closed} = 1;
-
 }
 
 =back
@@ -101,7 +105,7 @@ itself.
 
 =cut
 
-our $VERSION = 0.2;
+our $VERSION = 0.4;
 
 1;
 
