@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.54';
+our $VERSION  = '1.55';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -636,6 +636,8 @@ This method removes all toplets and assertions (except the infrastructure). Ever
 
 sub clear {
     my $self    = shift;
+
+warn "CLEAR";
 
     my %mid2iid    = %{ $infrastructure->{mid2iid} };                            # shallow clone
     my %assertions = %{ $infrastructure->{assertions} };                         # shallow clone
@@ -1322,7 +1324,7 @@ sub internalize {
     my $mid2iid = $self->{mid2iid};
     while (@_) {
 	my ($k, $v) = (shift, shift);                              # assume to get here undef => URI   or   ID => URI   or ID => \ URI   or ID => undef
-#warn "internalize $k, $v" if ! defined $k;
+#warn "internalize $k, $v"; # if ! defined $k;
 	# make sure that $k contains a mid
 
 	$k = undef if defined $k && $k eq 'undef';                 # perl 5.10 will stringify undef => ....
@@ -1583,7 +1585,6 @@ sub tids {
 	    push @ks,  @k2 ? $mid2iid->{$k2[0]}->[TM->LID] : undef;    # we take the first we find
 
 	} else {                                                       # only a string, like 'aaa'
-
 	    my $k2 = $self->{baseuri}.$k;                              # make it absolute, and...
 	    push @ks, $mid2iid->{$k2}                                  # see whether there is something
                         ? $mid2iid->{$k2}->[TM->LID] : undef;          # and then take canonical LID
@@ -1827,23 +1828,29 @@ sub assert {
 
 #warn "sub $THING assert $self".ref ($self);
 
-    my $asserts = $self->{assertions};
+    my @tids;                                                  # first collect all emerging tids from the assertions
     foreach (@_) {
 	unless ($_->[CANON]) {
+	    push @tids, $_->[TYPE]  || $THING;
+	    push @tids, $_->[SCOPE] || $US;
+	    push @tids, @{$_->[ROLES]};
+	    push @tids, grep { ! ref ($_) } @{$_->[PLAYERS]};
+	}
+    }
+    @tids = $self->internalize ( map { $_ => undef } @tids);   # then convert them into proper usable tids
+
+    my $asserts = $self->{assertions};                         # load (MLDBM kicker)
+    foreach (@_) {                                             # only now use all the information to complete the assertions
+	unless ($_->[CANON]) {
 	    $_->[KIND]  ||= ASSOC;
-
-	    $_->[TYPE]  ||= $THING;
-	    $_->[TYPE]    = $self->internalize ($_->[TYPE] => undef);
-	    $_->[SCOPE] ||= $US;
-	    $_->[SCOPE]   = $self->internalize ($_->[SCOPE] => undef);
-
-	    $_->[ROLES]   = [ map { $self->internalize ($_ => undef ) } @{$_->[ROLES]} ];
-	    $_->[PLAYERS] = [ map { $_ = ref ($_) ? $_ : $self->internalize ($_ => undef) } @{$_->[PLAYERS]}  ];
+	    $_->[TYPE]    = shift @tids;
+	    $_->[SCOPE]   = shift @tids;
+	    $_->[ROLES]   = [ map { shift @tids } @{$_->[ROLES]} ];
+	    $_->[PLAYERS] = [ map { $_ = ref ($_) ? $_ : shift @tids } @{$_->[PLAYERS]}  ];
 
 	    canonicalize (undef, $_);
 
 	    $_->[LID]   ||= mklabel ($_);
-#	    $_->[LID]     = $self->internalize ($_->[LID] => undef);
 	}
 	$asserts->{$_->[LID]} = $_;
     }
@@ -2274,7 +2281,7 @@ our %forall_handlers = (
 			    key => sub {
                                 my $self = shift;
                                 my $a    = shift;
-                                return "char.value:1.". $a->[PLAYERS]->[1]->[0];
+                                return "char.value:1.". $a->[PLAYERS]->[1]->[0] . '.' . $a->[PLAYERS]->[1]->[1];
                             },
                             enum => sub {
                                 my $self = shift;
@@ -2325,7 +2332,7 @@ our %forall_handlers = (
 			    key => sub {
                                 my $self = shift;
                                 my $a    = shift;
-                                return "char.type.value:1.". $a->[TYPE] . '.' . $a->[PLAYERS]->[1]->[0];
+                                return "char.type.value:1.". $a->[TYPE] . '.' . $a->[PLAYERS]->[1]->[0] . '.' . $a->[PLAYERS]->[1]->[1];
                             },
                             enum => sub {
                                 my $self = shift;
@@ -2567,6 +2574,16 @@ sub _allinone {
     return @mads;                                                    # and return what we got
 }
 
+sub _fat_mama {
+    use Proc::ProcessTable;
+    my $t = new Proc::ProcessTable;
+#warn Dumper [ $t->fields ]; exit;
+    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
+#warn "size: ".  $me->size;
+    return $me->size / 1024.0 / 1024.0;
+}
+
+
 
 sub match_forall {
     my $self   = shift;
@@ -2598,7 +2615,6 @@ sub _dispatch_forall {
     my $query = shift;
     my $skeys = shift;
 
-#warn "keys for this $skeys";
     if (my $handler = $forall_handlers{$skeys}) {                                           # there is a constraint and we have a handler
 	return &{$handler->{code}} ($self, @_); 
     } else {                                                                                # otherwise

@@ -6,22 +6,33 @@ my $tm = new TM::ResourceAble::MLDBM (file => '/tmp/somemap');
 use TM::Materialized::AsTMa;
 my $update = new TM::Materialized::AsTMa (file => 'maps/mapreduce.atm');
 $update->sync_in;   
-warn "snced";
+warn "synced";
+
+use TM::Literal;
+$update->assert (
+    map { Assertion->new (kind => TM->NAME, type => 'name', scope => 'us', roles => [ 'thing', 'value' ], players => [ "aaa$_", new TM::Literal ("AAA$_") ]) }
+	   (1..10000)
+	    );
+warn "enriched";
+
 
 $tm->clear;
 $tm->add ($update);
 warn "added";
 
+my $c = {};
+
 use Class::Trait;
 Class::Trait->apply ($tm, "TM::IndexAble");
-#$tm->index ({ axis => 'reify', closed => 1, detached => {} });
-#warn "indexed";
+$tm->index ({ axis => 'reify', closed => 1, detached => $c });
+warn "indexed";
+#warn Dumper $c;
 
 Class::Trait->apply ( $tm => 'TM::Serializable::AsTMa' );
 my $content = $tm->serialize;
 warn "serialized";
 
-warn $content;
+#warn $content;
 
 __END__
 

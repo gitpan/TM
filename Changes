@@ -4,6 +4,17 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.55  Sun Nov  7 15:44:43 CET 2010
+        - fix: TM::IndexAble misbehaved with closed indices and empty lists
+        ~ mod: pumped up to Perl 5.10 as prereq (rho)
+	- fix: TM::IndexAble small memory leak at deindex (rho)
+	- add: TM::IndexAble deindex parameters (rho)
+	- fix: BDB did not properly store top-level keys (rho)
+	- add: first version of TM::ObjectAble (rho)
+	- fix: LibXML operator overloading changed and triggered fails in 06*xtmserializ (rho)
+	- mod: relaxed speedup tests to diagnostics (fails on some platforms, difficult to control) (rho)
+	~ mod: MemCached, BDB files will soon go into separate distribution (rho)
+
 1.54  Tue Aug  3 12:25:03 CEST 2010
         - add: TM axes: one more to compute characteristics based on oc types (rho)
         - fix: newly introduced problem with XTM serialization (rho)

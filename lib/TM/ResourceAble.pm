@@ -92,7 +92,7 @@ Example:
 
 I<$url> = I<$tm>->url
 
-          I<$tm>->url (I<$url>)
+I<$tm>->url (I<$url>)
 
 Once an object of this class is instantiated it keeps the URL of the resource to which it is
 associated. With this method you can retrieve and set that. No special further action is taken

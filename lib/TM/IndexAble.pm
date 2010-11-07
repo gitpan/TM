@@ -142,101 +142,123 @@ should be the same as C<requests>
 
 =cut
 
-our %cachesets;
+#    map
+#   +---+
+#   |   |
+#   |   |                                cache
+#   |   | index  +-----+ <axis>_data   +-------+                                         <axis>_data     # can be local or detached
+#   |   |------->|     |-------------->|       | key = query                             <axis>_hits     # integer
+#   +---+        |     | <axis>        |       | value = array ref of LIDs               <axis>_requests # integer
+#                |     |-->HASH(0x123) |       |
+#                +-----+               |       |
+#                                      +-------+
+
+our %cachesets;   # here the detached ones go
+
+#   +---+                 index (detached)                                               # provided by caller
+#   |   |  HASH(0x123)  +-------+         cache
+#   |   |-------------->|       |       +-------+
+#   |   |               |       |------>|       |
+#   |   |               |       |       |       |
 
 sub index {
     my $self = shift;
 
-    my $index = $self->{index};
-    $index ||= {};                                                     # just to create some infrastructure
+    my $index = ($self->{index} || {});                                                  # local handle on all things indexed
 
-    foreach my $idx (@_) {                                             # whatever we are given by the user
-	my @a;
-	use feature 'switch';
-	given ($idx->{axis}) {
-	    when ('taxo') {                                            # "taxo" shortcuts some axes
-		@a = qw(subclass.type superclass.type class.type instance.type);
-	    }
-	    when ('char') {                                            # char shortcut
-		@a = qw(char.topic char.value char.type char.type.value char.topic.type);
-	    }
-	    when ('reify') {                                           # this is a special one
-		@a = qw(reify);
-	    }
-	    default {                                                  # take that as-is
-		@a = $idx->{axis};
-	    }
-	}
+    foreach my $idx (@_) {                                                               # whatever we are given by the user
+	my @a = _expand_axes ($idx->{axis});
 
-	my $cache;                                                     # handle
-	if (my $detached = $idx->{detached}) {                         # if user provided a detachable cache, we take that
-	    $cachesets{$detached} = $detached;                         # register that locally (as key this will be stringified)
-	    $index->{$_} = "$detached" foreach @a;                     # and memorize that the real information is in a detached one, not inside the map
-	    $cache         = $detached;                                # from now on we work with that
+
+	my $index2;  # could be detached or local
+	if (my $detached  = $idx->{detached}) {                                          # if user provided a detachable index, we take that
+	    $cachesets{"$detached"} = $detached;                                         # register that locally (as key this will be stringified)
+	    $index->{$_}  = "$detached" foreach @a;                                      # and memorize that the real information is in a detached one, not inside the map
+	    $index2       = $detached;                                                   # from now on we work with that
 	} else {
-	    $cache        = $index;                                    # we take the indices to be part of the map
+	    $index2       = $index;
 	}
 
-	map {
-	    $cache->{$_}->{hits}     //= 0,                            # initialize stats
-	    $cache->{$_}->{requests} //= 0,
-	    $cache->{$_}->{data}     //= {}
-	} @a;
+	foreach my $a (@a) {                                                             # walk over all axes now
 
-	_populate ($self, $cache, @a)                                  # fill the cache for these axes if ..
-	    if $idx->{closed};                                         # ... if the cache is a real index (not just a cache)
+#warn "indexable index $a";
+	    $index2->{"${a}_hits"}     //= 0;                                            # initialize stats
+	    $index2->{"${a}_requests"} //= 0;
+
+	    next if $index2->{"${a}_closed"};                                            # if we already got a closed one, we do not touch it
+#warn "AFTER CLOSED!";
+
+	    $index2->{"${a}_data"} //= {}; # we need to have a place for data
+
+	    next unless $idx->{closed};                                                  # only continue here when we want to close it
+	    my $data = $index2->{"${a}_data"};                                           # this is a potentially expensive operation
+
+	    if ($a eq 'reify') {                                                         # this is a special case
+		my $mid2iid = $self->{mid2iid};                                          # not necessarily cheap
+		
+		%$data = map  { $mid2iid->{$_}->[TM->ADDRESS] => $_ }                    # invert the index
+		         grep { $mid2iid->{$_}->[TM->ADDRESS] }                          # only those which "reify" something survive
+		         keys %{$mid2iid};                                               # all toplet tids
+		    
+	    } else {
+		my $enum = $TM::forall_handlers{$a}->{enum}                              # how to generate all assertions of that axes
+		           or die "unsupported index axes $a";                           # complain if enumeration is not yet supported
+		my $key  = $TM::forall_handlers{$a}->{key};                              # how to derive a full cache key from one assertion
+		    
+		my %as;                                                                  # collect the assertions for that axis $a
+		map { push @{ $as{ &$key ($self, $_) } } , $_->[TM->LID] }               # sort them according to the key
+		    &$enum ($self) ;                                                     # generate all assertions fitting this axis
+		    
+		map { $data->{$_} = $as{$_} }                                            # store the corresponding lists into the cache
+		    keys %as;                                                            # walk through keys
+	    }
+#warn "after axis $a ". Dumper $data;
+	    $index2->{"${a}_data"}   = $data;                                            # this is only for MLDBM backed indices (yes, I know a PITA)
+	    $index2->{"${a}_closed"} = 1;
+	}
+
     }
-    $self->{index} = $index;                                           # kick MLDBM in the arse
+    $self->{index} = $index;                                                             # kick MLDBM in the ...
+#    warn Dumper ($self->{index}, \%cachesets);
 
-    return                                                             # we return a hash (ref) with fields
-    map { $_->[0] => {
-	  hits     => $_->[1]->{hits},                                 # hits holding the number of cache hits since inception
-	  requests => $_->[1]->{requests}                              # and the number of requests
-	  } }
-    map  { 
-	[
-	 $_,
-	 ref ($self->{index}->{$_})
-	      ? $self->{index}->{$_}
-  	      : $cachesets{ $self->{index}->{$_} }->{$_}
-	]
-         }
-    keys %{ $self->{index} };
-}
+    return _collect_stats ($index) if (wantarray);
 
-sub _populate {
-    my $tm = shift;
-    my $cache = shift;
+sub _collect_stats {
+    my $index = shift;
+    my %s;
+    map { 
+	$s{ $1 }->{$2} = $index->{$_} if $_ =~ /(.+)_(.+)/
+        }
+        keys %{$index};
 
-    foreach my $a (@_) {                                                                   # walk over all (closed, otherwise we would not be here) axes
-	if ($a eq 'reify') {                                                               # this is a special case
-	    _populate_reify ($tm, $cache->{$a}->{data});
-	} else {
-	    my $enum = $TM::forall_handlers{$a}->{enum}                                    # how to generate all assertions of that axes
-	    or die "unsupported index axes $a";                                            # complain if enumeration is not yet supported
-	    my $key  = $TM::forall_handlers{$a}->{key};                                    # how to derive a full cache key from one assertion
-	    
-	    my %as;                                                                        # collect the assertions for that axis $a
-	    map { push @{ $as{ &$key ($tm, $_) } } , $_->[TM->LID] }                       # sort them according to the key
-	        &$enum ($tm) ;                                                             # generate all assertions fitting this axis
-
-	    map { $cache->{$a}->{data}->{$_} = $as{$_} }                                   # store the corresponding lists into the cache
-   	        keys %as;                                                                  # walk through keys
-	}
-	$cache->{$a}->{closed} = 1;
+    %s = (%s , map { _collect_stats ($_) } # and compute the stats from there
+	       map { $cachesets{ $index->{$_} } }  # these are detached ones, get them
+	       grep { $_ !~ /_/ }         # but only look for those without a _
+	       keys %{$index}                       # go back to all indices
+	);
+    return %s;
     }
 }
 
-sub _populate_reify {
-    my $tm   = shift;
-    my $data = shift;
-
-    my $mid2iid = $tm->{mid2iid};
-
-    %$data = map  { $mid2iid->{$_}->[TM->ADDRESS] => $_ }                                  # invert the index
-             grep { $mid2iid->{$_}->[TM->ADDRESS] }                                        # only those which "reify" something survive
-                keys %{$mid2iid};                                                          # all toplet tids
+sub _expand_axes {
+    my $a = shift;
+    use feature 'switch';
+    given ( $a ) {
+	when ('taxo') {                                                              # "taxo" shortcuts some axes
+	    return qw(subclass.type superclass.type class.type instance.type);
+	}
+	when ('char') {                                                              # char shortcut
+	    return qw(char.topic char.value char.type char.type.value char.topic.type);
+	}
+	when ('reify') {                                                             # this is a special one
+	    return qw(reify);
+	}
+	default {                                                                    # take that as-is
+	    return ( $a );
+	}
+    }
 }
+
 
 =pod
 
@@ -244,7 +266,14 @@ sub _populate_reify {
 
 I<$tm>->deindex (I<$axis>, ....)
 
+I<$tm>->deindex (I<$index>, ....)
+
 This method gets rid of certain indices/caches, as specified by their axes.
+
+Since v1.55: You can also pass in the hash reference of the index (in the detached
+case).
+
+Since v1.55: Also the expansion of axes (like for C<index>) works now.
 
 =cut
 
@@ -252,14 +281,24 @@ sub deindex {
     my $self = shift;
 
     my $index = $self->{index};
-    foreach my $a (@_) {
-	if (ref ($index->{$a})) {
-	    delete $index->{$a};
-	} else {
-	    delete $cachesets{ $index->{$a} };
-	    delete $index->{$a};
+#warn "deindex cacheset keys before ".Dumper [ keys %cachesets ];
+#warn Dumper $index;
+    foreach my $a (map { _expand_axes ($_) } @_) {
+#warn "deleting " . $a;
+	if (ref ($a)) {                                                        # this is a hash ref, obviously the index
+	    delete $cachesets{ "$a" };
+            map { delete $index->{$_} }                                        # delete those index entries
+                grep { $index->{$_} eq "$a" }                                  # which carry data from the {} we passed in
+                keys %$index;
+	} elsif (ref ($index->{$a})) {                                         # not detached
+	    delete $index->{$a};                                               # so we simply get rid of it
+	} else {                                                               # this is also a detached one, but this time via an axis (not the index itself)
+	    my $h = delete $index->{$a};                                       # get the hash (stringified) and in one go delete it
+	    delete $cachesets{$h};
 	}
     }
+#warn "deindex cacheset keys before ".Dumper [ keys %cachesets ];
+#warn Dumper $index;
     $self->{index} = $index;
 }
 
@@ -274,28 +313,39 @@ sub match_forall {
     my %query  = @_;
 #warn "forall ".Dumper \%query;
 
-    my @skeys = sort keys %query;                                                           # all fields make up the key
+    my @skeys = sort keys %query;                                              # all fields make up the key
     my $skeys = join ('.', @skeys);
-    my @svals = map { $query{$_} } @skeys;
-    my $key   = "$skeys:" . join ('.', @svals);
+    my @svals = map { $query{$_} }                                             # lookup that key in the incoming query
+                @skeys;                                                        # take these query keys
+    my $key   = "$skeys:" . join ('.', 
+				  map { ref ($_) ? @$_ : $_ }                  # if we have a value, take that and its datatype
+				  @svals);
 
-#    warn "i match ".$skeys;
-    unless ( my $c = $self->{index}->{$skeys} ) {
+#warn "i match ".$skeys;
+#warn "i match whole key >>$key<<";
+    my $index = $self->{index};                                                # just a handle
+
+    if (my $detached = $index->{$skeys}) {                                     # axis is pointing to a detached
+	$index = $cachesets{ $index->{$skeys} };
+    }
+#warn Dumper $index;
+    unless ( my $data = $index->{"${skeys}_data"} ) {
+#warn "no index";
 	return TM::_dispatch_forall ($self, \%query, $skeys, @svals);
 
     } else {
-	$c = $cachesets{$c}->{$skeys}                                          # replace referenced cache with the in-memory
-	      unless ref ($c);                                                 # except it it already a workable cache
-
-	$c->{requests}++;
-	my $data  = $c->{data};
-	
+#warn "-> using index! $data";
+	$index->{"${skeys}_requests"}++;
+#warn "DATA keys ".scalar keys %$data;
+#warn "DATA ".Dumper $data;	
 	if (my $lids = $data->{ $key }) {
-#	    warn "cached $key";
-	    $c->{hits}++;
-	    return map { $self->{assertions}->{$_} } @$lids;                            # and return fully fledged assocs
+#warn "and HIT";
+	    $index->{"${skeys}_hits"}++;
+
+	    my $asserts = $self->{assertions};                                 # just in case we have a tied hash ... we create a handle
+	    return map { $asserts->{$_} } @$lids;                              # and return fully fledged assocs
 	}
-	return [] if $c->{closed};                                                      # the end of wisdom
+	return () if $index->{"${skeys}_closed"};                              # the end of wisdom     ?????????????????????????? SUSPICIOUS
 	my @as = TM::_dispatch_forall ($self, \%query, $skeys, @svals);
 	$data->{ $key } = [ map { $_->[TM->LID] } @as ];
 	return @as;
@@ -309,23 +359,23 @@ sub is_reified {
     my $a    = shift;                                                          # the thing (assertion or otherwise)
 
     my $index = $self->{index};
-    unless ( my $c = $index->{reify} ) {                                       # if an index over reify has NOT been activated
-	return $self->_is_reified ($a);                                        # we look only at the source
+    if (my $detached = $index->{'reify'}) {                                     # axis is pointing to a detached
+	$index = $cachesets{ $index->{'reify'} };
+    }
 
-    } else {                                                                   # we have an index
-	$c = $cachesets{$c}->{reify}                                           # replace referenced cache with the in-memory
-	      unless ref ($c);                                                 # except it it already a workable cache
+    unless ( my $data = $index->{'reify_data'} ) {                             # if an index over reify has NOT been activated
+	return $self->_is_reified ($a);                                        # we look only at the source map
 
-	$c->{requests}++;                                                      # bookkeeping
-	my $data  = $c->{data};                                                # shortcut
+    } else {                                                                   # we have an index!
+	$index->{'reify_requests'}++;                                          # bookkeeping
 
 	my $k = ref ($a) ? $a->[TM->LID] : $a;
 	if (my $tid = $data->{ $k }) {                                         # cache always holds list references
-	    $c->{hits}++;                                                      # bookkeeping
+	    $index->{'reify_hits'}++;                                          # bookkeeping
 	    return ($tid);
 	}
-	return () if $c->{closed};                                             # the end of wisdom
-	warn "no hit!";
+	return () if $index->{'reify_closed'};                                 # the end of wisdom
+#	warn "no hit!";
 	my @tids = $self->_is_reified ($a);                                    # returns a list (strangely)
 	$data->{ $k } = $tids[0];                                              # tuck it into the cache
 	return @tids;                                                          # and give it back to the caller
@@ -349,7 +399,7 @@ itself.
 
 =cut
 
-our $VERSION = 0.2;
+our $VERSION = 0.7;
 
 1;
 

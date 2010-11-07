@@ -76,23 +76,26 @@ can_ok $tm, 'serialize';
     
     ok (
 	eq_set ([
-	          '#ctop',
-		],
-		[
 		 map { $_->nodeValue }
 		 $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@xlink:href')
-		]), 'instance btop');
+		],
+		[
+	          '#ctop',
+		]
+		), 'instance btop');
 
     ok ($doc->findnodes('/topicMap/association[@id="a068ce15eb7cf7cc4536d504c73a4c05c"]/instanceOf/topicRef[@xlink:href="#sucks-more-than"]'),
 	'found assoc');
     
     ok (
 	eq_set ([
-		 '#atop', '#others'
-		 ],
-		[
 		 map { $_->nodeValue }
-		 $doc->findnodes('/topicMap/association[@id="a4abe49897cefeb950e4affaab0418e4f"]/member[roleSpec/topicRef/@xlink:href = "#winner"]/topicRef/@xlink:href')]), 'found assoc');
+		 $doc->findnodes('/topicMap/association[@id="a4abe49897cefeb950e4affaab0418e4f"]/member[roleSpec/topicRef/@xlink:href = "#winner"]/topicRef/@xlink:href')
+                ],
+		[
+		 '#atop', '#others'
+		 ]
+		), 'found assoc');
 
     ok (
 	eq_set ([

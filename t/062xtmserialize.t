@@ -88,18 +88,27 @@ can_ok $tm, 'serialize';
 		 ]), 'topic ids');
     is ('2.0', $doc->findvalue ('/topicMap/@version'), 'version');
 
-    is ('#ctop#dtop', $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@href'), 'instances btop');
-    
+    ok (
+	eq_set (
+                [
+                 map { $_->nodeValue }
+		 $doc->findnodes('/topicMap/topic[@id="btop"]/instanceOf/topicRef/@href')
+		],
+	        [
+	          '#ctop','#dtop'
+		]), 'instances btop');
+
     ok ($doc->findnodes('/topicMap/association[itemIdentity/@href="068ce15eb7cf7cc4536d504c73a4c05c"]/type/topicRef[@href="#sucks-more-than"]'),
-	'found assoc');
+        'found assoc');
     
     ok (
 	eq_set ([
-		 '#atop', '#others'
-		 ],
-		[
 		 map { $_->nodeValue }
-		 $doc->findnodes('/topicMap/association[itemIdentity/@href="4abe49897cefeb950e4affaab0418e4f"]/role[type/topicRef/@href = "#winner"]/topicRef/@href')]), 'found assoc II');
+		 $doc->findnodes('/topicMap/association[itemIdentity/@href="4abe49897cefeb950e4affaab0418e4f"]/role[type/topicRef/@href = "#winner"]/topicRef/@href')],
+		[
+		 '#atop', '#others'
+		 ]
+		), 'found assoc II');
 
     ok (
 	eq_set ([

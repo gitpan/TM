@@ -99,6 +99,7 @@ use TM;
     is ($tid2, $tid1, "internalize finds existing assertion reifier");
 }
 
+
 { # reasserting
     my $tm = new TM;
     my $npa = $tm->match (TM->FORALL);
@@ -156,9 +157,9 @@ use TM;
 { # retracting
   my $tm = new TM;
   ok (!$tm->retrieve ('tm://nirvana/aaa'), 'looking for aaa, not there');
-  $tm->assert (Assertion->new (lid => 'tm://nirvana/aaa'),
-	       Assertion->new (lid => 'tm://nirvana/bbb'),
-	       Assertion->new (lid => 'tm://nirvana/ccc'));
+  $tm->assert (Assertion->new (lid => 'tm://nirvana/aaa', players => [], roles => []),
+	       Assertion->new (lid => 'tm://nirvana/bbb', players => [], roles => []),
+	       Assertion->new (lid => 'tm://nirvana/ccc', players => [], roles => []));
 #warn Dumper $tm;
   ok ($tm->retrieve ('tm://nirvana/aaa'),  'looking for aaa, is there');
   $tm->retract ('tm://nirvana/bbb');

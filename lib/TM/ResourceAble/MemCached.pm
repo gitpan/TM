@@ -191,7 +191,7 @@ This package implements L<TM> using a memcached server farm as backend. You shou
 much testing, mind you, so it is EXPERIMENTAL) to perform all operations according to the L<TM>
 interface. 
 
-B<NOTE>: The implementation is using the TIE technique (L<perltie>) via L<Tie::StdHash>), so maybe
+B<NOTE>: The implementation is using the TIE technique (L<perltie> via L<Tie::StdHash>), so maybe
 there are problems lurking.
 
 Of course, a set of memcacheds can store any number of maps. To keep them separate, the baseuri
@@ -301,7 +301,7 @@ itself.  http://www.perl.com/perl/misc/Artistic.html
 
 =cut
 
-our $VERSION  = '0.01';
+our $VERSION  = '0.02';
 
 1;
 

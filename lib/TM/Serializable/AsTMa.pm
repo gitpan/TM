@@ -188,6 +188,9 @@ sub _serializeAsTMa1 {
 
     my %assocs;
     my %topics;                                  # the work stats: collect info from the assertions.
+
+#    warn scalar $self->asserts (\ '+all -infrastructure');
+
 ASSOCS:
     for my $m ($self->asserts (\ '+all -infrastructure')) {
 	my $kind  = $m->[TM->KIND];
@@ -271,7 +274,7 @@ ASSOCS:
     } 
 #--- finally the actual dumping of the actual information ---------------------------------------------------
     my @result; # will collect lines here
-    push @result, "# originally from ".($self->{url}=~/^inline:/?"inline":$self->{url}) unless $opts{omit_provenance};
+    push @result, "# originally from ".($self->{url} =~ /^inline:/ ? "inline" : $self->{url}) unless $opts{omit_provenance};
     push @result, "# base $baseuri";
     push @result, "";
 

@@ -50,6 +50,7 @@ t/096taumapsphere.t
 t/100mapsphere.t
 t/101mapsphere.t
 t/102mapsphere.t
+t/103objectable.t
 t/13tmdm.t
 schemas/xtm20.dtd
 schemas/xtm10.dtd
@@ -85,6 +86,7 @@ lib/TM/Materialized/XTM.pm
 lib/TM/Materialized/JTM.pm
 lib/TM.pm
 lib/TM/Overview.pm
+lib/TM/ObjectAble.pm
 lib/TM/FAQ.pm
 lib/TM/PSI.pm
 lib/TM/ResourceAble.pm

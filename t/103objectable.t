@@ -1,198 +1,117 @@
+package Storage3;
+
+require Tie::Hash;
+our @ISA = 'Tie::StdHash';
+
+sub TIEHASH  {
+    my $storage = bless {}, shift;
+    $storage
+}
+sub STORE    {
+    return undef if $_[2] eq 'whatever';
+    $_[0]{$_[1]} = $_[2]
+}
+
+1;
+
 use strict;
 use warnings;
 
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-use Time::HiRes;
-
 use TM;
-
 use Test::More qw(no_plan);
 
 
-
-my $debug;
-
-
-sub _chomp {
-    my $s = shift;
-    chomp $s;
-    return $s;
-}
-
-
-sub mk_taxo {
-    my $max_d = shift;
-    my $max_c = shift;
-    my $max_i = shift;
-
-    return _mk_taxo ('0', 0, $max_d, $max_c, $max_i);
-
-sub _mk_taxo {
-    my $root  = shift;
-    my $d     = shift;
-    my $max_d = shift;
-    my $max_c = shift;
-    my $max_i = shift;
-
-    return { "C$root" => [
-                          ( $d < $max_d ? ( map { _mk_taxo ($root . $_, $d+1, $max_d, $max_c, $max_i) } ( 0 .. ($debug ||1+rand($max_c)))) : () ), # make concepts
-                          (                 map { "i$root$_" }                                          ( 0 .. ($debug ||2+rand($max_i)))       )  # make kids
-                          ] };
-}
-}
-
-sub implant {
-    my $tm = shift;
-    my $ta = shift;
-
-    my ($root) = keys %$ta;
-
-    $tm->assert (Assertion->new (type => 'name',       kind=> TM->NAME, roles => [ 'thing', 'value' ], players => [ $root, new TM::Literal ($root."_name") ]));
-
-    foreach my $ch (@{$ta->{$root}}) {
-	if (ref ($ch)) { # this is a subtree
-	    $tm->assert (Assertion->new (type => 'is-subclass-of', roles => [ 'subclass', 'superclass' ], players => [ (keys %$ch)[0], $root ]));
-	    implant ($tm, $ch);
-	} else { # this is just an instance
-	    $tm->assert (Assertion->new (type => 'isa',                         roles => [ 'class', 'instance' ],      players => [ $root, $ch ]));
-	    $tm->assert (Assertion->new (type => 'name',       kind=> TM->NAME, roles => [ 'thing', 'value' ], players => [ $ch, new TM::Literal ($ch."_name") ]));
-	    my ($a) = $tm->assert (Assertion->new (type => 'occurrence', kind=> TM->OCC,  roles => [ 'thing', 'value' ], players => [ $ch, new TM::Literal ($ch."_occ") ]));
-	    $tm->internalize (undef, $a->[TM->LID]);
-	}
-    }
-}
-
-sub verify {
-    my $tm = shift;
-    my $ta = shift;
-    my $si = shift; # silencio?
-
-    my ($root) = keys %$ta;
-
-    foreach my $ch (_flatten_tree ($ta)) {
-#warn "for $root finding child $ch";
-	if ($ch =~ /C/) { # this is a subtree node
-	    if ($si) {
-		die "fail $ch (indirect) subclass of $root" unless $tm->is_subclass ($tm->tids ($ch, $root));
-	    } else {
-#warn "$ch is subclass $root ?";
-		ok ($tm->is_subclass   ($tm->tids ($ch, $root)),                             "$ch (indirect) subclass of $root");
-#		ok ((grep { $_ eq $tm->tids ($root) } $tm->superclassesT ($tm->tids ($ch))), 'superclassesT root');
-	    }
-	} else { # this is just an instance
-	    if ($si) {
-		die "fail $ch (indirect) instance of $root" unless $tm->is_a ($tm->tids ($ch, $root));
-	    } else {
-#warn "$ch isa $root ?";
-		ok ($tm->is_a ($tm->tids ($ch, $root)),        "$ch (indirect) instance of $root");
-	    }
-	}
-    }
-
-    foreach my $ch (@{$ta->{$root}}) {
-	if (ref ($ch)) { # this is a subtree
-	    verify ($tm, $ch, $si);
-	}
-    }
-sub _flatten_tree {
-    my $ta     = shift;
-    my ($root) = keys %$ta;
-    my @kids;
-
-    push @kids, $root;
-    foreach my $ch (@{$ta->{$root}}) {
-	push @kids, ref ($ch) ? _flatten_tree ($ch) : $ch;
-    }
-    return @kids;
-}
-
-#ok (1, 'survived taxo verify');
-
-}
-
-
-
-sub _verify_chars {
-    my $tm = shift;
-    my $t  = shift;
-    my $si = shift; # silencio?
-
-    foreach ($tm->tids (_flatten_tree ($t))) {
-	my @as = $tm->match_forall (char => 1, topic => $_);
-	if ( /i\d+/ ) { # an instance got a name and an occurrence
-	    if ($si) {
-		die "char for $_: name and occurrence" unless scalar @as == 2;
-	    } else {
-		is ((scalar @as), 2, "$_");
-	    }
-	} else { # a class only a name
-	    if ($si) {
-		die "char for $_: only name" unless scalar @as == 1;
-	    } else {
-		is ((scalar @as), 1, "$_");
-	    }
-	}
-    }
-#    ok (1, 'chars');
-}
-
-sub _verify_reif {
-    my $tm = shift;
-    my $as = shift;
-    my $si = shift; # silencio?
-
-    foreach my $a (@$as) {
-	my ($tid) = $tm->is_reified ($a);
-	if ($si) {
-#	    die "reification failed" unless $tm->reifies ($tid)->[TM->LID] eq $a->[TM->LID];
-	} else {
-	    is ($tm->reifies ($tid)->[TM->LID], $a->[TM->LID], "reification $tid");
-	}
-    }
-    return;
-
-#     my ($root) = keys %$ta;
-
-#     foreach my $ch (@{$ta->{$root}}) {
-# 	if (ref ($ch)) { # this is a subtree
-# 	    _verify_reif ($tm, $ch, $si);
-# 	} else { # this is just an instance
-# 	    my ($a) = $tm->match_forall (char => 1, type => 'occurrence', topic => $tm->tids ($ch));
-# #warn Dumper $a;
-# #	    my ($a) = $tm->assert (Assertion->new (type => 'occurrence', kind=> TM->OCC,  roles => [ 'thing', 'value' ], players => [ $ch, new TM::Literal ($ch."_occ") ]));
-# 	    my ($tid) = $tm->is_reified ($a);
-# #warn $a->[TM->LID], $tid;
-# #warn Dumper $tm->toplets ($tid);
-# #warn Dumper $tm->reifies ($tid);
-# 	    next;
-# 	    if ($si) {
-# 		die "reification failed" unless $tm->reifies ($tid)->[TM->LID] eq $a->[TM->LID];
-# 	    } else {
-# 		is ($tm->reifies ($tid)->[TM->LID], $a->[TM->LID], "reification $tid");
-# 	    }
-# 	}
-#     }
-}
-
-my $warn = shift @ARGV;
-unless ($warn) {
-    close STDERR;
-    open (STDERR, ">/dev/null");
-    select (STDERR); $| = 1;
-}
-
 #== TESTS =====================================================================
 
-use constant DONE => 1;
-use constant INTENSITY => 3; # 4 for real testing
+use constant DONE => 0;
 
 use TM;
 use TM::Literal
 
-require_ok( 'TM::IndexAble' );
+require_ok( 'TM::ObjectAble' );
 
+if (1||DONE) {
+    use TM::Materialized::AsTMa;
+    my $tm = new TM::Materialized::AsTMa (baseuri => 'tm:',
+					  inline => qq{
+xxx (yyy)
+
+zzz (yyy)
+
+aaa (bbb)
+
+})->sync_in;
+
+    use Class::Trait;
+    Class::Trait->apply ($tm, "TM::ObjectAble");
+
+    ok (scalar @{ $tm->storages } == 0, 'have no store');
+
+    use Test::Exception;
+
+    throws_ok {
+	$tm->objectify ('tm:xxx', "whatever");
+    } qr/no storage/, 'undefined storage';
+
+    my %store1; # a simple hash
+    push @{ $tm->storages }, \%store1;
+    ok (scalar @{ $tm->storages } == 1, 'have one store');
+
+    my %store2; # a simple hash
+    push @{ $tm->storages }, \%store2;
+    ok (scalar @{ $tm->storages } == 2, 'have two stores');
+
+    $tm->objectify ('tm:xxx', "whatever");
+    is ($store1{'tm:xxx'}, 'whatever', 'first store hit');
+    is ($store2{'tm:xxx'}, undef,      'second store nohit');
+
+    my %store0;
+    tie %store0, 'Storage3';
+    unshift @{ $tm->storages }, \%store0;
+    $tm->objectify ('tm:yyy', "whatever");
+    is ($store0{'tm:yyy'}, undef,      '0-store nohit');
+    is ($store1{'tm:yyy'}, 'whatever', 'first store hit');
+    is ($store2{'tm:yyy'}, undef,      'second store hit');
+
+    $tm->objectify ('tm:zzz', "whoever");
+    is ($store0{'tm:zzz'}, 'whoever',  '0-store hit');
+    is ($store1{'tm:zzz'}, undef,      'first store nohit');
+    is ($store2{'tm:zzz'}, undef,      'second store nohit');
+#    warn Dumper \%store0;
+
+    my @os = $tm->object ('tm:xxx', 'tm:zzz', 'tm:uuu', 'tm:yyy');
+#    warn Dumper \@os;
+    ok (eq_array (\@os,
+	[
+	 'whatever',
+	 'whoever',
+	 undef,
+	 'whatever',
+	]), 'rendering objects');
+
+    throws_ok {
+	$tm->deobjectify ('tm:uuu');
+    } qr/no storage/, 'undefined storage for deleting';
+
+    $tm->deobjectify ('tm:zzz');
+#    warn Dumper \%store0;
+    is ($store0{'tm:zzz'}, undef,      '0-store nohit');
+    is ($store1{'tm:zzz'}, undef,      'first store nohit');
+    is ($store2{'tm:zzz'}, undef,      'second store nohit');
+
+    $tm->deobjectify ('tm:xxx');
+#    warn Dumper \%store0;
+    is ($store0{'tm:xxx'}, undef,      '0-store nohit');
+    is ($store1{'tm:xxx'}, undef,      'first store nohit');
+    is ($store2{'tm:xxx'}, undef,      'second store nohit');
+
+}
+
+
+__END__
 
 if (DONE) {
     my $tm = new TM;
