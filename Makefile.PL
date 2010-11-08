@@ -94,7 +94,7 @@ upload:
 #	sudo mcpani --inject
 #	echo "reload index" | cpan
 
-DEBVERSION=5
+DEBVERSION=1
 
 debian:
 	export DEB_BUILD_OPTIONS=nocheck

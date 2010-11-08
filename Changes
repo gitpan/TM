@@ -4,6 +4,9 @@ Note: Entries marked with
     - ! indicate a break of backwards compatibility.
     - ~ indicate a future break of compatibility, marked as deprecated
 
+1.56  Mon Nov  8 07:49:21 CET 2010
+        - fix: removed lingering test/performance code (rho)
+
 1.55  Sun Nov  7 15:44:43 CET 2010
         - fix: TM::IndexAble misbehaved with closed indices and empty lists
         ~ mod: pumped up to Perl 5.10 as prereq (rho)

@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-our $VERSION  = '1.55';
+our $VERSION  = '1.56';
 
 use Data::Dumper;
 # !!! HACK to suppress an annoying warning about Data::Dumper's VERSION not being numerical
@@ -636,8 +636,6 @@ This method removes all toplets and assertions (except the infrastructure). Ever
 
 sub clear {
     my $self    = shift;
-
-warn "CLEAR";
 
     my %mid2iid    = %{ $infrastructure->{mid2iid} };                            # shallow clone
     my %assertions = %{ $infrastructure->{assertions} };                         # shallow clone
@@ -2574,14 +2572,14 @@ sub _allinone {
     return @mads;                                                    # and return what we got
 }
 
-sub _fat_mama {
-    use Proc::ProcessTable;
-    my $t = new Proc::ProcessTable;
-#warn Dumper [ $t->fields ]; exit;
-    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
-#warn "size: ".  $me->size;
-    return $me->size / 1024.0 / 1024.0;
-}
+#sub _fat_mama {
+#    use Proc::ProcessTable;
+#    my $t = new Proc::ProcessTable;
+##warn Dumper [ $t->fields ]; exit;
+#    my ($me) = grep {$_->pid == $$ }  @{ $t->table };
+##warn "size: ".  $me->size;
+#    return $me->size / 1024.0 / 1024.0;
+#}
 
 
 
